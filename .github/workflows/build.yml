@@ -78,18 +78,29 @@ jobs:
         run: |
           ./gradlew lintDebug
           python3 - <<'PY'
+          import collections
           import glob
           import xml.etree.ElementTree as ElementTree
+
+          counts = collections.Counter()
 
           for report in sorted(glob.glob('app/build/reports/lint-results-*.xml')):
               print('==', report)
               for issue in ElementTree.parse(report).getroot():
+                  severity = issue.get('severity')
+                  counts[severity] += 1
+
+                  if severity not in ('Error', 'Fatal', 'Warning'):
+                      continue
+
                   location = issue.find('location')
                   where = ''
                   if location is not None:
                       where = '%s:%s' % (location.get('file'), location.get('line') or '?')
-                  print('%s: %s: %s [%s]' % (issue.get('severity'), issue.get('id'),
+                  print('%s: %s: %s [%s]' % (severity, issue.get('id'),
                                              issue.get('message'), where))
+
+          print('== lint summary:', dict(counts) or 'no issues')
           PY
 
       # the phone app only queries the app if the Contacts Provider finds the meta-data

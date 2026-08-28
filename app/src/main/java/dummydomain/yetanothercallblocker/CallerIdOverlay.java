@@ -1,5 +1,6 @@
 package dummydomain.yetanothercallblocker;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
@@ -43,6 +44,11 @@ public class CallerIdOverlay {
 
     private static final Runnable HIDE_RUNNABLE = CallerIdOverlay::hideInternal;
 
+    /*
+     * The view holds a themed wrapper around the application context, and it's only kept
+     * while the window is shown (hideInternal() clears it), so it doesn't outlive anything.
+     */
+    @SuppressLint("StaticFieldLeak")
     private static View view;
     private static String shownNumber;
 

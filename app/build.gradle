@@ -1,6 +1,37 @@
 apply plugin: 'com.android.application'
 apply plugin: 'org.greenrobot.greendao'
 
+/*
+ * Optional release signing.
+ *
+ * The credentials are taken from the environment (that's what the CI uses) or from
+ * a `keystore.properties` file in the project root (for local builds):
+ *
+ *     storeFile=/path/to/keystore.jks
+ *     storePassword=...
+ *     keyAlias=...
+ *     keyPassword=...
+ *
+ * If they aren't provided, the release build is left unsigned as it was before.
+ */
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
+def keystoreValue = { String envName, String propertyName ->
+    def value = System.getenv(envName) ?: keystoreProperties[propertyName]
+    value?.toString()?.trim() ?: null
+}
+
+def keystorePath = keystoreValue('YACB_KEYSTORE_FILE', 'storeFile')
+def signRelease = keystorePath != null && file(keystorePath).exists()
+
+if (keystorePath != null && !signRelease) {
+    logger.warn("The keystore ${keystorePath} doesn't exist, the release build won't be signed")
+}
+
 android {
     compileSdkVersion 30
     defaultConfig {
@@ -16,10 +47,23 @@ android {
             }
         }
     }
+    signingConfigs {
+        release {
+            if (signRelease) {
+                storeFile file(keystorePath)
+                storePassword keystoreValue('YACB_KEYSTORE_PASSWORD', 'storePassword')
+                keyAlias keystoreValue('YACB_KEY_ALIAS', 'keyAlias')
+                keyPassword keystoreValue('YACB_KEY_PASSWORD', 'keyPassword')
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (signRelease) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     applicationVariants.all { variant ->

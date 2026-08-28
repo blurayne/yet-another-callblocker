@@ -26,6 +26,8 @@ public class PhoneStateHandler {
 
     public enum Source {
         PHONE_STATE_LISTENER,
+        /** Android 12+ replacement for the listener. It never provides a number. */
+        TELEPHONY_CALLBACK,
         PHONE_STATE_BROADCAST_RECEIVER_MONITORING,
         PHONE_STATE_BROADCAST_RECEIVER
     }
@@ -75,6 +77,8 @@ public class PhoneStateHandler {
             }
 
             if (phoneNumber == null) {
+                // TelephonyCallback ends up here: a missing number means nothing on its own,
+                // the number of the call comes from the broadcast receiver
                 LOG.debug("onRinging() ignoring null");
                 ignore = true;
             }

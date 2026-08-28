@@ -63,6 +63,12 @@
             app:persistent="false"
             app:summary="@string/use_call_screening_service_summary"
             app:title="@string/use_call_screening_service" />
+        <MultiSelectListPreference
+            app:entries="@array/silence_calls_entries"
+            app:entryValues="@array/silence_calls_values"
+            app:key="silenceCalls"
+            app:summary="@string/silence_calls_summary"
+            app:title="@string/silence_calls" />
     </PreferenceCategory>
 
     <SwitchPreferenceCompat

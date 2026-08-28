@@ -160,6 +160,11 @@ public class RootSettingsFragment extends BaseSettingsFragment {
             callScreeningPref.setVisible(false);
         }
 
+        // silencing is done through the call screening service, which can only do it on Android 10+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            requirePreference(Settings.PREF_SILENCE_CALLS).setVisible(false);
+        }
+
         setPrefChangeListener(Settings.PREF_USE_MONITORING_SERVICE, (pref, newValue) -> {
             boolean enabled = Boolean.TRUE.equals(newValue);
             Context context = requireContext();

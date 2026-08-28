@@ -62,6 +62,17 @@ On pre-Android 8 devices there's a couple of notification-related options in the
 There's also an option to disable all the informational notifications at once.
 
 
+## Can the app silence a call instead of blocking it?
+
+Yes: "Silence calls" in Settings lets you pick the ratings that get the ringer muted
+(negative, neutral, unknown). Such a call isn't rejected - it goes through silently,
+your phone app shows it as usual and it ends up in the call log, you just aren't disturbed by it.
+Contacts are never silenced, and blocking wins if a number is set to be blocked as well.
+
+The feature is provided by the call screening service, so it needs
+["Advanced call blocking mode"](FAQ.md#whats-that-advanced-call-blocking-mode) and Android 10+.
+
+
 ## What countries are covered by the offline number database?
 
 I'm not sure to be honest. But I believe most of the world is covered.  

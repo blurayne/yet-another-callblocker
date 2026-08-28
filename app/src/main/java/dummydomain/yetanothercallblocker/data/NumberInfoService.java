@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.Set;
 
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
@@ -170,6 +171,42 @@ public class NumberInfoService {
 
     public boolean shouldBlock(NumberInfo numberInfo) {
         return numberInfo.blockingReason != null;
+    }
+
+    /**
+     * Whether the ringer should be silenced for the call.
+     *
+     * <p>The call itself isn't affected: it rings silently, is shown by the phone app
+     * and ends up in the call log as usual. Contacts are never silenced,
+     * just like they are never blocked.
+     */
+    public boolean shouldSilence(NumberInfo numberInfo) {
+        if (numberInfo.contactItem != null) return false;
+
+        Set<String> ratings = settings.getSilenceCalls();
+        if (ratings.isEmpty()) return false;
+
+        // the contacts can't be checked before the device is unlocked:
+        // silencing an unrecognized contact would be worse than not silencing a stranger
+        if (settings.getUseContacts() && contactsProvider != null
+                && contactsProvider.isInLimitedMode()) {
+            LOG.debug("shouldSilence() not silencing in limited mode");
+            return false;
+        }
+
+        switch (numberInfo.rating) {
+            case NEGATIVE:
+                return ratings.contains(Settings.PREF_SILENCE_CALLS_NEGATIVE);
+
+            case NEUTRAL:
+                return ratings.contains(Settings.PREF_SILENCE_CALLS_NEUTRAL);
+
+            case POSITIVE:
+                return false;
+
+            default:
+                return ratings.contains(Settings.PREF_SILENCE_CALLS_UNKNOWN);
+        }
     }
 
     public void blockedCall(NumberInfo numberInfo) {

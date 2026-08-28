@@ -36,14 +36,19 @@ public class CallScreeningServiceImpl extends CallScreeningService {
         LOG.info("onScreenCall({})", callDetails);
 
         boolean shouldBlock = false;
+        boolean shouldSilence = false;
         NumberInfo numberInfo = null;
 
         boolean blockingEnabled = false;
         boolean callerIdEnabled = false;
+        boolean silencingEnabled = false;
 
         try {
             blockingEnabled = App.getSettings().getCallBlockingEnabled();
             callerIdEnabled = App.getSettings().getCallerIdEnabled();
+            // silencing the ringer is only possible on Android 10+
+            silencingEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                    && App.getSettings().getSilenceCallsEnabled();
 
             boolean ignore = false;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -52,7 +57,7 @@ public class CallScreeningServiceImpl extends CallScreeningService {
                 }
             }
 
-            if (!ignore && !blockingEnabled && !callerIdEnabled) {
+            if (!ignore && !blockingEnabled && !callerIdEnabled && !silencingEnabled) {
                 ignore = true;
             }
 
@@ -109,9 +114,13 @@ public class CallScreeningServiceImpl extends CallScreeningService {
                         App.getSettings().getCachedAutoDetectedCountryCode(), callerIdEnabled);
 
                 shouldBlock = blockingEnabled && numberInfoService.shouldBlock(numberInfo);
+
+                shouldSilence = !shouldBlock && silencingEnabled
+                        && numberInfoService.shouldSilence(numberInfo);
             }
         } finally {
-            LOG.debug("onScreenCall() blocking call: {}", shouldBlock);
+            LOG.debug("onScreenCall() blocking call: {}, silencing call: {}",
+                    shouldBlock, shouldSilence);
 
             CallScreeningService.CallResponse.Builder responseBuilder = new CallResponse.Builder();
 
@@ -120,6 +129,9 @@ public class CallScreeningServiceImpl extends CallScreeningService {
                         .setDisallowCall(true)
                         .setRejectCall(true)
                         .setSkipNotification(true);
+            } else if (shouldSilence && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // the call goes through as usual, just without the ringtone
+                responseBuilder.setSilenceCall(true);
             }
 
             boolean blocked = shouldBlock;

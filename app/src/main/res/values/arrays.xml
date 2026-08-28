@@ -22,6 +22,17 @@
         <item>day</item>
     </string-array>
 
+    <string-array name="silence_calls_entries">
+        <item>@string/silence_calls_negative</item>
+        <item>@string/silence_calls_neutral</item>
+        <item>@string/silence_calls_unknown</item>
+    </string-array>
+    <string-array name="silence_calls_values">
+        <item>negative</item>
+        <item>neutral</item>
+        <item>unknown</item>
+    </string-array>
+
     <string-array name="block_in_limited_mode_entries">
         <item>@string/block_in_limited_mode_rating</item>
         <item>@string/block_in_limited_mode_blacklist</item>

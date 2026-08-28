@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -22,6 +23,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_INCOMING_CALL_NOTIFICATIONS = "incomingCallNotifications";
     public static final String PREF_CALLER_ID_DIRECTORY = "callerIdDirectory";
     public static final String PREF_CALLER_ID_OVERLAY = "callerIdOverlay";
+    public static final String PREF_SILENCE_CALLS = "silenceCalls";
     public static final String PREF_BLOCK_NEGATIVE_SIA_NUMBERS = "blockNegativeSiaNumbers";
     public static final String PREF_BLOCK_HIDDEN_NUMBERS = "blockHiddenNumbers";
     public static final String PREF_BLOCK_BLACKLISTED = "blockBlacklisted";
@@ -51,6 +53,10 @@ public class Settings extends GenericSettings {
     public static final String PREF_CALL_LOG_GROUPING_NONE = "none";
     public static final String PREF_CALL_LOG_GROUPING_CONSECUTIVE = "consecutive";
     public static final String PREF_CALL_LOG_GROUPING_DAY = "day";
+
+    public static final String PREF_SILENCE_CALLS_NEGATIVE = "negative";
+    public static final String PREF_SILENCE_CALLS_NEUTRAL = "neutral";
+    public static final String PREF_SILENCE_CALLS_UNKNOWN = "unknown";
 
     public static final String PREF_BLOCK_IN_LIMITED_MODE_RATING = "rating";
     public static final String PREF_BLOCK_IN_LIMITED_MODE_BLACKLIST = "blacklist";
@@ -141,6 +147,19 @@ public class Settings extends GenericSettings {
     /** Whether any of the features that display the caller info during a call is enabled. */
     public boolean getCallerIdEnabled() {
         return getCallerIdDirectory() || getCallerIdOverlay();
+    }
+
+    /** The ratings the ringer is silenced for. */
+    public Set<String> getSilenceCalls() {
+        return getStringSet(PREF_SILENCE_CALLS, Collections::emptySet);
+    }
+
+    public void setSilenceCalls(Set<String> values) {
+        setStringSet(PREF_SILENCE_CALLS, values);
+    }
+
+    public boolean getSilenceCallsEnabled() {
+        return !getSilenceCalls().isEmpty();
     }
 
     public boolean getCallBlockingEnabled() {

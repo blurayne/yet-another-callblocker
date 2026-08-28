@@ -89,6 +89,11 @@
     <string name="open_settings_activity">Settings</string>
     <string name="title_settings_activity">Settings</string>
     <string name="settings_category_main">Main</string>
+    <string name="silence_calls">Silence calls</string>
+    <string name="silence_calls_summary">Mute the ringer for the selected callers instead of blocking them: the call still goes through, is shown by the phone app and ends up in the call log. Contacts are never silenced. Needs \"Advanced call blocking mode\" and Android 10+.</string>
+    <string name="silence_calls_negative">Negative rating</string>
+    <string name="silence_calls_neutral">Neutral rating</string>
+    <string name="silence_calls_unknown">Unknown numbers</string>
     <string name="settings_category_caller_id">Caller ID</string>
     <string name="caller_id_directory">Caller ID in the phone app</string>
     <string name="caller_id_directory_summary">Provide the caller info to the phone app, so that it is displayed on the incoming call screen and in the call log. Only the numbers the app knows something about are reported, contacts are never affected.</string>

@@ -72,9 +72,35 @@ jobs:
           YACB_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleDebug assembleRelease --stacktrace
 
+      # the project doesn't fail the build on lint errors, so the findings are printed here
       - name: Lint
         continue-on-error: true
-        run: ./gradlew lintDebug
+        run: |
+          ./gradlew lintDebug
+          python3 - <<'PY'
+          import glob
+          import xml.etree.ElementTree as ElementTree
+
+          for report in sorted(glob.glob('app/build/reports/lint-results-*.xml')):
+              print('==', report)
+              for issue in ElementTree.parse(report).getroot():
+                  location = issue.find('location')
+                  where = ''
+                  if location is not None:
+                      where = '%s:%s' % (location.get('file'), location.get('line') or '?')
+                  print('%s: %s: %s [%s]' % (issue.get('severity'), issue.get('id'),
+                                             issue.get('message'), where))
+          PY
+
+      # the phone app only queries the app if the Contacts Provider finds the meta-data
+      - name: Check that the caller ID provider is registered
+        run: |
+          manifest=$(find app/build/intermediates -name AndroidManifest.xml \
+              -path '*merged_manifest*' | head -1)
+          echo "checking ${manifest}"
+          grep -q 'CallerIdDirectoryProvider' "${manifest}"
+          grep -q 'android.content.ContactDirectory' "${manifest}"
+          echo 'the caller ID directory provider is registered'
 
       - name: Collect the APKs
         run: |

@@ -183,6 +183,34 @@ public class PermissionHelper {
                 == PackageManager.PERMISSION_GRANTED;
     }
 
+    /** @see CallerIdOverlay */
+    public static boolean hasOverlayPermission(Context context) {
+        return CallerIdOverlay.hasPermission(context);
+    }
+
+    /**
+     * Asks the user to grant the "display over other apps" permission.
+     * Only needed on Android 6+, it's granted on install before that.
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    public static void requestOverlayPermission(Activity activity) {
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.caller_id_overlay_permission)
+                .setMessage(R.string.caller_id_overlay_permission_message)
+                .setPositiveButton(R.string.open_system_settings,
+                        (d, w) -> openOverlaySettings(activity))
+                .show();
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private static void openOverlaySettings(Context context) {
+        if (startActivity(context, new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + BuildConfig.APPLICATION_ID)))) {
+            return;
+        }
+        startActivity(context, new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
+    }
+
     public static RequestToken requestCallScreening(Activity activity) {
         return requestCallScreening(activity, null);
     }

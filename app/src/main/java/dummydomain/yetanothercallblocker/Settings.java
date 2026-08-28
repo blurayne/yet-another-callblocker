@@ -20,6 +20,8 @@ import dummydomain.yetanothercallblocker.sia.model.database.DbManager;
 public class Settings extends GenericSettings {
 
     public static final String PREF_INCOMING_CALL_NOTIFICATIONS = "incomingCallNotifications";
+    public static final String PREF_CALLER_ID_DIRECTORY = "callerIdDirectory";
+    public static final String PREF_CALLER_ID_OVERLAY = "callerIdOverlay";
     public static final String PREF_BLOCK_NEGATIVE_SIA_NUMBERS = "blockNegativeSiaNumbers";
     public static final String PREF_BLOCK_HIDDEN_NUMBERS = "blockHiddenNumbers";
     public static final String PREF_BLOCK_BLACKLISTED = "blockBlacklisted";
@@ -116,6 +118,29 @@ public class Settings extends GenericSettings {
 
     public void setIncomingCallNotifications(boolean show) {
         setBoolean(PREF_INCOMING_CALL_NOTIFICATIONS, show);
+    }
+
+    /** Whether the caller info is provided to the phone app as a contacts directory. */
+    public boolean getCallerIdDirectory() {
+        return getBoolean(PREF_CALLER_ID_DIRECTORY, true);
+    }
+
+    public void setCallerIdDirectory(boolean enabled) {
+        setBoolean(PREF_CALLER_ID_DIRECTORY, enabled);
+    }
+
+    /** Whether the caller info is drawn over the incoming call screen. */
+    public boolean getCallerIdOverlay() {
+        return getBoolean(PREF_CALLER_ID_OVERLAY);
+    }
+
+    public void setCallerIdOverlay(boolean enabled) {
+        setBoolean(PREF_CALLER_ID_OVERLAY, enabled);
+    }
+
+    /** Whether any of the features that display the caller info during a call is enabled. */
+    public boolean getCallerIdEnabled() {
+        return getCallerIdDirectory() || getCallerIdOverlay();
     }
 
     public boolean getCallBlockingEnabled() {

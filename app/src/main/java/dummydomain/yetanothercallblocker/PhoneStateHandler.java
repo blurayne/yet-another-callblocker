@@ -91,13 +91,15 @@ public class PhoneStateHandler {
 
         boolean blockingEnabled = settings.getCallBlockingEnabled();
         boolean showNotifications = settings.getIncomingCallNotifications();
+        boolean callerIdEnabled = settings.getCallerIdEnabled();
 
-        if (!blockingEnabled && !showNotifications) {
+        if (!blockingEnabled && !showNotifications && !callerIdEnabled) {
             return;
         }
 
+        // the full info is needed to display the blacklist entry as the caller ID
         NumberInfo numberInfo = numberInfoService.getNumberInfo(phoneNumber,
-                settings.getCachedAutoDetectedCountryCode(), false);
+                settings.getCachedAutoDetectedCountryCode(), callerIdEnabled);
 
         boolean blocked = false;
         if (blockingEnabled && numberInfoService.shouldBlock(numberInfo)) {
@@ -112,8 +114,12 @@ public class PhoneStateHandler {
             }
         }
 
-        if (!blocked && showNotifications) {
-            notificationService.startCallIndication(numberInfo);
+        if (!blocked) {
+            CallerIdHelper.onIncomingCall(context, numberInfo);
+
+            if (showNotifications) {
+                notificationService.startCallIndication(numberInfo);
+            }
         }
     }
 
@@ -122,6 +128,8 @@ public class PhoneStateHandler {
 
         isOffHook = true;
 
+        CallerIdHelper.onCallFinished(); // the call is answered - the phone app takes over
+
         postEvent(new CallOngoingEvent());
     }
 
@@ -129,6 +137,8 @@ public class PhoneStateHandler {
         LOG.debug("onIdle({}, {})", source, quote(phoneNumber));
 
         isOffHook = false;
+
+        CallerIdHelper.onCallFinished();
 
         notificationService.stopAllCallsIndication();
 

@@ -16,6 +16,7 @@ A free and open source application that can block unwanted calls or warn about p
 * Blocks calls with negative rating automatically (option).
 * Local blacklist with wildcard support.
 * Displays a notification with phone number summary (rating, reviews count, category) during incoming calls (option).
+* Displays the caller ID in your phone app's own incoming call screen and call log (option), or as an overlay over it.
 * Automatic incremental/delta database updates (option).
 * You can view online reviews for caller's number (provided by 3rd party service).
 * "Advanced call blocking mode" for blocking calls on Android 7+ before the phone starts ringing (needs to be manually enabled in Settings).
@@ -52,6 +53,8 @@ At this point most of the essential features (one would expect from a call block
 * Local blacklist with wildcard support.  
   Import of NoPhoneSpam backup is supported.
 * Showing a notification with some caller info (positive/negative rating, category, number of negative reviews and such) when the phone's ringing. *Works offline.*
+* Showing the caller info as the caller ID: the app provides it to your phone app as a contacts directory, so the name is displayed on the phone app's own incoming call screen (and in its call log) before the phone starts ringing. An overlay is available as a fallback for the phone apps that ignore it. *Works offline.*  
+  See [the FAQ](FAQ.md#how-does-the-app-display-the-caller-nameid-during-an-incoming-call) for details.
 * Loading and displaying a list of reviews for a number (accessed from the notification or the info view). *Requires internet.*
 * Automatic update of the database (for offline use). *Requires internet.*
 * Displaying call log with caller rating and the ability to show more info or load online reviews for the number. The list *works offline*, but loading reviews *requires internet.*

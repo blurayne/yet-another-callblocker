@@ -89,6 +89,14 @@
     <string name="open_settings_activity">Settings</string>
     <string name="title_settings_activity">Settings</string>
     <string name="settings_category_main">Main</string>
+    <string name="settings_category_caller_id">Caller ID</string>
+    <string name="caller_id_directory">Caller ID in the phone app</string>
+    <string name="caller_id_directory_summary">Provide the caller info to the phone app, so that it is displayed on the incoming call screen and in the call log. Only the numbers the app knows something about are reported, contacts are never affected.</string>
+    <string name="caller_id_overlay">Caller info overlay</string>
+    <string name="caller_id_overlay_summary">Draw the caller info over the incoming call screen. Use this if your phone app ignores the caller ID above. Requires the \"display over other apps\" permission.</string>
+    <string name="caller_id_overlay_close">Close</string>
+    <string name="caller_id_overlay_permission">Display over other apps</string>
+    <string name="caller_id_overlay_permission_message">The caller info overlay needs the permission to display over other apps.</string>
     <string name="settings_category_call_blocking">Call blocking</string>
     <string name="show_notifications_for_known_callers">Notifications for known callers</string>
     <string name="show_notifications_for_known_callers_summary">Display notifications for known callers (numbers in Contacts)</string>

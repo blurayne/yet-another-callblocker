@@ -25,6 +25,7 @@ public class YacbHolder {
     private static BlacklistService blacklistService;
 
     private static NumberInfoService numberInfoService;
+    private static NumberInfoCache numberInfoCache;
 
     @SuppressLint("StaticFieldLeak")
     private static NotificationService notificationService;
@@ -66,6 +67,10 @@ public class YacbHolder {
 
     static void setNumberInfoService(NumberInfoService numberInfoService) {
         YacbHolder.numberInfoService = numberInfoService;
+    }
+
+    static void setNumberInfoCache(NumberInfoCache numberInfoCache) {
+        YacbHolder.numberInfoCache = numberInfoCache;
     }
 
     static void setNotificationService(NotificationService notificationService) {
@@ -110,6 +115,10 @@ public class YacbHolder {
 
     public static NumberInfoService getNumberInfoService() {
         return numberInfoService;
+    }
+
+    public static NumberInfoCache getNumberInfoCache() {
+        return numberInfoCache;
     }
 
     public static NotificationService getNotificationService() {

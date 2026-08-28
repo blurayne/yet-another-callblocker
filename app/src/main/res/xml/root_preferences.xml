@@ -32,6 +32,18 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/settings_category_caller_id">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="callerIdDirectory"
+            app:summary="@string/caller_id_directory_summary"
+            app:title="@string/caller_id_directory" />
+        <SwitchPreferenceCompat
+            app:key="callerIdOverlay"
+            app:summary="@string/caller_id_overlay_summary"
+            app:title="@string/caller_id_overlay" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/settings_category_call_blocking">
         <SwitchPreferenceCompat
             app:key="blockNegativeSiaNumbers"

@@ -90,9 +90,31 @@ The number format *must* match the format that Android uses, that's why the lead
 1. If "Block blacklisted numbers" is enabled and the number matches any valid blacklist pattern, the call is **blocked**.
 
 
+## How does the app display the caller name/ID during an incoming call?
+
+There are two independent ways, both in Settings under "Caller ID":
+
+* **"Caller ID in the phone app"** (enabled by default).  
+  The app registers itself as a contacts directory, and your phone app asks it about every number
+  it can't find in your contacts. The result is displayed by the phone app itself - on the incoming
+  call screen, in the call log and in the contacts search - so there's no extra window and no
+  additional permission. Since the info is resolved while the call is being screened
+  (see ["Advanced call blocking mode"](FAQ.md#whats-that-advanced-call-blocking-mode)),
+  it's ready before the phone starts ringing.  
+  The stock Android phone app (AOSP Dialer, Google Phone) supports this. Some vendor phone apps
+  (Samsung, MIUI) use their own lookup and may ignore it - use the overlay below in that case.
+* **"Caller info overlay"** (disabled by default).  
+  The app draws a small window with the caller info over the incoming call screen.
+  This works regardless of the phone app, but it requires the "display over other apps" permission.
+
+Both are only used for the numbers the app knows something about (a rating, a category,
+a blacklist entry, a company name); contacts are never affected, and unknown numbers are
+displayed by the phone app as usual.
+
 ## Is there a way to display an overlay/pop-up screen with caller information?
 
-Not yet. If you want this feature, vote for [this issue](https://gitlab.com/xynngh/YetAnotherCallBlocker/-/issues/3).
+Yes, see [the question above](FAQ.md#how-does-the-app-display-the-caller-nameid-during-an-incoming-call).
+The upstream discussion of the feature is in [this issue](https://gitlab.com/xynngh/YetAnotherCallBlocker/-/issues/3).
 
 
 ## I have "block hidden numbers" enabled, but some hidden/"private" numbers are still not blocked.

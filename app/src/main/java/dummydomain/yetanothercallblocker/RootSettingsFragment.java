@@ -25,10 +25,12 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
 
     private static final String STATE_REQUEST_TOKEN = "STATE_REQUEST_TOKEN";
+    private static final String STATE_OVERLAY_REQUESTED = "STATE_OVERLAY_REQUESTED";
 
     private final UpdateScheduler updateScheduler = UpdateScheduler.get(App.getInstance());
 
     private PermissionHelper.RequestToken requestToken;
+    private boolean overlayPermissionRequested;
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
@@ -59,6 +61,9 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
         requestToken = PermissionHelper.RequestToken
                 .fromSavedInstanceState(savedInstanceState, STATE_REQUEST_TOKEN);
+
+        overlayPermissionRequested = savedInstanceState != null
+                && savedInstanceState.getBoolean(STATE_OVERLAY_REQUESTED);
     }
 
     @Override
@@ -68,6 +73,8 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         if (requestToken != null) {
             requestToken.onSaveInstanceState(outState, STATE_REQUEST_TOKEN);
         }
+
+        outState.putBoolean(STATE_OVERLAY_REQUESTED, overlayPermissionRequested);
     }
 
     @Override
@@ -80,6 +87,9 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         // needs to be updated after the confirmation dialog was closed
         // due to activity recreation (orientation change, etc.)
         updateBlockedCallNotificationsPreference();
+
+        // the permission may be granted (or revoked) in the system settings
+        updateCallerIdOverlayPreference();
     }
 
     @Override
@@ -98,6 +108,27 @@ public class RootSettingsFragment extends BaseSettingsFragment {
             if (Boolean.TRUE.equals(newValue)) {
                 PermissionHelper.checkPermissions(requireContext(), this,
                         true, false, false);
+            }
+            return true;
+        });
+
+        setPrefChangeListener(Settings.PREF_CALLER_ID_DIRECTORY, (preference, newValue) -> {
+            // the value has to be stored before the Contacts Provider re-reads the directories
+            App.getSettings().setCallerIdDirectory(Boolean.TRUE.equals(newValue));
+
+            CallerIdDirectoryProvider.notifyDirectoryChanged(requireContext());
+
+            return true;
+        });
+
+        setPrefChangeListener(Settings.PREF_CALLER_ID_OVERLAY, (preference, newValue) -> {
+            if (Boolean.TRUE.equals(newValue)
+                    && !PermissionHelper.hasOverlayPermission(requireContext())) {
+                overlayPermissionRequested = true;
+
+                PermissionHelper.requestOverlayPermission(requireActivity());
+
+                return false; // enabled in updateCallerIdOverlayPreference() if granted
             }
             return true;
         });
@@ -213,6 +244,25 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
         this.<SwitchPreferenceCompat>requirePreference(PREF_USE_CALL_SCREENING_SERVICE)
                 .setChecked(PermissionHelper.isCallScreeningHeld(requireContext()));
+    }
+
+    private void updateCallerIdOverlayPreference() {
+        Settings settings = App.getSettings();
+
+        boolean hasPermission = PermissionHelper.hasOverlayPermission(requireContext());
+
+        boolean enabled;
+        if (overlayPermissionRequested && hasPermission) {
+            overlayPermissionRequested = false; // the user granted it for this very feature
+            enabled = true;
+        } else {
+            enabled = settings.getCallerIdOverlay() && hasPermission;
+        }
+
+        settings.setCallerIdOverlay(enabled);
+
+        this.<SwitchPreferenceCompat>requirePreference(Settings.PREF_CALLER_ID_OVERLAY)
+                .setChecked(enabled);
     }
 
     private void updateBlockedCallNotificationsPreference() {

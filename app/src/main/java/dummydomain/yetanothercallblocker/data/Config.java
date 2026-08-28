@@ -148,6 +148,8 @@ public class Config {
                 communityDatabase, featuredDatabase, contactsProvider, blacklistService);
         YacbHolder.setNumberInfoService(numberInfoService);
 
+        YacbHolder.setNumberInfoCache(new NumberInfoCache());
+
         NotificationService notificationService = new NotificationService(context);
         YacbHolder.setNotificationService(notificationService);
 

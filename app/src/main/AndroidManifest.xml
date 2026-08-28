@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.READ_LOG" android:maxSdkVersion="15" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
@@ -160,6 +161,21 @@
                 <action android:name="android.telecom.CallScreeningService" />
             </intent-filter>
         </service>
+
+        <!--
+            Provides the caller info to the phone app as a contacts directory,
+            which makes it appear on the incoming call screen and in the call log.
+            The Contacts Provider finds it by the meta-data below.
+        -->
+        <provider
+            android:name=".CallerIdDirectoryProvider"
+            android:authorities="${applicationId}.directory"
+            android:exported="true"
+            android:readPermission="android.permission.READ_CONTACTS">
+            <meta-data
+                android:name="android.content.ContactDirectory"
+                android:value="true" />
+        </provider>
 
         <provider
             android:name="androidx.core.content.FileProvider"

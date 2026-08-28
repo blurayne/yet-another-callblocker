@@ -38,7 +38,13 @@ public class CallScreeningServiceImpl extends CallScreeningService {
         boolean shouldBlock = false;
         NumberInfo numberInfo = null;
 
+        boolean blockingEnabled = false;
+        boolean callerIdEnabled = false;
+
         try {
+            blockingEnabled = App.getSettings().getCallBlockingEnabled();
+            callerIdEnabled = App.getSettings().getCallerIdEnabled();
+
             boolean ignore = false;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 if (callDetails.getCallDirection() != Call.Details.DIRECTION_INCOMING) {
@@ -46,7 +52,7 @@ public class CallScreeningServiceImpl extends CallScreeningService {
                 }
             }
 
-            if (!ignore && !App.getSettings().getCallBlockingEnabled()) {
+            if (!ignore && !blockingEnabled && !callerIdEnabled) {
                 ignore = true;
             }
 
@@ -98,10 +104,11 @@ public class CallScreeningServiceImpl extends CallScreeningService {
             }
 
             if (!ignore) {
+                // the full info is needed to display the blacklist entry as the caller ID
                 numberInfo = numberInfoService.getNumberInfo(number,
-                        App.getSettings().getCachedAutoDetectedCountryCode(), false);
+                        App.getSettings().getCachedAutoDetectedCountryCode(), callerIdEnabled);
 
-                shouldBlock = numberInfoService.shouldBlock(numberInfo);
+                shouldBlock = blockingEnabled && numberInfoService.shouldBlock(numberInfo);
             }
         } finally {
             LOG.debug("onScreenCall() blocking call: {}", shouldBlock);
@@ -131,6 +138,10 @@ public class CallScreeningServiceImpl extends CallScreeningService {
                 numberInfoService.blockedCall(numberInfo);
 
                 postEvent(new CallEndedEvent());
+            } else if (callerIdEnabled) {
+                // the phone app queries the directory provider right after this,
+                // so the info is resolved before the phone even starts ringing
+                CallerIdHelper.onIncomingCall(this, numberInfo);
             }
         }
 

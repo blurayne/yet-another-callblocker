@@ -122,7 +122,9 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         });
 
         setPrefChangeListener(Settings.PREF_CALLER_ID_OVERLAY, (preference, newValue) -> {
+            // below Android 6 the permission is granted on install, there's nothing to request
             if (Boolean.TRUE.equals(newValue)
+                    && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
                     && !PermissionHelper.hasOverlayPermission(requireContext())) {
                 overlayPermissionRequested = true;
 

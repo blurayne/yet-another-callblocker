@@ -142,6 +142,29 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Lint errors
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob
+          import xml.etree.ElementTree as ElementTree
+
+          errors = []
+
+          for report in sorted(glob.glob('app/build/reports/lint-results-*.xml')):
+              for issue in ElementTree.parse(report).getroot():
+                  if issue.get('severity') not in ('Error', 'Fatal'):
+                      continue
+
+                  location = issue.find('location')
+                  where = ''
+                  if location is not None:
+                      where = '%s:%s' % (location.get('file'), location.get('line') or '?')
+                  errors.append('%s: %s [%s]' % (issue.get('id'), issue.get('message'), where))
+
+          print('\n'.join(errors) if errors else 'no lint errors')
+          PY
+
   release:
     name: Publish a release
     needs: build

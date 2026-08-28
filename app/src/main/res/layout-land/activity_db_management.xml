@@ -45,6 +45,18 @@
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:onClick="onExportDbClick"
+                android:text="@string/db_management_export_db" />
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="onImportDbClick"
+                android:text="@string/db_management_import_db" />
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:onClick="onResetDbClick"
                 android:text="@string/db_management_reset_base" />
 

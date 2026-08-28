@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import dummydomain.yetanothercallblocker.NotificationService;
 import dummydomain.yetanothercallblocker.PhoneStateHandler;
 import dummydomain.yetanothercallblocker.data.db.BlacklistDao;
+import dummydomain.yetanothercallblocker.sia.Storage;
 import dummydomain.yetanothercallblocker.sia.model.CommunityReviewsLoader;
 import dummydomain.yetanothercallblocker.sia.model.SiaMetadata;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
@@ -14,6 +15,8 @@ import dummydomain.yetanothercallblocker.sia.network.WebService;
 
 public class YacbHolder {
 
+    private static Storage storage;
+    private static dummydomain.yetanothercallblocker.sia.Settings siaSettings;
     private static WebService webService;
     private static DbManager dbManager;
     private static SiaMetadata siaMetadata;
@@ -32,6 +35,14 @@ public class YacbHolder {
 
     @SuppressLint("StaticFieldLeak")
     private static PhoneStateHandler phoneStateHandler;
+
+    static void setStorage(Storage storage) {
+        YacbHolder.storage = storage;
+    }
+
+    static void setSiaSettings(dummydomain.yetanothercallblocker.sia.Settings siaSettings) {
+        YacbHolder.siaSettings = siaSettings;
+    }
 
     static void setWebService(WebService webService) {
         YacbHolder.webService = webService;
@@ -79,6 +90,16 @@ public class YacbHolder {
 
     static void setPhoneStateHandler(PhoneStateHandler phoneStateHandler) {
         YacbHolder.phoneStateHandler = phoneStateHandler;
+    }
+
+    /** The storage the databases live in. */
+    public static Storage getStorage() {
+        return storage;
+    }
+
+    /** The settings of the SIA library (the database versions). */
+    public static dummydomain.yetanothercallblocker.sia.Settings getSiaSettings() {
+        return siaSettings;
     }
 
     public static WebService getWebService() {

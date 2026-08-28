@@ -224,6 +224,16 @@
     <string name="db_management_reset_secondary">Reset updates</string>
     <string name="db_management_update_db">Update DB</string>
     <string name="db_management_update_result">Update finished; DB ver: %d</string>
+    <string name="db_management_export_db">Export DB</string>
+    <string name="db_management_import_db">Import DB</string>
+    <string name="db_management_exporting">Exporting the database\u2026</string>
+    <string name="db_management_export_result">Database exported as %1$s</string>
+    <string name="db_management_export_failed">Couldn\'t export the database. Is it downloaded?</string>
+    <string name="db_management_import_confirmation">The current database will be replaced with the one from the selected file. The blacklist and the settings are not affected.\n\nContinue?</string>
+    <string name="db_management_import_confirm">Replace</string>
+    <string name="db_management_importing">Importing the database\u2026</string>
+    <string name="db_management_import_result">Database imported</string>
+    <string name="db_management_import_failed">Couldn\'t import the database. The selected file is not a database export or it is damaged.</string>
 
     <string name="title_lookup_number">Lookup number</string>
     <string name="lookup_default_test_number" translatable="false">+74995861192</string>

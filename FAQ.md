@@ -132,6 +132,17 @@ Partially. There's no proxy settings in the app, but system-wide tunnels should 
 Unfortunately, the third-party servers block requests from Tor, so daily updates and online reviews are not available via Tor.
 
 
+## Can I copy the database to another device or keep a backup of it?
+
+Yes: "Manage database" (Settings -> Advanced -> Manage database) has "Export DB" and "Import DB".
+The export is a zip archive of the offline database, which you can share or save anywhere;
+importing it replaces the current database, so the app asks for a confirmation first.
+It's meant for setting up another device (or reinstalling) without downloading the database again.
+
+The archive contains the database only. The blacklist has its own export in the blacklist screen,
+and the settings aren't included in either.
+
+
 ## The app takes too much storage space. What can I do?
 
 Normally the app takes a little under 150 MB in total: ~20 MB for the app and ~130 MB for the data (the offline number rating database).

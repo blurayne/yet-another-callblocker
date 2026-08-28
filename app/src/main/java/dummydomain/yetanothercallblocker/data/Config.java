@@ -95,6 +95,9 @@ public class Config {
             return new OkHttpClient();
         };
 
+        YacbHolder.setStorage(storage);
+        YacbHolder.setSiaSettings(siaSettings);
+
         CommunityDatabase communityDatabase = new CommunityDatabase(
                 storage, AbstractDatabase.Source.ANY, SIA_PATH_PREFIX,
                 SIA_SECONDARY_PATH_PREFIX, siaSettings);

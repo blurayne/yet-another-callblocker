@@ -33,11 +33,11 @@ if (keystorePath != null && !signRelease) {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 33
     defaultConfig {
         applicationId "dummydomain.yetanothercallblocker"
         minSdkVersion 14
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionCode 5170
         versionName "0.5.17"
 

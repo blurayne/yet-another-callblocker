@@ -35,7 +35,13 @@ public class TaskService extends IntentService {
     public static void start(Context context, String task) {
         Intent intent = new Intent(context, TaskService.class);
         intent.setAction(task);
-        ContextCompat.startForegroundService(context, intent);
+
+        try {
+            ContextCompat.startForegroundService(context, intent);
+        } catch (Exception e) {
+            // an app targeting Android 12+ can't start a foreground service from the background
+            LOG.warn("start() couldn't start the task service", e);
+        }
     }
 
     public TaskService() {

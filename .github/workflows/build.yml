@@ -125,6 +125,21 @@ jobs:
 
           (cd artifacts && sha256sum ./*.apk | tee SHA256SUMS.txt)
 
+          # an unsigned APK can't be installed, so say which file to use
+          {
+            echo "Yet Another Call Blocker, version ${version}, built from ${revision}."
+            echo
+            if ls artifacts/*-unsigned-*.apk >/dev/null 2>&1; then
+              echo "The release APK is UNSIGNED and CANNOT BE INSTALLED: no signing secrets are"
+              echo "set for this repository (see BUILDING.md). Install the debug APK instead."
+              echo
+              echo "The debug key is generated anew on every CI run, so a debug APK from another"
+              echo "run can't be installed over this one - uninstall the app first."
+            else
+              echo "The release APK is signed - install that one."
+            fi
+          } | tee artifacts/INSTALL.txt
+
       - name: Upload the APKs
         uses: actions/upload-artifact@v4
         with:

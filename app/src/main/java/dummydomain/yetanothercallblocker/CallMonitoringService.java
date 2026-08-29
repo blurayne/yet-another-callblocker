@@ -39,7 +39,18 @@ public class CallMonitoringService extends Service {
     private boolean monitoringStarted;
 
     public static void start(Context context) {
-        ContextCompat.startForegroundService(context, getIntent(context, ACTION_START));
+        try {
+            ContextCompat.startForegroundService(context, getIntent(context, ACTION_START));
+        } catch (Exception e) {
+            /*
+             * An app targeting Android 12+ can't start a foreground service while it's in the
+             * background, and the app process is started in the background often enough
+             * (an incoming call, a query from the phone app). Failing to monitor is bad,
+             * crashing the process is worse: the service is started again when the app is
+             * opened or the device boots.
+             */
+            LOG.warn("start() couldn't start the monitoring service", e);
+        }
     }
 
     public static void stop(Context context) {

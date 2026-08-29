@@ -70,24 +70,24 @@ jobs:
               | sed -e 's/-----[A-Z]*-----//g' | tr -- '-_' '+/')
 
           if ! printf '%s' "${encoded}" | base64 -d > "${keystore}" 2>/dev/null; then
-            echo "::error::KEYSTORE_BASE64 is not valid base64. Create it with:" \
-                 "base64 -w0 keystore.jks (macOS: base64 -i keystore.jks)," \
-                 "or on Windows with" \
-                 "[Convert]::ToBase64String([IO.File]::ReadAllBytes('keystore.jks'))."
-
-            # the value itself is a secret, so only say what is wrong with it
-            echo "length: ${#encoded} characters"
+            # the value itself is a secret, so only say what is wrong with it,
+            # and say it in the error annotation, which is where it will be looked for
             case "${encoded}" in
               *[!A-Za-z0-9+/=]*)
-                echo "it contains characters that base64 data can't contain," \
-                     "so it is not (only) an encoded file" ;;
+                reason="it holds characters that base64 data can't contain,"
+                reason="${reason} so it isn't (only) an encoded file" ;;
               *)
                 if [ $((${#encoded} % 4)) -ne 0 ]; then
-                  echo "its length is not a multiple of 4: the value looks truncated"
+                  reason="its length is not a multiple of 4, so it looks truncated"
                 else
-                  echo "the characters look fine, so the data itself is damaged"
+                  reason="the characters look fine, so the data itself is damaged"
                 fi ;;
             esac
+
+            echo "::error::KEYSTORE_BASE64 (${#encoded} characters) can't be decoded:" \
+                 "${reason}. Create it with: base64 -w0 keystore.jks" \
+                 "(macOS: base64 -i keystore.jks), or on Windows with" \
+                 "[Convert]::ToBase64String([IO.File]::ReadAllBytes('keystore.jks'))."
             exit 1
           fi
 
@@ -95,9 +95,9 @@ jobs:
 
           if ! keytool -list -keystore "${keystore}" -storepass "${KEYSTORE_PASSWORD}" \
               > /dev/null 2>&1; then
-            echo "::error::The decoded keystore can't be opened." \
-                 "Check that KEYSTORE_BASE64 is the whole file and that KEYSTORE_PASSWORD" \
-                 "is the keystore (store) password."
+            echo "::error::The decoded keystore ($(stat -c%s "${keystore}") bytes) can't be" \
+                 "opened. Check that KEYSTORE_BASE64 is the whole file and that" \
+                 "KEYSTORE_PASSWORD is the keystore (store) password, not the key password."
             exit 1
           fi
 

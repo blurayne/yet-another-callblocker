@@ -32,6 +32,9 @@ and the artifacts expire after 30 days - so re-link the current one instead of r
 The `apk` artifact holds the debug APK (installable, debug-signed), the release APK
 (unsigned unless the signing secrets are set) and `SHA256SUMS.txt`.
 
+[DEVELOPMENT.md](DEVELOPMENT.md) covers signing, the CI, and how to get logs and crash reports
+off a device; keep it up to date when any of that changes.
+
 ## Building
 
 * **JDK 11.** Gradle 7.2 and AGP 7.0.3 don't support newer JDKs, and the Android command line

@@ -97,6 +97,9 @@
     <string name="db_filtering_reverting">Restoring the unfiltered database\u2026</string>
     <string name="db_filtering_reverted">The unfiltered database is in use again.</string>
     <string name="db_filtering_revert_failed">Couldn\'t restore the unfiltered database.</string>
+    <string name="db_filtering_progress">Part %1$d of %2$d</string>
+    <string name="db_filtering_cancelling">Stopping\u2026</string>
+    <string name="db_filtering_result_cancelled">Filtering was stopped. The unfiltered database is in use.</string>
     <string name="db_filtering_result_filtered">Removed %1$d of %2$d entries, %3$d are left.</string>
     <string name="db_filtering_result_nothing_filtered">Nothing was filtered out: all %1$d entries match the filter, so the database is unchanged.</string>
     <string name="db_filtering_result_no_filter">Nothing was filtered: database filtering is disabled, or no prefixes to keep are set.</string>

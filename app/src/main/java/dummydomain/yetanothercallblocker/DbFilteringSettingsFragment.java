@@ -3,10 +3,15 @@ package dummydomain.yetanothercallblocker;
 import android.annotation.SuppressLint;
 import android.os.AsyncTask;
 import android.text.TextUtils;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceGroup;
+import androidx.preference.PreferenceScreen;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -17,6 +22,8 @@ import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.DbFilterRevertedEvent;
 import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
+import dummydomain.yetanothercallblocker.event.DbFilteringInProgressEvent;
+import dummydomain.yetanothercallblocker.event.DbFilteringProgressEvent;
 import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
 import dummydomain.yetanothercallblocker.work.TaskService;
 
@@ -32,6 +39,10 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
     private final Settings settings = App.getSettings();
 
     private AsyncTask<Void, Void, List<String>> prefillPrefixesTask;
+
+    private AlertDialog progressDialog;
+    private ProgressBar progressBar;
+    private TextView progressText;
 
     @Override
     protected String getScreenKey() {
@@ -97,8 +108,30 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
         updateMasterPreference();
     }
 
+    /**
+     * Sticky, so the progress is picked up again when the screen is reopened
+     * while the filtering is still running.
+     */
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN_ORDERED)
+    public void onDbFilteringInProgress(DbFilteringInProgressEvent event) {
+        showProgressDialog();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onDbFilteringProgress(DbFilteringProgressEvent event) {
+        if (progressBar == null) return;
+
+        progressBar.setMax(event.total);
+        progressBar.setProgress(event.current);
+
+        progressText.setText(getString(R.string.db_filtering_progress,
+                event.current, event.total));
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onDbFilteringFinished(DbFilteringFinishedEvent event) {
+        hideProgressDialog();
+
         updateMasterPreference();
 
         showMessage(getFilteringMessage(event.result));
@@ -128,6 +161,9 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
             case NO_DATABASE:
                 return getString(R.string.db_filtering_result_no_database);
 
+            case CANCELLED:
+                return getString(R.string.db_filtering_result_cancelled);
+
             default:
                 return getString(R.string.error);
         }
@@ -141,6 +177,67 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
                 .setMessage(message)
                 .setPositiveButton(android.R.string.ok, null)
                 .show();
+    }
+
+    /**
+     * While the database is being filtered its settings are left visible but disabled: changing
+     * them would apply to the next run, not to the one the numbers on screen belong to.
+     */
+    private void showProgressDialog() {
+        setPreferencesEnabled(false);
+
+        if (progressDialog != null || !isAdded()) return;
+
+        View view = getLayoutInflater().inflate(R.layout.dialog_progress, null);
+        progressBar = view.findViewById(R.id.progress_bar);
+        progressText = view.findViewById(R.id.progress_text);
+        progressText.setText(R.string.filtering_db);
+
+        progressDialog = new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.db_filtering_filter_db)
+                .setView(view)
+                .setCancelable(false)
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+
+        // the run stops when it notices, so the dialog stays up until it reports back
+        progressDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
+            DbFilteringService.requestCancellation();
+
+            v.setEnabled(false);
+            progressText.setText(R.string.db_filtering_cancelling);
+        });
+    }
+
+    private void hideProgressDialog() {
+        setPreferencesEnabled(true);
+
+        if (progressDialog != null) {
+            progressDialog.dismiss();
+            progressDialog = null;
+        }
+
+        progressBar = null;
+        progressText = null;
+    }
+
+    private void setPreferencesEnabled(boolean enabled) {
+        PreferenceScreen screen = getPreferenceScreen();
+        if (screen == null) return;
+
+        for (int i = 0; i < screen.getPreferenceCount(); i++) {
+            Preference preference = screen.getPreference(i);
+            preference.setEnabled(enabled);
+
+            if (preference instanceof PreferenceGroup) {
+                PreferenceGroup group = (PreferenceGroup) preference;
+                for (int k = 0; k < group.getPreferenceCount(); k++) {
+                    group.getPreference(k).setEnabled(enabled);
+                }
+            }
+        }
+
+        if (enabled) updateMasterPreference();
     }
 
     /** The unfiltered database can only be restored while a copy of it is kept. */
@@ -157,6 +254,14 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
     @Override
     public void onStop() {
         EventUtils.unregister(this);
+
+        // the run carries on in the service; the dialog comes back with the sticky event
+        if (progressDialog != null) {
+            progressDialog.dismiss();
+            progressDialog = null;
+            progressBar = null;
+            progressText = null;
+        }
 
         cancelPrefillPrefixesTask();
 

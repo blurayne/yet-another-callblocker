@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,6 +13,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseDataSlice;
@@ -41,7 +46,14 @@ public class DbFilteringService {
         NO_FILTER,
         /** There's no database to filter and it couldn't be downloaded. */
         NO_DATABASE,
+        /** The user stopped the run; the unfiltered database was put back. */
+        CANCELLED,
         FAILED
+    }
+
+    /** Reports how far a filtering run has got. */
+    public interface ProgressListener {
+        void onProgress(int current, int total);
     }
 
     /** The outcome of a filtering run. */
@@ -69,12 +81,24 @@ public class DbFilteringService {
     private static final String SLICE_NAME_POSTFIX = ".dat";
     private static final String INFO_FILE_NAME = SLICE_NAME_PREFIX + "info" + SLICE_NAME_POSTFIX;
 
+    private static final String SECONDARY_SLICE_POSTFIX = ".sia";
+
     private static final Logger LOG = LoggerFactory.getLogger(DbFilteringService.class);
+
+    /** Only one run happens at a time: the task service handles its intents one by one. */
+    private static final AtomicBoolean CANCELLATION_REQUESTED = new AtomicBoolean();
 
     private final Settings settings;
 
     public DbFilteringService(Settings settings) {
         this.settings = settings;
+    }
+
+    /** Asks the filtering run that is in progress, if any, to stop. */
+    public static void requestCancellation() {
+        LOG.debug("requestCancellation()");
+
+        CANCELLATION_REQUESTED.set(true);
     }
 
     /** Whether a copy of the unfiltered database is kept. */
@@ -89,7 +113,16 @@ public class DbFilteringService {
      * settings gives the same result as filtering once with the second ones.
      */
     public Result filter() {
+        return filter(null);
+    }
+
+    /**
+     * @param listener notified as the database parts are processed, may be null
+     */
+    public Result filter(ProgressListener listener) {
         LOG.debug("filter() started");
+
+        CANCELLATION_REQUESTED.set(false);
 
         NumberFilter numberFilter = DbFilteringUtils.getNumberFilter(settings);
         if (numberFilter == null) {
@@ -118,12 +151,19 @@ public class DbFilteringService {
 
             int entriesBefore = readEntryCount(mainDir);
 
-            YacbHolder.getDbManager().setNumberFilter(numberFilter);
-            YacbHolder.getDbManager().filterDb();
+            int entriesAfter = filterFiles(numberFilter, listener);
+
+            if (entriesAfter < 0) { // cancelled part way through
+                LOG.info("filter() cancelled, restoring the unfiltered database");
+
+                replaceDir(mainDir, masterDir);
+                settings.setDbFiltered(false);
+                reloadDatabases();
+
+                return new Result(Status.CANCELLED, entriesBefore, entriesBefore);
+            }
 
             reloadDatabases();
-
-            int entriesAfter = countSliceEntries(mainDir);
 
             if (entriesAfter >= entriesBefore) {
                 // the database in use is the unfiltered one, so the copy is just a second one
@@ -179,12 +219,11 @@ public class DbFilteringService {
         if (numberFilter == null) return new Result(Status.NO_FILTER, 0, 0);
 
         try {
-            YacbHolder.getDbManager().setNumberFilter(numberFilter);
-            YacbHolder.getDbManager().filterDb();
+            int entriesLeft = filterFiles(numberFilter, null);
 
             reloadDatabases();
 
-            return new Result(Status.FILTERED, 0, 0);
+            return new Result(entriesLeft < 0 ? Status.CANCELLED : Status.FILTERED, 0, 0);
         } catch (Exception e) {
             LOG.error("updateFilter() failed", e);
             return new Result(Status.FAILED, 0, 0);
@@ -210,6 +249,92 @@ public class DbFilteringService {
 
         LOG.info("revertToMaster() the unfiltered database is back in use");
         return true;
+    }
+
+    /**
+     * Filters the database part by part, which is what
+     * {@code DbManager.filterDb()} does - except that this can report progress,
+     * can be stopped, and knows how many entries are left when it's done.
+     *
+     * @return the number of entries left, or -1 if the run was cancelled
+     */
+    private int filterFiles(NumberFilter numberFilter, ProgressListener listener) {
+        List<File> files = new ArrayList<>();
+
+        File mainDir = getMainDir();
+        File[] mainFiles = mainDir.listFiles((d, name) -> isSliceFile(name));
+        if (mainFiles != null) files.addAll(Arrays.asList(mainFiles));
+
+        File secondaryDir = new File(getDataDir(), SiaConstants.SIA_SECONDARY_PATH_PREFIX);
+        File[] secondaryFiles = secondaryDir.listFiles(
+                (d, name) -> name.endsWith(SECONDARY_SLICE_POSTFIX));
+        if (secondaryFiles != null) files.addAll(Arrays.asList(secondaryFiles));
+
+        int total = files.size();
+        int entriesLeft = 0;
+
+        for (int i = 0; i < total; i++) {
+            if (CANCELLATION_REQUESTED.get()) return -1;
+
+            entriesLeft += filterOrDeleteSlice(files.get(i), numberFilter);
+
+            if (listener != null) listener.onProgress(i + 1, total);
+        }
+
+        return entriesLeft;
+    }
+
+    /** @return the number of entries the file holds afterwards (0 if it was deleted) */
+    private int filterOrDeleteSlice(File file, NumberFilter numberFilter) {
+        int entries = 0;
+
+        if (numberFilter.isDetailed()) {
+            entries = filterSlice(file, numberFilter);
+        } else if (numberFilter.keepPrefix(getSlicePrefix(file.getName()))) {
+            entries = countSliceEntries(file);
+        }
+
+        if (entries <= 0 && file.exists() && !file.delete()) {
+            LOG.warn("filterOrDeleteSlice() couldn't delete {}", file);
+        }
+
+        return entries;
+    }
+
+    /** @return the number of entries kept, 0 if the file is to be dropped */
+    private int filterSlice(File file, NumberFilter numberFilter) {
+        CommunityDatabaseDataSlice original = new CommunityDatabaseDataSlice();
+
+        try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
+            original.loadFromStream(inputStream);
+        } catch (Exception e) {
+            LOG.warn("filterSlice() couldn't read {}", file, e);
+            return 0;
+        }
+
+        CommunityDatabaseDataSlice slice = new CommunityDatabaseDataSlice();
+        if (!slice.partialClone(original, original.generateFilteredIndex(numberFilter))) {
+            return 0; // nothing in this part matches the filter
+        }
+
+        try (BufferedOutputStream outputStream
+                     = new BufferedOutputStream(new FileOutputStream(file))) {
+            slice.writeMerged(null, outputStream);
+        } catch (Exception e) {
+            LOG.error("filterSlice() couldn't write {}", file, e);
+            return 0;
+        }
+
+        return slice.getNumberOfItems();
+    }
+
+    /** The part of a file name the filter matches against: the digits of the numbers it holds. */
+    private static String getSlicePrefix(String name) {
+        if (name.endsWith(SECONDARY_SLICE_POSTFIX)) {
+            return name.substring(0, name.length() - SECONDARY_SLICE_POSTFIX.length());
+        }
+        return name.substring(SLICE_NAME_PREFIX.length(),
+                name.length() - SLICE_NAME_POSTFIX.length());
     }
 
     private boolean downloadDb() {
@@ -246,25 +371,17 @@ public class DbFilteringService {
         }
     }
 
-    /** The number of entries the database actually holds. */
-    private static int countSliceEntries(File dir) {
-        File[] files = dir.listFiles((d, name) -> isSliceFile(name));
-        if (files == null) return 0;
+    /** The number of entries a database part holds. */
+    private static int countSliceEntries(File file) {
+        CommunityDatabaseDataSlice slice = new CommunityDatabaseDataSlice();
 
-        int total = 0;
-
-        for (File file : files) {
-            CommunityDatabaseDataSlice slice = new CommunityDatabaseDataSlice();
-
-            try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
-                slice.loadFromStream(inputStream);
-                total += slice.getNumberOfItems();
-            } catch (Exception e) {
-                LOG.warn("countSliceEntries() couldn't read {}", file, e);
-            }
+        try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
+            slice.loadFromStream(inputStream);
+            return slice.getNumberOfItems();
+        } catch (Exception e) {
+            LOG.warn("countSliceEntries() couldn't read {}", file, e);
+            return 0;
         }
-
-        return total;
     }
 
     private static boolean isSliceFile(String name) {

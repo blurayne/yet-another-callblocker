@@ -20,6 +20,8 @@ import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.DbFilterRevertedEvent;
 import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
+import dummydomain.yetanothercallblocker.event.DbFilteringInProgressEvent;
+import dummydomain.yetanothercallblocker.event.DbFilteringProgressEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
 
@@ -128,7 +130,19 @@ public class TaskService extends IntentService {
     }
 
     private void filterDb() {
-        postEvent(new DbFilteringFinishedEvent(new DbFilteringService(App.getSettings()).filter()));
+        // the automatic filtering after an update reports nothing: this is the one the user started
+        DbFilteringInProgressEvent sticky = new DbFilteringInProgressEvent();
+
+        postStickyEvent(sticky);
+        try {
+            DbFilteringService.Result result = new DbFilteringService(App.getSettings())
+                    .filter((current, total) ->
+                            postEvent(new DbFilteringProgressEvent(current, total)));
+
+            postEvent(new DbFilteringFinishedEvent(result));
+        } finally {
+            removeStickyEvent(sticky);
+        }
     }
 
     private void revertDbFilter() {

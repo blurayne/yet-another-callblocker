@@ -154,13 +154,18 @@ jobs:
           echo 'the caller ID directory provider is registered'
 
       - name: Collect the APKs
+        id: apks
         run: |
           version=$(sed -n 's/.*versionName *"\(.*\)".*/\1/p' app/build.gradle)
           revision=$(git rev-parse --short HEAD)
+          built=$(date -u +%Y%m%d-%H%M%S)
+
+          # the build time distinguishes repeated builds of the same revision
+          echo "name=apk-${built}-${revision}" >> "${GITHUB_OUTPUT}"
 
           mkdir -p artifacts
           find app/build/outputs/apk -name '*.apk' -print0 | while IFS= read -r -d '' apk; do
-            cp "${apk}" "artifacts/$(basename "${apk}" .apk)-${version}-${revision}.apk"
+            cp "${apk}" "artifacts/$(basename "${apk}" .apk)-${version}-${built}-${revision}.apk"
           done
 
           (cd artifacts && sha256sum ./*.apk | tee SHA256SUMS.txt)
@@ -186,7 +191,7 @@ jobs:
       - name: Upload the APKs
         uses: actions/upload-artifact@v4
         with:
-          name: apk
+          name: ${{ steps.apks.outputs.name }}
           path: artifacts/
           if-no-files-found: error
           retention-days: 30
@@ -236,7 +241,8 @@ jobs:
       - name: Download the APKs
         uses: actions/download-artifact@v4
         with:
-          name: apk
+          pattern: apk-*
+          merge-multiple: true
           path: artifacts
 
       - name: Create the release

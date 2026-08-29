@@ -160,7 +160,7 @@ The certificate fingerprint of the committed debug key is
 
 The `Build` workflow (`.github/workflows/build.yml`) builds the app on every push and pull
 request, and can be started manually from the Actions tab (with an option to bundle the offline
-database into the APK). It attaches the APKs and their checksums to the run as the `apk`
-artifact and the lint reports as `reports`, prints the lint findings in the job log (the project
+database into the APK). It attaches the APKs and their checksums to the run as an
+`apk-<build time>-<revision>` artifact and the lint reports as `reports`, prints the lint findings in the job log (the project
 doesn't fail the build on them), and checks that the caller ID provider survived the manifest
 merge. Pushing a `v*` tag additionally publishes the APKs as a GitHub release.

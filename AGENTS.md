@@ -27,10 +27,12 @@ curl -s "https://api.github.com/repos/blurayne/yet-another-callblocker/actions/r
 curl -s "https://api.github.com/repos/blurayne/yet-another-callblocker/actions/runs/<run_id>/artifacts"
 ```
 
-The download itself needs a signed-in GitHub session (or `gh run download <run_id> -n apk`),
+The download itself needs a signed-in GitHub session
+(or `gh run download <run_id> --pattern 'apk-*'`),
 and the artifacts expire after 30 days - so re-link the current one instead of reusing an old link.
-The `apk` artifact holds the debug APK (installable, debug-signed), the release APK
-(unsigned unless the signing secrets are set) and `SHA256SUMS.txt`.
+The artifact is named `apk-<build time>-<revision>` and holds the debug APK
+(debug-signed), the release APK (unsigned unless the signing secrets are set)
+and `SHA256SUMS.txt`.
 
 [DEVELOPMENT.md](DEVELOPMENT.md) covers signing, the CI, and how to get logs and crash reports
 off a device; keep it up to date when any of that changes.

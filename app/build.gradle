@@ -109,7 +109,9 @@ dependencies {
     implementation 'androidx.paging:paging-runtime:2.1.2'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'androidx.preference:preference:1.1.1'
-    implementation 'androidx.work:work-runtime:2.6.0'
+    // 2.7.0 is the first release that creates its PendingIntents the way Android 12+ demands:
+    // with an older one, WorkManager's initialization crashes an app that targets 31 or above
+    implementation 'androidx.work:work-runtime:2.7.1'
     implementation 'org.greenrobot:greendao:3.3.0'
     implementation "org.greenrobot:eventbus:$eventbus_version"
     annotationProcessor "org.greenrobot:eventbus-annotation-processor:$eventbus_version"

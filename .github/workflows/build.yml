@@ -59,9 +59,29 @@ jobs:
       - name: Decode the signing keystore
         id: keystore
         if: env.KEYSTORE_BASE64 != ''
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          printf '%s' "${KEYSTORE_BASE64}" | base64 -d > "${RUNNER_TEMP}/keystore.jks"
-          echo "path=${RUNNER_TEMP}/keystore.jks" >> "${GITHUB_OUTPUT}"
+          keystore="${RUNNER_TEMP}/keystore.jks"
+
+          # `base64` wraps its output unless it is told not to, so the newlines are dropped here
+          # instead of rejecting a secret that was created in the most obvious way
+          if ! printf '%s' "${KEYSTORE_BASE64}" | tr -d '[:space:]' | base64 -d > "${keystore}"; then
+            echo "::error::KEYSTORE_BASE64 is not valid base64. Create it with:" \
+                 "base64 -w0 keystore.jks (macOS: base64 -i keystore.jks)." \
+                 "Windows certutil -encode does not work: it wraps the data in a PEM header."
+            exit 1
+          fi
+
+          if ! keytool -list -keystore "${keystore}" -storepass "${KEYSTORE_PASSWORD}" \
+              > /dev/null 2>&1; then
+            echo "::error::The decoded keystore can't be opened." \
+                 "Check that KEYSTORE_BASE64 is the whole file and that KEYSTORE_PASSWORD" \
+                 "is the keystore (store) password."
+            exit 1
+          fi
+
+          echo "path=${keystore}" >> "${GITHUB_OUTPUT}"
 
       - name: Build
         env:

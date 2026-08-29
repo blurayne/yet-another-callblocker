@@ -180,6 +180,9 @@ jobs:
             fi
           } | tee artifacts/INSTALL.txt
 
+          # so that a run says what it produced without unpacking the artifact
+          echo "::notice::Built $(cd artifacts && ls ./*.apk | tr '\n' ' ')"
+
       - name: Upload the APKs
         uses: actions/upload-artifact@v4
         with:

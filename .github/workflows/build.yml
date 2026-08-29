@@ -133,8 +133,8 @@ jobs:
               echo "The release APK is UNSIGNED and CANNOT BE INSTALLED: no signing secrets are"
               echo "set for this repository (see BUILDING.md). Install the debug APK instead."
               echo
-              echo "The debug key is generated anew on every CI run, so a debug APK from another"
-              echo "run can't be installed over this one - uninstall the app first."
+              echo "The debug APK is signed with the debug key from the repo, so builds can be"
+              echo "installed over each other."
             else
               echo "The release APK is signed - install that one."
             fi

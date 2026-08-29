@@ -13,3 +13,5 @@
 /keystore.properties
 *.jks
 *.keystore
+# ... except the shared debug key, see app/build.gradle
+!/ci-debug.keystore

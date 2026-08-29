@@ -38,6 +38,15 @@ Open and build the project in Android Studio or use Gradle:
 The build requires JDK 11: Gradle 7.2 and the Android Gradle Plugin 7.0 don't support newer ones.
 
 
+## Debug builds
+
+The debug builds are signed with `ci-debug.keystore` from the project root instead of the
+per-machine `~/.android/debug.keystore`, so that debug APKs built anywhere (in particular by
+the CI) can be installed over each other. Android's debug credentials are fixed and public
+(`androiddebugkey` / `android`), so the file is not a secret - but for the same reason it must
+never be used to sign anything that is distributed to others.
+
+
 ## Signing the release build (optional)
 
 The release build is unsigned unless the signing credentials are provided,

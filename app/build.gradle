@@ -48,6 +48,19 @@ android {
         }
     }
     signingConfigs {
+        /*
+         * A debug keystore that is part of the repo, so that every build - local or CI - signs
+         * the debug APK with the same key and the builds can be installed over each other.
+         * Android's debug credentials are fixed and public by design; this key is only ever
+         * used for debug builds and must never be used for anything that is distributed.
+         */
+        debug {
+            storeFile rootProject.file('ci-debug.keystore')
+            storeType 'PKCS12'
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
         release {
             if (signRelease) {
                 storeFile file(keystorePath)

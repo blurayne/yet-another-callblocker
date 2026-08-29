@@ -16,7 +16,10 @@ import org.slf4j.LoggerFactory;
 import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.NotificationHelper;
 import dummydomain.yetanothercallblocker.R;
+import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.event.DbFilterRevertedEvent;
+import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
 
@@ -29,6 +32,7 @@ public class TaskService extends IntentService {
     public static final String TASK_DOWNLOAD_MAIN_DB = "download_main_db";
     public static final String TASK_UPDATE_SECONDARY_DB = "update_secondary_db";
     public static final String TASK_FILTER_DB = "filter_db";
+    public static final String TASK_REVERT_DB_FILTER = "revert_db_filter";
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskService.class);
 
@@ -73,6 +77,11 @@ public class TaskService extends IntentService {
                         filterDb();
                         break;
 
+                    case TASK_REVERT_DB_FILTER:
+                        updateNotification(getString(R.string.db_filtering_reverting));
+                        revertDbFilter();
+                        break;
+
                     default:
                         LOG.warn("Unknown action: " + action);
                         break;
@@ -101,6 +110,10 @@ public class TaskService extends IntentService {
             YacbHolder.getCommunityDatabase().reload();
             YacbHolder.getFeaturedDatabase().reload();
             YacbHolder.getSiaMetadata().reload();
+
+            // the downloaded database is unfiltered, so the filter has to be applied again
+            updateNotification(getString(R.string.filtering_db));
+            new DbFilteringService(App.getSettings()).updateFilter(true);
         } catch (Exception e) {
             LOG.warn("downloadMainDb()", e);
         } finally {
@@ -115,7 +128,12 @@ public class TaskService extends IntentService {
     }
 
     private void filterDb() {
-        YacbHolder.getDbManager().filterDb();
+        postEvent(new DbFilteringFinishedEvent(new DbFilteringService(App.getSettings()).filter()));
+    }
+
+    private void revertDbFilter() {
+        postEvent(new DbFilterRevertedEvent(
+                new DbFilteringService(App.getSettings()).revertToMaster()));
     }
 
 }

@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.preference.EditTextPreference;
 import androidx.preference.MultiSelectListPreference;
 import androidx.preference.Preference;
 
@@ -15,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
+import dummydomain.yetanothercallblocker.sia.model.database.DbManager;
 import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
 import dummydomain.yetanothercallblocker.utils.FileUtils;
 import dummydomain.yetanothercallblocker.utils.SystemUtils;
@@ -39,6 +41,18 @@ public class AdvancedSettingsFragment extends BaseSettingsFragment {
 
     @Override
     protected void initScreen() {
+        // an unset URL means the default one, so that is what is shown instead of nothing
+        EditTextPreference databaseUrlPref = requirePreference(Settings.PREF_DATABASE_DOWNLOAD_URL);
+        databaseUrlPref.setSummaryProvider(
+                (Preference.SummaryProvider<EditTextPreference>) preference ->
+                        App.getSettings().getDatabaseDownloadUrl());
+        databaseUrlPref.setOnBindEditTextListener(editText -> {
+            if (TextUtils.isEmpty(editText.getText())) {
+                editText.setText(DbManager.DEFAULT_URL);
+                editText.setSelection(editText.getText().length());
+            }
+        });
+
         Preference blockInLimitedModePref =
                 requirePreference(Settings.PREF_BLOCK_IN_LIMITED_MODE);
         if (SystemUtils.isFileBasedEncryptionEnabled()) {

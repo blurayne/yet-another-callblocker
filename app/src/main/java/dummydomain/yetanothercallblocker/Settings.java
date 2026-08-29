@@ -41,6 +41,8 @@ public class Settings extends GenericSettings {
     public static final String PREF_DB_FILTERING_ENABLED = "dbFilteringEnabled";
     public static final String PREF_DB_FILTERING_PREFIXES_PREFILLED = "dbFilteringPrefixesPrefilled";
     public static final String PREF_DB_FILTERING_PREFIXES_TO_KEEP = "dbFilteringPrefixesToKeep";
+    public static final String PREF_DB_FILTERING_KEEP_MASTER = "dbFilteringKeepMaster";
+    public static final String PREF_DB_FILTERED = "dbFiltered";
     public static final String PREF_DB_FILTERING_THOROUGH = "dbFilteringThorough";
     public static final String PREF_DB_FILTERING_KEEP_SHORT_NUMBERS = "dbFilteringKeepShortNumbers";
     public static final String PREF_DB_FILTERING_KEEP_SHORT_NUMBERS_MAX_LENGTH = "dbFilteringKeepShortNumbersMaxLength";
@@ -314,6 +316,24 @@ public class Settings extends GenericSettings {
 
     public void setDbFilteringPrefixesToKeep(String prefixes) {
         setString(PREF_DB_FILTERING_PREFIXES_TO_KEEP, prefixes);
+    }
+
+    /** Whether a copy of the unfiltered database is kept when the database is filtered. */
+    public boolean getDbFilteringKeepMaster() {
+        return getBoolean(PREF_DB_FILTERING_KEEP_MASTER, true);
+    }
+
+    public void setDbFilteringKeepMaster(boolean keep) {
+        setBoolean(PREF_DB_FILTERING_KEEP_MASTER, keep);
+    }
+
+    /** Whether the database in use has been filtered. */
+    public boolean isDbFiltered() {
+        return getBoolean(PREF_DB_FILTERED);
+    }
+
+    public void setDbFiltered(boolean filtered) {
+        setBoolean(PREF_DB_FILTERED, filtered);
     }
 
     public boolean isDbFilteringThorough() {

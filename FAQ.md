@@ -154,6 +154,22 @@ The archive contains the database only. The blacklist has its own export in the 
 and the settings aren't included in either.
 
 
+## What happens to the database when I filter it?
+
+Filtering deletes the parts of the database you don't need, which can't be undone by filtering
+again - so the app keeps a copy of the unfiltered database ("Keep the unfiltered database",
+enabled by default) and filters that copy. This is what makes "Use the unfiltered database"
+possible, and it means that changing the filter settings and filtering again always starts from
+the complete database instead of narrowing down what is left of it.
+
+The copy needs about as much space as the database itself. Turning the option off frees that
+space, at the price of having to download the database again to get an unfiltered one back.
+Filtering reports how many entries it removed, and if the filter matches everything, the copy is
+dropped again since the database in use is the unfiltered one anyway.
+
+When the database is updated, the filter is applied to the update automatically.
+
+
 ## The app takes too much storage space. What can I do?
 
 Normally the app takes a little under 150 MB in total: ~20 MB for the app and ~130 MB for the data (the offline number rating database).

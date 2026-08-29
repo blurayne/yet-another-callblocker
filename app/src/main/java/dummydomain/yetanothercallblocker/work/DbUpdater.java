@@ -2,6 +2,7 @@ package dummydomain.yetanothercallblocker.work;
 
 import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.Settings;
+import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdatingEvent;
@@ -26,6 +27,9 @@ public class DbUpdater {
             if (updateResult.isUpdated()) {
                 settings.setLastUpdateTime(System.currentTimeMillis());
                 updated = true;
+
+                // the update brings unfiltered entries with it
+                new DbFilteringService(settings).updateFilter(false);
             } // TODO: handle other results
             settings.setLastUpdateCheckTime(System.currentTimeMillis());
         } finally {

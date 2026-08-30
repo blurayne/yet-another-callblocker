@@ -59,6 +59,10 @@
             app:summary="@string/block_blacklisted_summary"
             app:title="@string/block_blacklisted" />
         <SwitchPreferenceCompat
+            app:key="blockFailedVerification"
+            app:summary="@string/block_failed_verification_summary"
+            app:title="@string/block_failed_verification" />
+        <SwitchPreferenceCompat
             app:key="useCallScreeningService"
             app:persistent="false"
             app:summary="@string/use_call_screening_service_summary"

@@ -26,11 +26,13 @@
         <item>@string/silence_calls_negative</item>
         <item>@string/silence_calls_neutral</item>
         <item>@string/silence_calls_unknown</item>
+        <item>@string/silence_calls_unverified</item>
     </string-array>
     <string-array name="silence_calls_values">
         <item>negative</item>
         <item>neutral</item>
         <item>unknown</item>
+        <item>unverified</item>
     </string-array>
 
     <string-array name="block_in_limited_mode_entries">

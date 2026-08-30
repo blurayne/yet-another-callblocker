@@ -62,6 +62,23 @@ On pre-Android 8 devices there's a couple of notification-related options in the
 There's also an option to disable all the informational notifications at once.
 
 
+## What is "block forged numbers"?
+
+Some networks sign the number a call is placed from, so that the phone can tell whether the
+number shown is really the caller's (this is called STIR/SHAKEN). Android passes that verdict on
+since Android 11, and the app can block or silence a call the network reports as forged - which
+catches a spoofed number no matter what the database says about it, since the number on such a
+call is one the caller doesn't own.
+
+It only works where the network does it. In much of the world, including Germany, it isn't in
+use: every call is then simply "not verified", which is not the same as "forged", and the option
+does nothing. Spoofing is dealt with by the networks themselves there.
+
+Like every other blocking option, this one never blocks contacts. It needs
+["Advanced call blocking mode"](FAQ.md#whats-that-advanced-call-blocking-mode), since the verdict
+comes with the call being screened.
+
+
 ## Can the app silence a call instead of blocking it?
 
 Yes: "Silence calls" in Settings lets you pick the ratings that get the ringer muted

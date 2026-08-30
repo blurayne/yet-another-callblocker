@@ -7,7 +7,7 @@ import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabaseItem
 public class NumberInfo {
 
     public enum BlockingReason {
-        HIDDEN_NUMBER, SIA_RATING, BLACKLISTED
+        HIDDEN_NUMBER, SIA_RATING, BLACKLISTED, FAILED_VERIFICATION
     }
 
     public enum Rating {
@@ -20,6 +20,11 @@ public class NumberInfo {
 
     // info from various sources
     public boolean isHiddenNumber;
+    /**
+     * Whether the network said the number is not the one the caller is calling from
+     * (STIR/SHAKEN). Known for a screened call only, and only where it is deployed.
+     */
+    public boolean failedVerification;
     public ContactItem contactItem;
     public CommunityDatabaseItem communityDatabaseItem;
     public FeaturedDatabaseItem featuredDatabaseItem;

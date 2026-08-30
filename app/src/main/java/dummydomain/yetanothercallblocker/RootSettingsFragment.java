@@ -145,6 +145,12 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         setPrefChangeListener(Settings.PREF_BLOCK_NEGATIVE_SIA_NUMBERS, callBlockingListener);
         setPrefChangeListener(Settings.PREF_BLOCK_HIDDEN_NUMBERS, callBlockingListener);
         setPrefChangeListener(Settings.PREF_BLOCK_BLACKLISTED, callBlockingListener);
+        setPrefChangeListener(Settings.PREF_BLOCK_FAILED_VERIFICATION, callBlockingListener);
+
+        // the network only reports a forged number since Android 11
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            requirePreference(Settings.PREF_BLOCK_FAILED_VERIFICATION).setVisible(false);
+        }
 
         SwitchPreferenceCompat callScreeningPref =
                 requirePreference(PREF_USE_CALL_SCREENING_SERVICE);

@@ -213,6 +213,7 @@ public class NotificationHelper {
     private static String getInfoDescription(Context context, NumberInfo numberInfo) {
         String text = numberInfo.name;
 
+        text = concat(text, "\n", getVerificationDescriptionPart(context, numberInfo));
         text = concat(text, "; ", getCommunityDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getBlacklistDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getNumberDescriptionPart(context, numberInfo));
@@ -223,11 +224,17 @@ public class NotificationHelper {
     private static String getBlockedDescription(Context context, NumberInfo numberInfo) {
         String text = numberInfo.name;
 
+        text = concat(text, "\n", getVerificationDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getCommunityDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getBlacklistDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getNumberDescriptionPart(context, numberInfo));
 
         return text;
+    }
+
+    private static String getVerificationDescriptionPart(Context context, NumberInfo numberInfo) {
+        return numberInfo.failedVerification
+                ? context.getString(R.string.info_failed_verification) : null;
     }
 
     private static String getNumberDescriptionPart(Context context, NumberInfo numberInfo) {

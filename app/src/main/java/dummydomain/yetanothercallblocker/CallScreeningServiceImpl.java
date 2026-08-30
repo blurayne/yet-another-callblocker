@@ -113,10 +113,26 @@ public class CallScreeningServiceImpl extends CallScreeningService {
                 numberInfo = numberInfoService.getNumberInfo(number,
                         App.getSettings().getCachedAutoDetectedCountryCode(), callerIdEnabled);
 
+                /*
+                 * Where the network supports it (STIR/SHAKEN, Android 11+), it tells us whether
+                 * the number the call claims to come from is really the caller's. A call that
+                 * fails that check carries a forged number, whatever the number itself says.
+                 */
+                numberInfo.failedVerification = hasFailedVerification(callDetails)
+                        && numberInfo.contactItem == null;
+
                 shouldBlock = blockingEnabled && numberInfoService.shouldBlock(numberInfo);
 
+                if (!shouldBlock && blockingEnabled && numberInfo.failedVerification
+                        && App.getSettings().getBlockFailedVerification()) {
+                    shouldBlock = true;
+                    numberInfo.blockingReason = NumberInfo.BlockingReason.FAILED_VERIFICATION;
+                }
+
                 shouldSilence = !shouldBlock && silencingEnabled
-                        && numberInfoService.shouldSilence(numberInfo);
+                        && (numberInfoService.shouldSilence(numberInfo)
+                        || numberInfo.failedVerification && App.getSettings().getSilenceCalls()
+                        .contains(Settings.PREF_SILENCE_CALLS_UNVERIFIED));
             }
         } finally {
             LOG.debug("onScreenCall() blocking call: {}, silencing call: {}",
@@ -158,6 +174,22 @@ public class CallScreeningServiceImpl extends CallScreeningService {
         }
 
         LOG.debug("onScreenCall() finished");
+    }
+
+    /**
+     * Whether the network says the number of the call is forged. It only knows that where
+     * STIR/SHAKEN is deployed - everywhere else every call is simply "not verified",
+     * which says nothing either way.
+     */
+    private static boolean hasFailedVerification(Call.Details callDetails) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false;
+
+        boolean failed = callDetails.getCallerNumberVerificationStatus()
+                == Connection.VERIFICATION_STATUS_FAILED;
+
+        if (failed) LOG.info("hasFailedVerification() the number of the call is not verified");
+
+        return failed;
     }
 
     private void extraLogging(Call.Details callDetails) {

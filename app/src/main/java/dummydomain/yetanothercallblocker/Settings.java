@@ -26,6 +26,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_SILENCE_CALLS = "silenceCalls";
     public static final String PREF_BLOCK_NEGATIVE_SIA_NUMBERS = "blockNegativeSiaNumbers";
     public static final String PREF_BLOCK_HIDDEN_NUMBERS = "blockHiddenNumbers";
+    public static final String PREF_BLOCK_FAILED_VERIFICATION = "blockFailedVerification";
     public static final String PREF_BLOCK_BLACKLISTED = "blockBlacklisted";
     public static final String PREF_BLACKLIST_IS_NOT_EMPTY = "blacklistIsNotEmpty";
     public static final String PREF_USE_CONTACTS = "useContacts";
@@ -59,6 +60,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_SILENCE_CALLS_NEGATIVE = "negative";
     public static final String PREF_SILENCE_CALLS_NEUTRAL = "neutral";
     public static final String PREF_SILENCE_CALLS_UNKNOWN = "unknown";
+    public static final String PREF_SILENCE_CALLS_UNVERIFIED = "unverified";
 
     public static final String PREF_BLOCK_IN_LIMITED_MODE_RATING = "rating";
     public static final String PREF_BLOCK_IN_LIMITED_MODE_BLACKLIST = "blacklist";
@@ -165,7 +167,21 @@ public class Settings extends GenericSettings {
     }
 
     public boolean getCallBlockingEnabled() {
-        return getBlockNegativeSiaNumbers() || getBlockHiddenNumbers() || getBlacklistEnabled();
+        return getBlockNegativeSiaNumbers() || getBlockHiddenNumbers() || getBlacklistEnabled()
+                || getBlockFailedVerification();
+    }
+
+    /**
+     * Whether calls the network says carry a forged number are blocked.
+     *
+     * @see dummydomain.yetanothercallblocker.CallScreeningServiceImpl
+     */
+    public boolean getBlockFailedVerification() {
+        return getBoolean(PREF_BLOCK_FAILED_VERIFICATION);
+    }
+
+    public void setBlockFailedVerification(boolean block) {
+        setBoolean(PREF_BLOCK_FAILED_VERIFICATION, block);
     }
 
     public boolean getBlockNegativeSiaNumbers() {

@@ -109,6 +109,10 @@
     <string name="silence_calls_negative">Negative rating</string>
     <string name="silence_calls_neutral">Neutral rating</string>
     <string name="silence_calls_unknown">Unknown numbers</string>
+    <string name="silence_calls_unverified">Forged numbers</string>
+    <string name="block_failed_verification">Block forged numbers</string>
+    <string name="block_failed_verification_summary">Block calls that the network reports as calling from a number that isn\'t theirs (STIR/SHAKEN). Needs Android 11+ and a network that checks it - where it isn\'t in use, no call is ever reported as forged and this does nothing. Contacts are never blocked</string>
+    <string name="info_failed_verification">The number of this call is forged</string>
     <string name="settings_category_caller_id">Caller ID</string>
     <string name="caller_id_directory">Caller ID in the phone app</string>
     <string name="caller_id_directory_summary">Provide the caller info to the phone app, so that it is displayed on the incoming call screen and in the call log. Only the numbers the app knows something about are reported, contacts are never affected.</string>

@@ -156,10 +156,13 @@ public class CallLogDataSource extends ItemKeyedDataSource<CallLogDataSource.Gro
         String countryCode = App.getSettings().getCachedAutoDetectedCountryCode();
 
         for (CallLogItem item : items) {
-            NumberInfo numberInfo = numberInfoCache.get(item.number);
+            // a withheld number is looked up as no number at all rather than as its placeholder
+            String number = item.presentation.hasNumber() ? item.number : null;
+
+            NumberInfo numberInfo = numberInfoCache.get(number);
             if (numberInfo == null) {
-                numberInfo = YacbHolder.getNumberInfo(item.number, countryCode);
-                numberInfoCache.put(item.number, numberInfo);
+                numberInfo = YacbHolder.getNumberInfo(number, countryCode);
+                numberInfoCache.put(number, numberInfo);
             }
 
             item.numberInfo = numberInfo;

@@ -127,6 +127,8 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
         private String getLabel(Context context, CallLogItem item) {
             NumberInfo numberInfo = item.numberInfo;
 
+            if (!item.presentation.hasNumber()) return getPresentationLabel(context, item);
+
             if (numberInfo.noNumber) return context.getString(R.string.no_number);
 
             if (numberInfo.name != null) return numberInfo.name;
@@ -176,6 +178,20 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
                 view.setVisibility(View.VISIBLE);
             } else {
                 view.setVisibility(View.GONE);
+            }
+        }
+
+        /** Says what kind of call it was when there's no number to show. */
+        private String getPresentationLabel(Context context, CallLogItem item) {
+            switch (item.presentation) {
+                case RESTRICTED:
+                    return context.getString(R.string.call_log_number_withheld);
+
+                case PAYPHONE:
+                    return context.getString(R.string.call_log_number_payphone);
+
+                default:
+                    return context.getString(R.string.call_log_number_unknown);
             }
         }
 

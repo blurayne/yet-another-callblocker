@@ -196,6 +196,9 @@
     <string name="db_filtering_filter_db_summary">Run the database filtering now (to filter the existing data)</string>
     <string name="filtering_db">Filtering DB…</string>
 
+    <string name="call_log_number_withheld">Withheld number</string>
+    <string name="call_log_number_unknown">Unknown number</string>
+    <string name="call_log_number_payphone">Payphone</string>
     <string name="no_number"><![CDATA[<no number>]]></string>
     <string name="save">Save</string>
     <plurals name="selected_count">

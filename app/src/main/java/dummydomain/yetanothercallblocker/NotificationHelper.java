@@ -190,9 +190,13 @@ public class NotificationHelper {
 
         String text = getBlockedDescription(context, numberInfo);
 
+        boolean forgedNumber
+                = numberInfo.blockingReason == NumberInfo.BlockingReason.FAILED_VERIFICATION;
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(
                 context, CHANNEL_ID_BLOCKED_INFO)
-                .setSmallIcon(R.drawable.ic_brick_24dp)
+                .setSmallIcon(forgedNumber
+                        ? R.drawable.ic_shield_s_24dp : R.drawable.ic_brick_24dp)
                 .setColor(UiUtils.getColorInt(context, R.color.rateNegative))
                 .setContentTitle(title)
                 .setContentText(firstLine(text))

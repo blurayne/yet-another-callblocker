@@ -64,6 +64,11 @@ class IconAndColor {
      * the same way they are never blocked.
      */
     static IconAndColor forNumberInfo(NumberInfo numberInfo) {
+        // a forged number says more about the call than anything known about the number itself
+        if (numberInfo.failedVerification) {
+            return of(R.drawable.ic_shield_s_24dp, R.color.rateNegative);
+        }
+
         if (numberInfo.blacklistItem != null && numberInfo.contactItem == null) {
             return of(R.drawable.ic_incognito_24dp,
                     numberInfo.rating == NumberInfo.Rating.NEGATIVE

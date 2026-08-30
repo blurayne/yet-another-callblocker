@@ -22,6 +22,15 @@ public class InfoDialogHelper {
 
     public static void showDialog(Context context, NumberInfo numberInfo,
                                   DialogInterface.OnDismissListener onDismissListener) {
+        showDialog(context, numberInfo, null, onDismissListener);
+    }
+
+    /**
+     * @param callInfo what is known about the call the dialog was opened from, may be null
+     *                 (it is when the dialog is opened from a notification)
+     */
+    public static void showDialog(Context context, NumberInfo numberInfo, CharSequence callInfo,
+                                  DialogInterface.OnDismissListener onDismissListener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context)
                 .setTitle(!numberInfo.noNumber
                         ? numberInfo.number : context.getString(R.string.no_number));
@@ -85,6 +94,13 @@ public class InfoDialogHelper {
 
         ReviewsSummaryHelper.populateSummary(view.findViewById(R.id.reviews_summary),
                 numberInfo.communityDatabaseItem);
+
+        TextView callInfoView = view.findViewById(R.id.call_info);
+        if (!TextUtils.isEmpty(callInfo)) {
+            callInfoView.setText(callInfo);
+        } else {
+            callInfoView.setVisibility(View.GONE);
+        }
 
         if (onDismissListener != null) builder.setOnDismissListener(onDismissListener);
 

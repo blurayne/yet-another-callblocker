@@ -61,4 +61,13 @@
         android:gravity="center_horizontal"
         android:text="@string/info_in_blacklist" />
 
+    <TextView
+        android:id="@+id/call_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center_horizontal"
+        android:textSize="12sp"
+        tools:text="Called: 29 Aug 2026, 11:38:42" />
+
 </LinearLayout>

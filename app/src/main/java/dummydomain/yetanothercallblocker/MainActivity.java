@@ -22,6 +22,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -284,8 +286,21 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, AboutActivity.class));
     }
 
-    private void onCallLogItemClicked(CallLogItemGroup item) {
-        InfoDialogHelper.showDialog(this, item.getItems().get(0).numberInfo, null);
+    private void onCallLogItemClicked(CallLogItemGroup group) {
+        List<CallLogItem> items = group.getItems();
+
+        InfoDialogHelper.showDialog(this, items.get(0).numberInfo, getCallInfo(items), null);
+    }
+
+    /** The list shows how long ago a call was; the dialog says exactly when it was. */
+    private CharSequence getCallInfo(List<CallLogItem> items) {
+        // the newest call of the group comes first
+        String time = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
+                .format(new Date(items.get(0).timestamp));
+
+        return items.size() > 1
+                ? getString(R.string.info_call_time_last, items.size(), time)
+                : getString(R.string.info_call_time, time);
     }
 
     private void reloadCallLog() {

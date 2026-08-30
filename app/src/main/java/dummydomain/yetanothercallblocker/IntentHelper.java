@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 
 import org.slf4j.Logger;
@@ -24,6 +25,14 @@ public class IntentHelper {
             flags = PendingIntent.FLAG_IMMUTABLE;
         }
         return PendingIntent.getActivity(context, 0, intent, flags);
+    }
+
+    /** Lets the user store the number, either as a new contact or in an existing one. */
+    public static Intent getAddToContactsIntent(String number) {
+        Intent intent = new Intent(Intent.ACTION_INSERT_OR_EDIT);
+        intent.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
+        intent.putExtra(ContactsContract.Intents.Insert.PHONE, number);
+        return intent;
     }
 
     public static Intent clearTop(Intent intent) {

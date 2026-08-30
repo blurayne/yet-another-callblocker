@@ -86,8 +86,7 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
 
             label.setText(getLabel(context, item));
 
-            IconAndColor iconAndColor = IconAndColor.forNumberRating(
-                    numberInfo.rating, numberInfo.contactItem != null);
+            IconAndColor iconAndColor = IconAndColor.forNumberInfo(numberInfo);
 
             if (!iconAndColor.noInfo) {
                 iconAndColor.applyToImageView(numberInfoIcon);

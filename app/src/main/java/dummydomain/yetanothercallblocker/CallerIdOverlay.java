@@ -127,8 +127,7 @@ public class CallerIdOverlay {
     }
 
     private static void populate(Context context, View view, NumberInfo numberInfo, String name) {
-        IconAndColor.forNumberRating(numberInfo.rating, numberInfo.contactItem != null)
-                .applyToImageView(view.findViewById(R.id.icon));
+        IconAndColor.forNumberInfo(numberInfo).applyToImageView(view.findViewById(R.id.icon));
 
         view.<TextView>findViewById(R.id.name).setText(name);
 

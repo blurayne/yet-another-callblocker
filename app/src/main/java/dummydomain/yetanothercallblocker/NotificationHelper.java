@@ -166,8 +166,7 @@ public class NotificationHelper {
 
         text += getInfoDescription(context, numberInfo);
 
-        IconAndColor iconAndColor = IconAndColor.forNumberRating(
-                numberInfo.rating, numberInfo.contactItem != null);
+        IconAndColor iconAndColor = IconAndColor.forNumberInfo(numberInfo);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(iconAndColor.iconResId)

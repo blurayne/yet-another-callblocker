@@ -240,6 +240,7 @@
     <string name="info_call_time_last">%1$d calls, last: %2$s</string>
     <string name="info_in_blacklist">In blacklist</string>
     <string name="info_in_blacklist_contact">In blacklist (contacts are not blocked)</string>
+    <string name="add_to_contacts">Add to contacts</string>
     <string name="add_to_blacklist">Add to blacklist</string>
 
     <string name="open_db_management_activity">Manage database</string>

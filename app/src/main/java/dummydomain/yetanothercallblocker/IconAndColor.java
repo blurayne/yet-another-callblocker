@@ -58,6 +58,21 @@ class IconAndColor {
         return new IconAndColor(R.drawable.ic_thumbs_up_down_24dp, R.color.notFound, true);
     }
 
+    /**
+     * The icon for a number: a blacklisted one is marked as such, in red when the database
+     * has a bad opinion of it too. Contacts are never treated as blacklisted,
+     * the same way they are never blocked.
+     */
+    static IconAndColor forNumberInfo(NumberInfo numberInfo) {
+        if (numberInfo.blacklistItem != null && numberInfo.contactItem == null) {
+            return of(R.drawable.ic_incognito_24dp,
+                    numberInfo.rating == NumberInfo.Rating.NEGATIVE
+                            ? R.color.rateNegative : R.color.blacklisted);
+        }
+
+        return forNumberRating(numberInfo.rating, numberInfo.contactItem != null);
+    }
+
     static IconAndColor forNumberRating(NumberInfo.Rating rating, boolean contact) {
         boolean noInfo = false;
         @DrawableRes int icon;

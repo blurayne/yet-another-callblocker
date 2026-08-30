@@ -95,6 +95,12 @@ public class InfoDialogHelper {
         ReviewsSummaryHelper.populateSummary(view.findViewById(R.id.reviews_summary),
                 numberInfo.communityDatabaseItem);
 
+        // a number that isn't in the contacts yet can be put there from here
+        boolean canAddToContacts = !numberInfo.noNumber && numberInfo.contactItem == null;
+
+        TextView addToContactsView = view.findViewById(R.id.add_to_contacts);
+        if (!canAddToContacts) addToContactsView.setVisibility(View.GONE);
+
         TextView callInfoView = view.findViewById(R.id.call_info);
         if (!TextUtils.isEmpty(callInfo)) {
             callInfoView.setText(callInfo);
@@ -130,6 +136,15 @@ public class InfoDialogHelper {
                         -> addToBlacklistAction.run());
 
         AlertDialog dialog = builder.create();
+
+        if (canAddToContacts) {
+            addToContactsView.setOnClickListener(v -> {
+                dialog.dismiss();
+
+                IntentHelper.startActivity(context,
+                        IntentHelper.getAddToContactsIntent(numberInfo.number));
+            });
+        }
 
         // avoid dismissing the original dialog on button press
 

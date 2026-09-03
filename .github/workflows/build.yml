@@ -211,9 +211,15 @@ jobs:
       - name: Build errors
         if: failure()
         run: |
-          # the compiler says what is wrong somewhere in a very long log: repeat it here
-          grep -E "^(e: |.*error:|FAILURE:|Caused by:)" "${RUNNER_TEMP}/build.log" \
-              | head -40 || echo "no compiler errors in the build log"
+          # as annotations, which are readable without digging through the whole log
+          grep -E "^(e: |.*error:|FAILURE:|Caused by:|> )" "${RUNNER_TEMP}/build.log" \
+              | head -20 > "${RUNNER_TEMP}/build-errors.txt" || true
+
+          while IFS= read -r line; do
+            echo "::error::${line}"
+          done < "${RUNNER_TEMP}/build-errors.txt"
+
+          cat "${RUNNER_TEMP}/build-errors.txt"
 
       - name: Lint errors
         if: always()

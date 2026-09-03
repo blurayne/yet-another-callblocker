@@ -77,6 +77,20 @@ public class NumberInfoService {
         }
         LOG.trace("getNumberInfo() contactItem={}", numberInfo.contactItem);
 
+        if (numberInfo.contactItem != null) {
+            numberInfo.name = numberInfo.contactItem.displayName;
+
+            if (!full) {
+                /*
+                 * A call from a contact is allowed whatever the databases say about the number,
+                 * so when the answer is all that's wanted, there is nothing left to look up.
+                 * The full info is still gathered for the screens that show it.
+                 */
+                LOG.debug("getNumberInfo() the number is a contact, finished early");
+                return numberInfo;
+            }
+        }
+
         String normalizedNumber = numberInfo.normalizedNumber
                 = numberNormalizer.normalizeNumber(number, countryCode);
         LOG.trace("getNumberInfo() normalizedNumber={}", numberInfo.normalizedNumber);

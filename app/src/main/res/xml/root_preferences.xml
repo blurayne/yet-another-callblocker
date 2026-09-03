@@ -13,6 +13,7 @@
             app:summary="@string/auto_updates_summary"
             app:title="@string/auto_updates" />
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:key="useContacts"
             app:summary="@string/use_contacts_summary"
             app:title="@string/use_contacts" />

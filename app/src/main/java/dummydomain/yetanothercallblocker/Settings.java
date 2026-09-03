@@ -221,7 +221,7 @@ public class Settings extends GenericSettings {
     }
 
     public boolean getUseContacts() {
-        return getBoolean(PREF_USE_CONTACTS);
+        return getBoolean(PREF_USE_CONTACTS, true);
     }
 
     public void setUseContacts(boolean use) {

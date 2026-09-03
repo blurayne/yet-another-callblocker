@@ -25,6 +25,8 @@ public class NumberInfo {
      * (STIR/SHAKEN). Known for a screened call only, and only where it is deployed.
      */
     public boolean failedVerification;
+    /** Whether the user put the number on the whitelist, which allows it whatever else says. */
+    public boolean whitelisted;
     public ContactItem contactItem;
     public CommunityDatabaseItem communityDatabaseItem;
     public FeaturedDatabaseItem featuredDatabaseItem;

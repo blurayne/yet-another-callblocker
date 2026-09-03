@@ -30,6 +30,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_BLOCK_BLACKLISTED = "blockBlacklisted";
     public static final String PREF_BLACKLIST_IS_NOT_EMPTY = "blacklistIsNotEmpty";
     public static final String PREF_USE_CONTACTS = "useContacts";
+    public static final String PREF_WHITELIST = "whitelist";
     public static final String PREF_UI_MODE = "uiMode";
     public static final String PREF_CALL_LOG_GROUPING = "callLogGrouping";
     public static final String PREF_USE_MONITORING_SERVICE = "useMonitoringService";
@@ -277,6 +278,15 @@ public class Settings extends GenericSettings {
 
     public void setBlacklistIsNotEmpty(boolean flag) {
         setBoolean(PREF_BLACKLIST_IS_NOT_EMPTY, flag);
+    }
+
+    /** The numbers that are never blocked, one pattern per line. */
+    public String getWhitelist() {
+        return getString(PREF_WHITELIST, "");
+    }
+
+    public void setWhitelist(String whitelist) {
+        setString(PREF_WHITELIST, whitelist);
     }
 
     public boolean getUseContacts() {

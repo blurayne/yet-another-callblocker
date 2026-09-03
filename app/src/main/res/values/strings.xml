@@ -266,6 +266,11 @@
     <string name="contacts_are_not_blocked_no_permission">Calls from contacts may be blocked because the \"Contacts\" permission is not granted!</string>
     <string name="info_call_time">Called: %1$s</string>
     <string name="info_call_time_last">%1$d calls, last: %2$s</string>
+    <string name="whitelist">Whitelist</string>
+    <string name="whitelist_summary">Numbers that are never blocked, whatever else is known about them - one per line. They are written like the blacklist patterns: * stands for any digits, # for one</string>
+    <string name="info_whitelisted">In whitelist</string>
+    <string name="add_to_whitelist">Add to whitelist</string>
+    <string name="added_to_whitelist">The number was added to the whitelist.</string>
     <string name="info_in_blacklist">In blacklist</string>
     <string name="info_in_blacklist_contact">In blacklist (contacts are not blocked)</string>
     <string name="add_to_contacts">Add to contacts</string>

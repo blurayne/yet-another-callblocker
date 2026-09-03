@@ -54,12 +54,32 @@
         android:layout_marginTop="6dp" />
 
     <TextView
+        android:id="@+id/whitelisted"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center_horizontal"
+        android:text="@string/info_whitelisted" />
+
+    <TextView
         android:id="@+id/in_blacklist"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:gravity="center_horizontal"
         android:text="@string/info_in_blacklist" />
+
+    <TextView
+        android:id="@+id/add_to_whitelist"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_horizontal"
+        android:padding="8dp"
+        android:text="@string/add_to_whitelist"
+        android:textColor="?attr/colorAccent"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/add_to_contacts"

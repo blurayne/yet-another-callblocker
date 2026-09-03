@@ -221,6 +221,7 @@ public class NotificationHelper {
         text = concat(text, "; ", getCommunityDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getBlacklistDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getPhoneBlockDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getWhitelistDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getNumberDescriptionPart(context, numberInfo));
 
         return text;
@@ -233,9 +234,14 @@ public class NotificationHelper {
         text = concat(text, "\n", getCommunityDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getBlacklistDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getPhoneBlockDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getWhitelistDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getNumberDescriptionPart(context, numberInfo));
 
         return text;
+    }
+
+    private static String getWhitelistDescriptionPart(Context context, NumberInfo numberInfo) {
+        return numberInfo.whitelisted ? context.getString(R.string.info_whitelisted) : null;
     }
 
     private static String getPhoneBlockDescriptionPart(Context context, NumberInfo numberInfo) {

@@ -153,6 +153,7 @@ public class Config {
                 settings, NumberUtils::isHiddenNumber, NumberUtils::normalizeNumber,
                 communityDatabase, featuredDatabase, contactsProvider, blacklistService);
         numberInfoService.setPhoneBlockList(phoneBlockList);
+        numberInfoService.setWhitelist(new Whitelist(settings));
         YacbHolder.setNumberInfoService(numberInfoService);
 
         YacbHolder.setNumberInfoCache(new NumberInfoCache());

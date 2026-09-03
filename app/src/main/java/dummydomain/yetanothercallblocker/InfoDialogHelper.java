@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.widget.Toast;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import dummydomain.yetanothercallblocker.data.NumberInfo;
 import dummydomain.yetanothercallblocker.data.SiaNumberCategoryUtils;
+import dummydomain.yetanothercallblocker.data.Whitelist;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabaseItem;
@@ -75,6 +77,9 @@ public class InfoDialogHelper {
 
         String blacklistName = null;
 
+        TextView whitelistedView = view.findViewById(R.id.whitelisted);
+        if (!numberInfo.whitelisted) whitelistedView.setVisibility(View.GONE);
+
         TextView inBlacklistView = view.findViewById(R.id.in_blacklist);
         if (numberInfo.blacklistItem != null) {
             blacklistName = numberInfo.blacklistItem.getName();
@@ -97,6 +102,11 @@ public class InfoDialogHelper {
 
         // a number that isn't in the contacts yet can be put there from here
         boolean canAddToContacts = !numberInfo.noNumber && numberInfo.contactItem == null;
+
+        boolean canAddToWhitelist = !numberInfo.noNumber && !numberInfo.whitelisted;
+
+        TextView addToWhitelistView = view.findViewById(R.id.add_to_whitelist);
+        if (!canAddToWhitelist) addToWhitelistView.setVisibility(View.GONE);
 
         TextView addToContactsView = view.findViewById(R.id.add_to_contacts);
         if (!canAddToContacts) addToContactsView.setVisibility(View.GONE);
@@ -136,6 +146,17 @@ public class InfoDialogHelper {
                         -> addToBlacklistAction.run());
 
         AlertDialog dialog = builder.create();
+
+        if (canAddToWhitelist) {
+            addToWhitelistView.setOnClickListener(v -> {
+                dialog.dismiss();
+
+                Settings settings = App.getSettings();
+                settings.setWhitelist(Whitelist.add(settings.getWhitelist(), numberInfo.number));
+
+                Toast.makeText(context, R.string.added_to_whitelist, Toast.LENGTH_SHORT).show();
+            });
+        }
 
         if (canAddToContacts) {
             addToContactsView.setOnClickListener(v -> {

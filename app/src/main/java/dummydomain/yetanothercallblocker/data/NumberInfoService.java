@@ -35,6 +35,7 @@ public class NumberInfoService {
     protected final ContactsProvider contactsProvider;
     protected final BlacklistService blacklistService;
     protected PhoneBlockList phoneBlockList;
+    protected Whitelist whitelist;
 
     public NumberInfoService(Settings settings, HiddenNumberDetector hiddenNumberDetector,
                              NumberNormalizer numberNormalizer, CommunityDatabase communityDatabase,
@@ -51,6 +52,10 @@ public class NumberInfoService {
 
     public void setPhoneBlockList(PhoneBlockList phoneBlockList) {
         this.phoneBlockList = phoneBlockList;
+    }
+
+    public void setWhitelist(Whitelist whitelist) {
+        this.whitelist = whitelist;
     }
 
     public NumberInfo getNumberInfo(String number, String countryCode, boolean full) {
@@ -82,8 +87,11 @@ public class NumberInfoService {
         }
         LOG.trace("getNumberInfo() contactItem={}", numberInfo.contactItem);
 
-        if (numberInfo.contactItem != null) {
-            numberInfo.name = numberInfo.contactItem.displayName;
+        if (whitelist != null) numberInfo.whitelisted = whitelist.matches(number);
+        LOG.trace("getNumberInfo() whitelisted={}", numberInfo.whitelisted);
+
+        if (numberInfo.contactItem != null || numberInfo.whitelisted) {
+            if (numberInfo.contactItem != null) numberInfo.name = numberInfo.contactItem.displayName;
 
             if (!full) {
                 /*
@@ -91,7 +99,7 @@ public class NumberInfoService {
                  * so when the answer is all that's wanted, there is nothing left to look up.
                  * The full info is still gathered for the screens that show it.
                  */
-                LOG.debug("getNumberInfo() the number is a contact, finished early");
+                LOG.debug("getNumberInfo() the number is allowed, finished early");
                 return numberInfo;
             }
         }
@@ -155,7 +163,7 @@ public class NumberInfoService {
     }
 
     protected NumberInfo.BlockingReason getBlockingReason(NumberInfo numberInfo) {
-        if (numberInfo.contactItem != null) return null;
+        if (numberInfo.contactItem != null || numberInfo.whitelisted) return null;
 
         if (numberInfo.isHiddenNumber && settings.getBlockHiddenNumbers()) {
             return NumberInfo.BlockingReason.HIDDEN_NUMBER;
@@ -212,7 +220,7 @@ public class NumberInfoService {
      * just like they are never blocked.
      */
     public boolean shouldSilence(NumberInfo numberInfo) {
-        if (numberInfo.contactItem != null) return false;
+        if (numberInfo.contactItem != null || numberInfo.whitelisted) return false;
 
         Set<String> ratings = settings.getSilenceCalls();
         if (ratings.isEmpty()) return false;

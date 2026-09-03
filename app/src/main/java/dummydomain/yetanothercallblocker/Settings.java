@@ -38,6 +38,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_NOTIFICATIONS_UNKNOWN = "showNotificationsForUnknownCallers";
     public static final String PREF_NOTIFICATIONS_BLOCKED = "showNotificationsForBlockedCalls";
     public static final String PREF_BLOCK_IN_LIMITED_MODE = "blockInLimitedMode";
+    public static final String PREF_AUTO_UPDATE_SET_UP = "autoUpdateSetUp";
     public static final String PREF_LAST_UPDATE_TIME = "lastUpdateTime";
     public static final String PREF_LAST_UPDATE_CHECK_TIME = "lastUpdateCheckTime";
     public static final String PREF_DB_FILTERING_ENABLED = "dbFilteringEnabled";
@@ -149,7 +150,7 @@ public class Settings extends GenericSettings {
 
     /** Whether the caller info is drawn over the incoming call screen. */
     public boolean getCallerIdOverlay() {
-        return getBoolean(PREF_CALLER_ID_OVERLAY);
+        return getBoolean(PREF_CALLER_ID_OVERLAY, true);
     }
 
     public void setCallerIdOverlay(boolean enabled) {
@@ -176,7 +177,7 @@ public class Settings extends GenericSettings {
 
     /** Whether the PhoneBlock community list is kept on the device and used. */
     public boolean getUsePhoneBlock() {
-        return getBoolean(PREF_USE_PHONE_BLOCK);
+        return getBoolean(PREF_USE_PHONE_BLOCK, true);
     }
 
     public void setUsePhoneBlock(boolean use) {
@@ -185,7 +186,7 @@ public class Settings extends GenericSettings {
 
     /** Whether the numbers of that list are blocked rather than only shown. */
     public boolean getBlockPhoneBlock() {
-        return getBoolean(PREF_BLOCK_PHONE_BLOCK);
+        return getBoolean(PREF_BLOCK_PHONE_BLOCK, true);
     }
 
     public void setBlockPhoneBlock(boolean block) {
@@ -237,7 +238,7 @@ public class Settings extends GenericSettings {
      * @see dummydomain.yetanothercallblocker.CallScreeningServiceImpl
      */
     public boolean getBlockFailedVerification() {
-        return getBoolean(PREF_BLOCK_FAILED_VERIFICATION);
+        return getBoolean(PREF_BLOCK_FAILED_VERIFICATION, true);
     }
 
     public void setBlockFailedVerification(boolean block) {
@@ -245,7 +246,7 @@ public class Settings extends GenericSettings {
     }
 
     public boolean getBlockNegativeSiaNumbers() {
-        return getBoolean(PREF_BLOCK_NEGATIVE_SIA_NUMBERS);
+        return getBoolean(PREF_BLOCK_NEGATIVE_SIA_NUMBERS, true);
     }
 
     public void setBlockNegativeSiaNumbers(boolean block) {
@@ -253,7 +254,7 @@ public class Settings extends GenericSettings {
     }
 
     public boolean getBlockHiddenNumbers() {
-        return getBoolean(PREF_BLOCK_HIDDEN_NUMBERS);
+        return getBoolean(PREF_BLOCK_HIDDEN_NUMBERS, true);
     }
 
     public void setBlockHiddenNumbers(boolean block) {
@@ -306,7 +307,7 @@ public class Settings extends GenericSettings {
     }
 
     public String getCallLogGrouping() {
-        return getString(PREF_CALL_LOG_GROUPING, PREF_CALL_LOG_GROUPING_CONSECUTIVE);
+        return getString(PREF_CALL_LOG_GROUPING, PREF_CALL_LOG_GROUPING_NONE);
     }
 
     public void setCallLogGrouping(String value) {
@@ -361,6 +362,18 @@ public class Settings extends GenericSettings {
 
     public void setBlockInLimitedMode(Set<String> value) {
         setStringSet(PREF_BLOCK_IN_LIMITED_MODE, value);
+    }
+
+    /**
+     * Whether the automatic updates were ever set up. They are on to begin with, but turning
+     * them off has to stick, so this says the difference between "not set up yet" and "not wanted".
+     */
+    public boolean getAutoUpdateSetUp() {
+        return getBoolean(PREF_AUTO_UPDATE_SET_UP);
+    }
+
+    public void setAutoUpdateSetUp(boolean setUp) {
+        setBoolean(PREF_AUTO_UPDATE_SET_UP, setUp);
     }
 
     public long getLastUpdateTime() {

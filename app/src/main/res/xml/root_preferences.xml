@@ -25,7 +25,7 @@
             app:title="@string/ui_mode"
             app:useSimpleSummaryProvider="true" />
         <ListPreference
-            app:defaultValue="consecutive"
+            app:defaultValue="none"
             app:entries="@array/call_log_grouping_entries"
             app:entryValues="@array/call_log_grouping_values"
             app:key="callLogGrouping"
@@ -40,10 +40,12 @@
             app:summary="@string/phone_block_info_summary"
             app:title="@string/phone_block_info" />
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:key="usePhoneBlock"
             app:summary="@string/use_phone_block_summary"
             app:title="@string/use_phone_block" />
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:dependency="usePhoneBlock"
             app:key="blockPhoneBlock"
             app:summary="@string/block_phone_block_summary"
@@ -67,6 +69,7 @@
             app:summary="@string/caller_id_directory_summary"
             app:title="@string/caller_id_directory" />
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:key="callerIdOverlay"
             app:summary="@string/caller_id_overlay_summary"
             app:title="@string/caller_id_overlay" />
@@ -74,10 +77,12 @@
 
     <PreferenceCategory app:title="@string/settings_category_call_blocking">
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:key="blockNegativeSiaNumbers"
             app:summary="@string/block_negative_sia_numbers_summary"
             app:title="@string/block_negative_sia" />
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:key="blockHiddenNumbers"
             app:summary="@string/block_hidden_number_summary"
             app:title="@string/block_hidden_number" />
@@ -91,6 +96,7 @@
             app:summary="@string/whitelist_summary"
             app:title="@string/whitelist" />
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:key="blockFailedVerification"
             app:summary="@string/block_failed_verification_summary"
             app:title="@string/block_failed_verification" />
@@ -137,6 +143,24 @@
             app:persistent="false"
             app:summary="@string/show_notifications_for_blocked_calls_summary"
             app:title="@string/show_notifications_for_blocked_calls" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="categoryDebugging"
+        app:title="@string/settings_category_debugging">
+        <Preference
+            app:key="exportLogcat"
+            app:persistent="false"
+            app:summary="@string/export_logcat_summary"
+            app:title="@string/export_logcat" />
+        <SwitchPreferenceCompat
+            app:key="saveCrashesToExternalStorage"
+            app:summary="@string/save_crashes_to_external_storage_summary"
+            app:title="@string/save_crashes_to_external_storage" />
+        <SwitchPreferenceCompat
+            app:key="saveLogcatOnCrash"
+            app:summary="@string/save_logcat_on_crash_summary"
+            app:title="@string/save_logcat_on_crash" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/settings_screen_advanced">

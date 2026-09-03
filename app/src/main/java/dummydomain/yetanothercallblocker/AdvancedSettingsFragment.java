@@ -1,6 +1,5 @@
 package dummydomain.yetanothercallblocker;
 
-import android.app.Activity;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -9,25 +8,15 @@ import androidx.preference.EditTextPreference;
 import androidx.preference.MultiSelectListPreference;
 import androidx.preference.Preference;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
 import java.util.regex.Pattern;
 
 import dummydomain.yetanothercallblocker.sia.model.database.DbManager;
-import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
-import dummydomain.yetanothercallblocker.utils.FileUtils;
 import dummydomain.yetanothercallblocker.utils.SystemUtils;
 
 public class AdvancedSettingsFragment extends BaseSettingsFragment {
 
     private static final String PREF_SCREEN_ADVANCED = "screenAdvanced";
     private static final String PREF_COUNTRY_CODES_INFO = "countryCodesInfo";
-    private static final String PREF_EXPORT_LOGCAT = "exportLogcat";
-
-    private static final Logger LOG = LoggerFactory.getLogger(AdvancedSettingsFragment.class);
 
     @Override
     protected String getScreenKey() {
@@ -95,27 +84,6 @@ public class AdvancedSettingsFragment extends BaseSettingsFragment {
         setPrefChangeListener(Settings.PREF_COUNTRY_CODE_FOR_REVIEWS_OVERRIDE,
                 countryCodeChangeListener);
 
-        requirePreference(PREF_EXPORT_LOGCAT)
-                .setOnPreferenceClickListener(preference -> {
-                    exportLogcat();
-                    return true;
-                });
-    }
-
-    private void exportLogcat() {
-        Activity activity = requireActivity();
-
-        String path = null;
-        try {
-            path = DebuggingUtils.saveLogcatInCache(activity);
-            DebuggingUtils.appendDeviceInfo(path);
-        } catch (IOException | InterruptedException e) {
-            LOG.warn("exportLogcat()", e);
-        }
-
-        if (path != null) {
-            FileUtils.shareFile(activity, new File(path));
-        }
     }
 
 }

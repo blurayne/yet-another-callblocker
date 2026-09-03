@@ -54,22 +54,4 @@
         app:key="databaseDownloadUrl"
         app:title="@string/database_download_url" />
 
-    <PreferenceCategory
-        app:key="categoryDebugging"
-        app:title="@string/settings_category_debugging">
-        <Preference
-            app:key="exportLogcat"
-            app:persistent="false"
-            app:summary="@string/export_logcat_summary"
-            app:title="@string/export_logcat" />
-        <SwitchPreferenceCompat
-            app:key="saveCrashesToExternalStorage"
-            app:summary="@string/save_crashes_to_external_storage_summary"
-            app:title="@string/save_crashes_to_external_storage" />
-        <SwitchPreferenceCompat
-            app:key="saveLogcatOnCrash"
-            app:summary="@string/save_logcat_on_crash_summary"
-            app:title="@string/save_logcat_on_crash" />
-    </PreferenceCategory>
-
 </PreferenceScreen>

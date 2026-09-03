@@ -1,5 +1,6 @@
 package dummydomain.yetanothercallblocker;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -15,10 +16,17 @@ import androidx.preference.SwitchPreferenceCompat;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 import dummydomain.yetanothercallblocker.data.PhoneBlockList;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
+import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
+import dummydomain.yetanothercallblocker.utils.FileUtils;
 import dummydomain.yetanothercallblocker.utils.PackageManagerUtils;
 import dummydomain.yetanothercallblocker.work.TaskService;
 import dummydomain.yetanothercallblocker.work.UpdateScheduler;
@@ -29,11 +37,14 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_USE_CALL_SCREENING_SERVICE = "useCallScreeningService";
     private static final String PREF_AUTO_UPDATE_ENABLED = "autoUpdateEnabled";
     private static final String PREF_NOTIFICATION_CHANNEL_SETTINGS = "notificationChannelSettings";
+    private static final String PREF_EXPORT_LOGCAT = "exportLogcat";
     private static final String PREF_PHONE_BLOCK_INFO = "phoneBlockInfo";
     private static final String PREF_PHONE_BLOCK_UPDATE = "phoneBlockUpdate";
     private static final String PREF_CATEGORY_NOTIFICATIONS = "categoryNotifications";
     private static final String PREF_CATEGORY_NOTIFICATIONS_LEGACY = "categoryNotificationsLegacy";
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
+
+    private static final Logger LOG = LoggerFactory.getLogger(RootSettingsFragment.class);
 
     private static final String STATE_REQUEST_TOKEN = "STATE_REQUEST_TOKEN";
     private static final String STATE_OVERLAY_REQUESTED = "STATE_OVERLAY_REQUESTED";
@@ -133,6 +144,12 @@ public class RootSettingsFragment extends BaseSettingsFragment {
             }
             return true;
         });
+
+        requirePreference(PREF_EXPORT_LOGCAT)
+                .setOnPreferenceClickListener(preference -> {
+                    exportLogcat();
+                    return true;
+                });
 
         requirePreference(PREF_PHONE_BLOCK_INFO).setOnPreferenceClickListener(pref -> {
             new AlertDialog.Builder(requireActivity())
@@ -296,6 +313,22 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         }
     }
 
+private void exportLogcat() {
+        Activity activity = requireActivity();
+
+        String path = null;
+        try {
+            path = DebuggingUtils.saveLogcatInCache(activity);
+            DebuggingUtils.appendDeviceInfo(path);
+        } catch (IOException | InterruptedException e) {
+            LOG.warn("exportLogcat()", e);
+        }
+
+        if (path != null) {
+            FileUtils.shareFile(activity, new File(path));
+        }
+    }
+
     private void updateCallScreeningPreference() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return;
 
@@ -352,18 +385,18 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
         boolean hasPermission = PermissionHelper.hasOverlayPermission(requireContext());
 
-        boolean enabled;
         if (overlayPermissionRequested && hasPermission) {
             overlayPermissionRequested = false; // the user granted it for this very feature
-            enabled = true;
-        } else {
-            enabled = settings.getCallerIdOverlay() && hasPermission;
+            settings.setCallerIdOverlay(true);
         }
 
-        settings.setCallerIdOverlay(enabled);
-
+        /*
+         * Without the permission the overlay can't be drawn, which is shown by leaving the
+         * switch off - but the setting is left alone, so that granting the permission later
+         * brings the overlay back rather than needing the switch to be found again.
+         */
         this.<SwitchPreferenceCompat>requirePreference(Settings.PREF_CALLER_ID_OVERLAY)
-                .setChecked(enabled);
+                .setChecked(settings.getCallerIdOverlay() && hasPermission);
     }
 
     private void updateBlockedCallNotificationsPreference() {

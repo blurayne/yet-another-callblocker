@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 
 import dummydomain.yetanothercallblocker.data.Config;
 import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
+import dummydomain.yetanothercallblocker.work.UpdateScheduler;
 
 public class App extends Application {
 
@@ -62,6 +63,11 @@ public class App extends Application {
         ensureInitialized(this);
 
         setUiMode(settings.getUiMode());
+
+        if (!settings.getAutoUpdateSetUp()) {
+            settings.setAutoUpdateSetUp(true);
+            UpdateScheduler.get(this).scheduleAutoUpdates();
+        }
 
         if (settings.getUseMonitoringService()) {
             CallMonitoringService.start(this);

@@ -212,8 +212,9 @@ jobs:
         if: failure()
         run: |
           # as annotations, which are readable without digging through the whole log
-          grep -E "^(e: |.*error:|FAILURE:|Caused by:|> )" "${RUNNER_TEMP}/build.log" \
-              | head -20 > "${RUNNER_TEMP}/build-errors.txt" || true
+          # "> Task ..." lines are progress, not errors, and there are hundreds of them
+          grep -E "error:|^e: |^FAILURE|Caused by:|^> [^T]" "${RUNNER_TEMP}/build.log" \
+              | grep -v "^> Task " | head -20 > "${RUNNER_TEMP}/build-errors.txt" || true
 
           while IFS= read -r line; do
             echo "::error::${line}"

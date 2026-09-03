@@ -146,9 +146,13 @@ public class Config {
             }
         };
 
+        PhoneBlockList phoneBlockList = new PhoneBlockList(storage::getDataDirPath);
+        YacbHolder.setPhoneBlockList(phoneBlockList);
+
         NumberInfoService numberInfoService = new NumberInfoService(
                 settings, NumberUtils::isHiddenNumber, NumberUtils::normalizeNumber,
                 communityDatabase, featuredDatabase, contactsProvider, blacklistService);
+        numberInfoService.setPhoneBlockList(phoneBlockList);
         YacbHolder.setNumberInfoService(numberInfoService);
 
         YacbHolder.setNumberInfoCache(new NumberInfoCache());

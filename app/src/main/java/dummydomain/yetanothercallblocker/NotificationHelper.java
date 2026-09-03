@@ -220,6 +220,7 @@ public class NotificationHelper {
         text = concat(text, "\n", getVerificationDescriptionPart(context, numberInfo));
         text = concat(text, "; ", getCommunityDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getBlacklistDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getPhoneBlockDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getNumberDescriptionPart(context, numberInfo));
 
         return text;
@@ -231,9 +232,16 @@ public class NotificationHelper {
         text = concat(text, "\n", getVerificationDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getCommunityDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getBlacklistDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getPhoneBlockDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getNumberDescriptionPart(context, numberInfo));
 
         return text;
+    }
+
+    private static String getPhoneBlockDescriptionPart(Context context, NumberInfo numberInfo) {
+        return numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam()
+                ? NumberInfoUtils.getPhoneBlockDescription(context, numberInfo.phoneBlockRating)
+                : null;
     }
 
     private static String getVerificationDescriptionPart(Context context, NumberInfo numberInfo) {

@@ -33,6 +33,33 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/settings_category_phone_block">
+        <Preference
+            app:key="phoneBlockInfo"
+            app:persistent="false"
+            app:summary="@string/phone_block_info_summary"
+            app:title="@string/phone_block_info" />
+        <SwitchPreferenceCompat
+            app:key="usePhoneBlock"
+            app:summary="@string/use_phone_block_summary"
+            app:title="@string/use_phone_block" />
+        <SwitchPreferenceCompat
+            app:dependency="usePhoneBlock"
+            app:key="blockPhoneBlock"
+            app:summary="@string/block_phone_block_summary"
+            app:title="@string/block_phone_block" />
+        <EditTextPreference
+            app:dependency="usePhoneBlock"
+            app:key="phoneBlockToken"
+            app:summary="@string/phone_block_token_summary"
+            app:title="@string/phone_block_token" />
+        <Preference
+            app:dependency="usePhoneBlock"
+            app:key="phoneBlockUpdate"
+            app:persistent="false"
+            app:title="@string/phone_block_update" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/settings_category_caller_id">
         <SwitchPreferenceCompat
             app:defaultValue="true"

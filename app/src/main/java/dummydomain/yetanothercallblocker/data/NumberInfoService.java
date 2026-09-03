@@ -34,6 +34,7 @@ public class NumberInfoService {
     protected final FeaturedDatabase featuredDatabase;
     protected final ContactsProvider contactsProvider;
     protected final BlacklistService blacklistService;
+    protected PhoneBlockList phoneBlockList;
 
     public NumberInfoService(Settings settings, HiddenNumberDetector hiddenNumberDetector,
                              NumberNormalizer numberNormalizer, CommunityDatabase communityDatabase,
@@ -46,6 +47,10 @@ public class NumberInfoService {
         this.featuredDatabase = featuredDatabase;
         this.contactsProvider = contactsProvider;
         this.blacklistService = blacklistService;
+    }
+
+    public void setPhoneBlockList(PhoneBlockList phoneBlockList) {
+        this.phoneBlockList = phoneBlockList;
     }
 
     public NumberInfo getNumberInfo(String number, String countryCode, boolean full) {
@@ -128,6 +133,12 @@ public class NumberInfoService {
         }
         LOG.trace("getNumberInfo() rating={}", numberInfo.rating);
 
+        if (phoneBlockList != null && settings.getUsePhoneBlock()) {
+            numberInfo.phoneBlockRating = phoneBlockList.getRating(
+                    PhoneBlockService.parseNumber(normalizedNumber));
+        }
+        LOG.trace("getNumberInfo() phoneBlockRating={}", numberInfo.phoneBlockRating);
+
         if (blacklistService != null && settings.getBlacklistIsNotEmpty()) {
             // avoid loading blacklist if blocking for other reason
             if (full || getBlockingReason(numberInfo) == null) {
@@ -159,6 +170,12 @@ public class NumberInfoService {
         if (numberInfo.blacklistItem != null && settings.getBlockBlacklisted()
                 && canBlock(NumberInfo.BlockingReason.BLACKLISTED)) {
             return NumberInfo.BlockingReason.BLACKLISTED;
+        }
+
+        if (numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam()
+                && settings.getBlockPhoneBlock()
+                && canBlock(NumberInfo.BlockingReason.PHONE_BLOCK)) {
+            return NumberInfo.BlockingReason.PHONE_BLOCK;
         }
 
         return null;

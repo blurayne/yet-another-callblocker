@@ -17,6 +17,7 @@ import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.NotificationHelper;
 import dummydomain.yetanothercallblocker.R;
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
+import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.DbFilterRevertedEvent;
 import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
@@ -24,6 +25,7 @@ import dummydomain.yetanothercallblocker.event.DbFilteringInProgressEvent;
 import dummydomain.yetanothercallblocker.event.DbFilteringProgressEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
+import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
 
 import static dummydomain.yetanothercallblocker.EventUtils.postEvent;
 import static dummydomain.yetanothercallblocker.EventUtils.postStickyEvent;
@@ -35,6 +37,7 @@ public class TaskService extends IntentService {
     public static final String TASK_UPDATE_SECONDARY_DB = "update_secondary_db";
     public static final String TASK_FILTER_DB = "filter_db";
     public static final String TASK_REVERT_DB_FILTER = "revert_db_filter";
+    public static final String TASK_UPDATE_PHONE_BLOCK = "update_phone_block";
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskService.class);
 
@@ -77,6 +80,11 @@ public class TaskService extends IntentService {
                     case TASK_FILTER_DB:
                         updateNotification(getString(R.string.filtering_db));
                         filterDb();
+                        break;
+
+                    case TASK_UPDATE_PHONE_BLOCK:
+                        updateNotification(getString(R.string.phone_block_updating));
+                        updatePhoneBlock();
                         break;
 
                     case TASK_REVERT_DB_FILTER:
@@ -143,6 +151,13 @@ public class TaskService extends IntentService {
         } finally {
             removeStickyEvent(sticky);
         }
+    }
+
+    private void updatePhoneBlock() {
+        PhoneBlockService.Result result = new PhoneBlockService(
+                App.getSettings(), YacbHolder.getPhoneBlockList()).update(true);
+
+        postEvent(new PhoneBlockUpdateFinishedEvent(result));
     }
 
     private void revertDbFilter() {

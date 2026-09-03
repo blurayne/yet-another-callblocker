@@ -50,6 +50,13 @@ public class Settings extends GenericSettings {
     public static final String PREF_COUNTRY_CODE_OVERRIDE = "countryCodeOverride";
     public static final String PREF_COUNTRY_CODE_FOR_REVIEWS_OVERRIDE = "countryCodeForReviewsOverride";
     public static final String PREF_DATABASE_DOWNLOAD_URL = "databaseDownloadUrl";
+    public static final String PREF_USE_PHONE_BLOCK = "usePhoneBlock";
+    public static final String PREF_BLOCK_PHONE_BLOCK = "blockPhoneBlock";
+    public static final String PREF_PHONE_BLOCK_TOKEN = "phoneBlockToken";
+    public static final String PREF_PHONE_BLOCK_URL = "phoneBlockUrl";
+    public static final String PREF_PHONE_BLOCK_LAST_UPDATE_TIME = "phoneBlockLastUpdateTime";
+    public static final String PREF_PHONE_BLOCK_LAST_FULL_UPDATE_TIME = "phoneBlockLastFullUpdateTime";
+    public static final String PREF_PHONE_BLOCK_NEXT_UPDATE_TIME = "phoneBlockNextUpdateTime";
     public static final String PREF_SAVE_CRASHES_TO_EXTERNAL_STORAGE = "saveCrashesToExternalStorage";
     public static final String PREF_SAVE_LOGCAT_ON_CRASH = "saveLogcatOnCrash";
 
@@ -166,9 +173,61 @@ public class Settings extends GenericSettings {
         return !getSilenceCalls().isEmpty();
     }
 
+    /** Whether the PhoneBlock community list is kept on the device and used. */
+    public boolean getUsePhoneBlock() {
+        return getBoolean(PREF_USE_PHONE_BLOCK);
+    }
+
+    public void setUsePhoneBlock(boolean use) {
+        setBoolean(PREF_USE_PHONE_BLOCK, use);
+    }
+
+    /** Whether the numbers of that list are blocked rather than only shown. */
+    public boolean getBlockPhoneBlock() {
+        return getBoolean(PREF_BLOCK_PHONE_BLOCK);
+    }
+
+    public void setBlockPhoneBlock(boolean block) {
+        setBoolean(PREF_BLOCK_PHONE_BLOCK, block);
+    }
+
+    public String getPhoneBlockToken() {
+        return getString(PREF_PHONE_BLOCK_TOKEN);
+    }
+
+    public String getPhoneBlockUrl() {
+        return getNonEmptyString(PREF_PHONE_BLOCK_URL,
+                dummydomain.yetanothercallblocker.data.PhoneBlockService.DEFAULT_URL);
+    }
+
+    public long getPhoneBlockLastUpdateTime() {
+        return getLong(PREF_PHONE_BLOCK_LAST_UPDATE_TIME, 0);
+    }
+
+    public void setPhoneBlockLastUpdateTime(long time) {
+        setLong(PREF_PHONE_BLOCK_LAST_UPDATE_TIME, time);
+    }
+
+    public long getPhoneBlockLastFullUpdateTime() {
+        return getLong(PREF_PHONE_BLOCK_LAST_FULL_UPDATE_TIME, 0);
+    }
+
+    public void setPhoneBlockLastFullUpdateTime(long time) {
+        setLong(PREF_PHONE_BLOCK_LAST_FULL_UPDATE_TIME, time);
+    }
+
+    public long getPhoneBlockNextUpdateTime() {
+        return getLong(PREF_PHONE_BLOCK_NEXT_UPDATE_TIME, 0);
+    }
+
+    public void setPhoneBlockNextUpdateTime(long time) {
+        setLong(PREF_PHONE_BLOCK_NEXT_UPDATE_TIME, time);
+    }
+
     public boolean getCallBlockingEnabled() {
         return getBlockNegativeSiaNumbers() || getBlockHiddenNumbers() || getBlacklistEnabled()
-                || getBlockFailedVerification();
+                || getBlockFailedVerification()
+                || getUsePhoneBlock() && getBlockPhoneBlock();
     }
 
     /**

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.format.DateUtils;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,6 +13,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
 
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import dummydomain.yetanothercallblocker.data.PhoneBlockList;
+import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
 import dummydomain.yetanothercallblocker.utils.PackageManagerUtils;
 import dummydomain.yetanothercallblocker.work.UpdateScheduler;
 
@@ -20,6 +28,8 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_USE_CALL_SCREENING_SERVICE = "useCallScreeningService";
     private static final String PREF_AUTO_UPDATE_ENABLED = "autoUpdateEnabled";
     private static final String PREF_NOTIFICATION_CHANNEL_SETTINGS = "notificationChannelSettings";
+    private static final String PREF_PHONE_BLOCK_INFO = "phoneBlockInfo";
+    private static final String PREF_PHONE_BLOCK_UPDATE = "phoneBlockUpdate";
     private static final String PREF_CATEGORY_NOTIFICATIONS = "categoryNotifications";
     private static final String PREF_CATEGORY_NOTIFICATIONS_LEGACY = "categoryNotificationsLegacy";
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
@@ -81,6 +91,8 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     public void onStart() {
         super.onStart();
 
+        EventUtils.register(this);
+
         // may be changed externally
         updateCallScreeningPreference();
 
@@ -90,6 +102,15 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
         // the permission may be granted (or revoked) in the system settings
         updateCallerIdOverlayPreference();
+
+        updatePhoneBlockPreference();
+    }
+
+    @Override
+    public void onStop() {
+        EventUtils.unregister(this);
+
+        super.onStop();
     }
 
     @Override
@@ -108,6 +129,28 @@ public class RootSettingsFragment extends BaseSettingsFragment {
             if (Boolean.TRUE.equals(newValue)) {
                 PermissionHelper.checkPermissions(requireContext(), this,
                         true, false, false);
+            }
+            return true;
+        });
+
+        requirePreference(PREF_PHONE_BLOCK_INFO).setOnPreferenceClickListener(pref -> {
+            new AlertDialog.Builder(requireActivity())
+                    .setTitle(R.string.settings_category_phone_block)
+                    .setMessage(pref.getSummary())
+                    .setNegativeButton(R.string.back, null)
+                    .show();
+            return true;
+        });
+
+        requirePreference(PREF_PHONE_BLOCK_UPDATE).setOnPreferenceClickListener(preference -> {
+            TaskService.start(requireContext(), TaskService.TASK_UPDATE_PHONE_BLOCK);
+            return true;
+        });
+
+        setPrefChangeListener(Settings.PREF_USE_PHONE_BLOCK, (preference, newValue) -> {
+            if (Boolean.TRUE.equals(newValue)) {
+                // there is nothing to use until the list has been fetched
+                TaskService.start(requireContext(), TaskService.TASK_UPDATE_PHONE_BLOCK);
             }
             return true;
         });
@@ -257,6 +300,50 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
         this.<SwitchPreferenceCompat>requirePreference(PREF_USE_CALL_SCREENING_SERVICE)
                 .setChecked(PermissionHelper.isCallScreeningHeld(requireContext()));
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onPhoneBlockUpdateFinished(PhoneBlockUpdateFinishedEvent event) {
+        updatePhoneBlockPreference();
+
+        int size = event.result.size;
+
+        String message;
+        switch (event.result.status) {
+            case UPDATED:
+                message = getString(R.string.phone_block_update_result, size);
+                break;
+
+            case NOT_DUE:
+                message = getString(R.string.phone_block_update_not_due, size);
+                break;
+
+            case NOT_CONFIGURED:
+                return; // the list is turned off, there is nothing to say
+
+            default:
+                message = getString(R.string.phone_block_update_failed);
+                break;
+        }
+
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+    }
+
+    /** Says how big the list is and when it was last fetched. */
+    private void updatePhoneBlockPreference() {
+        PhoneBlockList list = YacbHolder.getPhoneBlockList();
+        long lastUpdate = App.getSettings().getPhoneBlockLastUpdateTime();
+
+        String summary;
+        if (list == null || list.isEmpty() || lastUpdate <= 0) {
+            summary = getString(R.string.phone_block_status_empty);
+        } else {
+            summary = getString(R.string.phone_block_status, list.getSize(),
+                    DateUtils.getRelativeTimeSpanString(lastUpdate, System.currentTimeMillis(),
+                            DateUtils.MINUTE_IN_MILLIS));
+        }
+
+        requirePreference(PREF_PHONE_BLOCK_UPDATE).setSummary(summary);
     }
 
     private void updateCallerIdOverlayPreference() {

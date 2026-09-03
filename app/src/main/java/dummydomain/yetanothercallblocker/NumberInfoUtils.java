@@ -4,6 +4,7 @@ import android.content.Context;
 import android.text.TextUtils;
 
 import dummydomain.yetanothercallblocker.data.NumberInfo;
+import dummydomain.yetanothercallblocker.data.PhoneBlockList;
 import dummydomain.yetanothercallblocker.data.SiaNumberCategoryUtils;
 import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseItem;
@@ -25,7 +26,27 @@ public class NumberInfoUtils {
             return context.getString(R.string.info_in_blacklist);
         }
 
+        if (numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam()) {
+            return getPhoneBlockDescription(context, numberInfo.phoneBlockRating);
+        }
+
         return null;
+    }
+
+    /** What the PhoneBlock community says the number is used for. */
+    public static String getPhoneBlockDescription(Context context, PhoneBlockList.Rating rating) {
+        int resId;
+        switch (rating) {
+            case PING: resId = R.string.phone_block_rating_ping; break;
+            case POLL: resId = R.string.phone_block_rating_poll; break;
+            case ADVERTISING: resId = R.string.phone_block_rating_advertising; break;
+            case GAMBLE: resId = R.string.phone_block_rating_gamble; break;
+            case FRAUD: resId = R.string.phone_block_rating_fraud; break;
+            case MISSED: resId = R.string.phone_block_rating_missed; break;
+            default: resId = R.string.phone_block_rating_unknown; break;
+        }
+
+        return context.getString(R.string.phone_block_description, context.getString(resId));
     }
 
     /**
@@ -84,7 +105,27 @@ public class NumberInfoUtils {
             return context.getString(R.string.info_in_blacklist);
         }
 
+        if (numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam()) {
+            return getPhoneBlockDescription(context, numberInfo.phoneBlockRating);
+        }
+
         return null;
+    }
+
+    /** What the PhoneBlock community says the number is used for. */
+    public static String getPhoneBlockDescription(Context context, PhoneBlockList.Rating rating) {
+        int resId;
+        switch (rating) {
+            case PING: resId = R.string.phone_block_rating_ping; break;
+            case POLL: resId = R.string.phone_block_rating_poll; break;
+            case ADVERTISING: resId = R.string.phone_block_rating_advertising; break;
+            case GAMBLE: resId = R.string.phone_block_rating_gamble; break;
+            case FRAUD: resId = R.string.phone_block_rating_fraud; break;
+            case MISSED: resId = R.string.phone_block_rating_missed; break;
+            default: resId = R.string.phone_block_rating_unknown; break;
+        }
+
+        return context.getString(R.string.phone_block_description, context.getString(resId));
     }
 
 }

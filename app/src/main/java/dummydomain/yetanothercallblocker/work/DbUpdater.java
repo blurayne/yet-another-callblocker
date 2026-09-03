@@ -3,6 +3,7 @@ package dummydomain.yetanothercallblocker.work;
 import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
+import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdatingEvent;
@@ -36,6 +37,9 @@ public class DbUpdater {
             removeStickyEvent(sticky);
             postEvent(new SecondaryDbUpdateFinished(updated));
         }
+
+        // the community list has its own pace, which it keeps track of itself
+        new PhoneBlockService(settings, YacbHolder.getPhoneBlockList()).update(false);
     }
 
 }

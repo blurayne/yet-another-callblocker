@@ -112,20 +112,4 @@ public class NumberInfoUtils {
         return null;
     }
 
-    /** What the PhoneBlock community says the number is used for. */
-    public static String getPhoneBlockDescription(Context context, PhoneBlockList.Rating rating) {
-        int resId;
-        switch (rating) {
-            case PING: resId = R.string.phone_block_rating_ping; break;
-            case POLL: resId = R.string.phone_block_rating_poll; break;
-            case ADVERTISING: resId = R.string.phone_block_rating_advertising; break;
-            case GAMBLE: resId = R.string.phone_block_rating_gamble; break;
-            case FRAUD: resId = R.string.phone_block_rating_fraud; break;
-            case MISSED: resId = R.string.phone_block_rating_missed; break;
-            default: resId = R.string.phone_block_rating_unknown; break;
-        }
-
-        return context.getString(R.string.phone_block_description, context.getString(resId));
-    }
-
 }

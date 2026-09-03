@@ -110,7 +110,10 @@ jobs:
           YACB_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           YACB_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           YACB_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleDebug assembleRelease --stacktrace
+        run: |
+          # keep the output, so that the errors can be repeated at the end of the job
+          set -o pipefail
+          ./gradlew assembleDebug assembleRelease --stacktrace 2>&1 | tee "${RUNNER_TEMP}/build.log"
 
       # the project doesn't fail the build on lint errors, so the findings are printed here
       - name: Lint
@@ -204,6 +207,13 @@ jobs:
           path: app/build/reports/
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Build errors
+        if: failure()
+        run: |
+          # the compiler says what is wrong somewhere in a very long log: repeat it here
+          grep -E "^(e: |.*error:|FAILURE:|Caused by:)" "${RUNNER_TEMP}/build.log" \
+              | head -40 || echo "no compiler errors in the build log"
 
       - name: Lint errors
         if: always()

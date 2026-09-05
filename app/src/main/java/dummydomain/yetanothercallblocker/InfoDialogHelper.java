@@ -111,6 +111,12 @@ public class InfoDialogHelper {
         TextView addToContactsView = view.findViewById(R.id.add_to_contacts);
         if (!canAddToContacts) addToContactsView.setVisibility(View.GONE);
 
+        // reporting is only offered when there's an account to report with
+        boolean canReportToPhoneBlock = !numberInfo.noNumber && PhoneBlockHelper.canReport();
+
+        TextView reportToPhoneBlockView = view.findViewById(R.id.report_to_phone_block);
+        if (!canReportToPhoneBlock) reportToPhoneBlockView.setVisibility(View.GONE);
+
         TextView callInfoView = view.findViewById(R.id.call_info);
         if (!TextUtils.isEmpty(callInfo)) {
             callInfoView.setText(callInfo);
@@ -156,6 +162,12 @@ public class InfoDialogHelper {
 
                 Toast.makeText(context, R.string.added_to_whitelist, Toast.LENGTH_SHORT).show();
             });
+        }
+
+        if (canReportToPhoneBlock) {
+            // the dialog stays until the report is done, so that going back returns to it
+            reportToPhoneBlockView.setOnClickListener(v -> PhoneBlockHelper
+                    .showReportDialog(context, numberInfo.number, dialog::dismiss));
         }
 
         if (canAddToContacts) {

@@ -1,8 +1,10 @@
 package dummydomain.yetanothercallblocker;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.format.DateUtils;
@@ -23,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 
 import dummydomain.yetanothercallblocker.data.PhoneBlockList;
+import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
 import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
@@ -40,6 +43,7 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_EXPORT_LOGCAT = "exportLogcat";
     private static final String PREF_PHONE_BLOCK_INFO = "phoneBlockInfo";
     private static final String PREF_PHONE_BLOCK_UPDATE = "phoneBlockUpdate";
+    private static final String PREF_PHONE_BLOCK_CHECK_TOKEN = "phoneBlockCheckToken";
     private static final String PREF_CATEGORY_NOTIFICATIONS = "categoryNotifications";
     private static final String PREF_CATEGORY_NOTIFICATIONS_LEGACY = "categoryNotificationsLegacy";
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
@@ -162,6 +166,18 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
         requirePreference(PREF_PHONE_BLOCK_UPDATE).setOnPreferenceClickListener(preference -> {
             TaskService.start(requireContext(), TaskService.TASK_UPDATE_PHONE_BLOCK);
+            return true;
+        });
+
+        requirePreference(PREF_PHONE_BLOCK_CHECK_TOKEN).setOnPreferenceClickListener(preference -> {
+            checkPhoneBlockToken();
+            return true;
+        });
+
+        setPrefChangeListener(Settings.PREF_PHONE_BLOCK_TOKEN, (preference, newValue) -> {
+            // whatever was known about the old token doesn't apply to this one
+            App.getSettings().resetPhoneBlockTokenState();
+            NotificationHelper.hidePhoneBlockTokenNotification(requireContext());
             return true;
         });
 
@@ -361,6 +377,40 @@ private void exportLogcat() {
         }
 
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+    }
+
+    /** Asks PhoneBlock whether the token works and says what it answered. */
+    private void checkPhoneBlockToken() {
+        Context context = requireContext().getApplicationContext();
+        Settings settings = App.getSettings();
+
+        Toast.makeText(context, R.string.phone_block_checking_token, Toast.LENGTH_SHORT).show();
+
+        @SuppressLint("StaticFieldLeak") // the application context outlives the task
+        AsyncTask<Void, Void, PhoneBlockService.TokenStatus> task
+                = new AsyncTask<Void, Void, PhoneBlockService.TokenStatus>() {
+            @Override
+            protected PhoneBlockService.TokenStatus doInBackground(Void... voids) {
+                return new PhoneBlockService(settings, YacbHolder.getPhoneBlockList()).checkToken();
+            }
+
+            @Override
+            protected void onPostExecute(PhoneBlockService.TokenStatus status) {
+                PhoneBlockHelper.handleTokenStatus(context, settings, status);
+
+                int message;
+                switch (status) {
+                    case OK: message = R.string.phone_block_token_ok; break;
+                    case NO_TOKEN: message = R.string.phone_block_token_missing; break;
+                    case INVALID: message = R.string.phone_block_token_invalid_text; break;
+                    default: message = R.string.phone_block_check_token_failed; break;
+                }
+
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+            }
+        };
+
+        task.execute();
     }
 
     /** Says how big the list is and when it was last fetched. */

@@ -82,6 +82,18 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/report_to_phone_block"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_horizontal"
+        android:padding="8dp"
+        android:text="@string/phone_block_report_title_short"
+        android:textColor="?attr/colorAccent"
+        android:textStyle="bold" />
+
+    <TextView
         android:id="@+id/add_to_contacts"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

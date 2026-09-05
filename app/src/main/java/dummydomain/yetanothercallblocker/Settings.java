@@ -59,6 +59,10 @@ public class Settings extends GenericSettings {
     public static final String PREF_PHONE_BLOCK_LAST_UPDATE_TIME = "phoneBlockLastUpdateTime";
     public static final String PREF_PHONE_BLOCK_LAST_FULL_UPDATE_TIME = "phoneBlockLastFullUpdateTime";
     public static final String PREF_PHONE_BLOCK_NEXT_UPDATE_TIME = "phoneBlockNextUpdateTime";
+    public static final String PREF_PHONE_BLOCK_TOKEN_VALID = "phoneBlockTokenValid";
+    public static final String PREF_PHONE_BLOCK_LAST_TOKEN_CHECK_TIME = "phoneBlockLastTokenCheckTime";
+    public static final String PREF_PHONE_BLOCK_TOKEN_PROBLEM_NOTIFIED
+            = "phoneBlockTokenProblemNotified";
     public static final String PREF_SAVE_CRASHES_TO_EXTERNAL_STORAGE = "saveCrashesToExternalStorage";
     public static final String PREF_SAVE_LOGCAT_ON_CRASH = "saveLogcatOnCrash";
 
@@ -224,6 +228,39 @@ public class Settings extends GenericSettings {
 
     public void setPhoneBlockNextUpdateTime(long time) {
         setLong(PREF_PHONE_BLOCK_NEXT_UPDATE_TIME, time);
+    }
+
+    /** Whether the API token was accepted the last time it was used. */
+    public boolean getPhoneBlockTokenValid() {
+        return getBoolean(PREF_PHONE_BLOCK_TOKEN_VALID, true);
+    }
+
+    public void setPhoneBlockTokenValid(boolean valid) {
+        setBoolean(PREF_PHONE_BLOCK_TOKEN_VALID, valid);
+    }
+
+    public long getPhoneBlockLastTokenCheckTime() {
+        return getLong(PREF_PHONE_BLOCK_LAST_TOKEN_CHECK_TIME, 0);
+    }
+
+    public void setPhoneBlockLastTokenCheckTime(long time) {
+        setLong(PREF_PHONE_BLOCK_LAST_TOKEN_CHECK_TIME, time);
+    }
+
+    /** Whether the user was told that the token stopped working (so they're told once). */
+    public boolean getPhoneBlockTokenProblemNotified() {
+        return getBoolean(PREF_PHONE_BLOCK_TOKEN_PROBLEM_NOTIFIED, false);
+    }
+
+    public void setPhoneBlockTokenProblemNotified(boolean notified) {
+        setBoolean(PREF_PHONE_BLOCK_TOKEN_PROBLEM_NOTIFIED, notified);
+    }
+
+    /** Forgets what is known about the token, so that the new one is checked again. */
+    public void resetPhoneBlockTokenState() {
+        setPhoneBlockTokenValid(true);
+        setPhoneBlockLastTokenCheckTime(0);
+        setPhoneBlockTokenProblemNotified(false);
     }
 
     public boolean getCallBlockingEnabled() {

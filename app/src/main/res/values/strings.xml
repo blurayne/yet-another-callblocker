@@ -13,6 +13,7 @@
     <string name="notification_channel_name_blocked_info">Blocked info</string>
     <string name="notification_channel_name_monitoring_service">Monitoring service</string>
     <string name="notification_channel_name_tasks">Tasks</string>
+    <string name="notification_channel_name_warnings">Warnings</string>
 
     <string name="notification_incoming_call_contact">Contact</string>
     <string name="notification_incoming_call_positive">Positive call</string>
@@ -121,7 +122,7 @@
     <string name="block_phone_block">Block numbers from the list</string>
     <string name="block_phone_block_summary">Block calls from numbers the PhoneBlock community warns about, instead of only showing what it says about them. Contacts are never blocked</string>
     <string name="phone_block_token">API token</string>
-    <string name="phone_block_token_summary">The token of your PhoneBlock account, if the list can\'t be downloaded without one. It is created on the PhoneBlock website</string>
+    <string name="phone_block_token_summary">The token of your PhoneBlock account, if the list can\'t be downloaded without one, and what reporting a number needs. It is created on the PhoneBlock website</string>
     <string name="phone_block_update">Update the list now</string>
     <string name="phone_block_updating">Updating the PhoneBlock list\u2026</string>
     <string name="phone_block_update_result">The list holds %1$d numbers.</string>
@@ -137,6 +138,27 @@
     <string name="phone_block_rating_gamble">gambling</string>
     <string name="phone_block_rating_fraud">fraud</string>
     <string name="phone_block_rating_unknown">unwanted caller</string>
+    <string name="phone_block_rating_legitimate">legitimate caller</string>
+    <string name="phone_block_report_action">Report</string>
+    <string name="phone_block_report_title_short">Report to PhoneBlock</string>
+    <string name="phone_block_report_title">Report %1$s</string>
+    <string name="phone_block_report_message">The number, what you say it was and your comment are sent to phoneblock.net, where they count as a vote of your account. Everything else the app does stays on this device.</string>
+    <string name="phone_block_report_comment_hint">What the call was about (required)</string>
+    <string name="phone_block_report_comment_required">Please describe the call - a report without a comment tells the community nothing.</string>
+    <string name="phone_block_report_submit">Report</string>
+    <string name="phone_block_report_sending">Reporting to PhoneBlock\u2026</string>
+    <string name="phone_block_report_done">The number was reported to PhoneBlock.</string>
+    <string name="phone_block_report_rejected">PhoneBlock didn\'t accept the report.</string>
+    <string name="phone_block_report_failed">The report couldn\'t be sent.</string>
+    <string name="phone_block_report_no_token">Reporting needs a PhoneBlock account: put its API token in the settings.</string>
+    <string name="phone_block_token_invalid_title">The PhoneBlock token isn\'t working</string>
+    <string name="phone_block_token_invalid_text">PhoneBlock doesn\'t accept the API token any more. Create a new one on the PhoneBlock website and put it in the settings.</string>
+    <string name="phone_block_check_token">Check the API token</string>
+    <string name="phone_block_check_token_summary">Ask PhoneBlock whether the token still works. This happens once a day on its own</string>
+    <string name="phone_block_checking_token">Checking the token\u2026</string>
+    <string name="phone_block_token_ok">PhoneBlock accepts the token.</string>
+    <string name="phone_block_token_missing">There is no token to check.</string>
+    <string name="phone_block_check_token_failed">The token couldn\'t be checked - PhoneBlock wasn\'t reachable.</string>
     <string name="settings_category_caller_id">Caller ID</string>
     <string name="caller_id_directory">Caller ID in the phone app</string>
     <string name="caller_id_directory_summary">Provide the caller info to the phone app, so that it is displayed on the incoming call screen and in the call log. Only the numbers the app knows something about are reported, contacts are never affected.</string>

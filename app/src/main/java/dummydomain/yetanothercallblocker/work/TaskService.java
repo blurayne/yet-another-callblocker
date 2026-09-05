@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.NotificationHelper;
+import dummydomain.yetanothercallblocker.PhoneBlockHelper;
 import dummydomain.yetanothercallblocker.R;
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
@@ -156,6 +157,9 @@ public class TaskService extends IntentService {
     private void updatePhoneBlock() {
         PhoneBlockService.Result result = new PhoneBlockService(
                 App.getSettings(), YacbHolder.getPhoneBlockList()).update(true);
+
+        // the update may have run into a token that isn't accepted any more
+        PhoneBlockHelper.checkTokenIfDue(getApplicationContext(), App.getSettings());
 
         postEvent(new PhoneBlockUpdateFinishedEvent(result));
     }

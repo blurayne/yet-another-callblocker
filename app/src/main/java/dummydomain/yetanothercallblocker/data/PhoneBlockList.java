@@ -26,7 +26,19 @@ public class PhoneBlockList {
 
     /** What the community says a number is used for. */
     public enum Rating {
-        LEGITIMATE, MISSED, PING, POLL, ADVERTISING, GAMBLE, FRAUD, UNKNOWN;
+        LEGITIMATE("A_LEGITIMATE"), MISSED("B_MISSED"), PING("C_PING"), POLL("D_POLL"),
+        ADVERTISING("E_ADVERTISING"), GAMBLE("F_GAMBLE"), FRAUD("G_FRAUD"), UNKNOWN(null);
+
+        private final String apiName;
+
+        Rating(String apiName) {
+            this.apiName = apiName;
+        }
+
+        /** The name the API uses, or null for a rating that can't be reported. */
+        public String getApiName() {
+            return apiName;
+        }
 
         /** Parses the names the API uses ({@code A_LEGITIMATE} and so on). */
         public static Rating parse(String value) {

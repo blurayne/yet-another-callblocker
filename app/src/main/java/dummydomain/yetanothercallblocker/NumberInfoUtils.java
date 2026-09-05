@@ -35,8 +35,15 @@ public class NumberInfoUtils {
 
     /** What the PhoneBlock community says the number is used for. */
     public static String getPhoneBlockDescription(Context context, PhoneBlockList.Rating rating) {
+        return context.getString(R.string.phone_block_description,
+                getPhoneBlockRatingName(context, rating));
+    }
+
+    /** The name of a PhoneBlock rating on its own. */
+    public static String getPhoneBlockRatingName(Context context, PhoneBlockList.Rating rating) {
         int resId;
         switch (rating) {
+            case LEGITIMATE: resId = R.string.phone_block_rating_legitimate; break;
             case PING: resId = R.string.phone_block_rating_ping; break;
             case POLL: resId = R.string.phone_block_rating_poll; break;
             case ADVERTISING: resId = R.string.phone_block_rating_advertising; break;
@@ -46,7 +53,7 @@ public class NumberInfoUtils {
             default: resId = R.string.phone_block_rating_unknown; break;
         }
 
-        return context.getString(R.string.phone_block_description, context.getString(resId));
+        return context.getString(resId);
     }
 
     /**

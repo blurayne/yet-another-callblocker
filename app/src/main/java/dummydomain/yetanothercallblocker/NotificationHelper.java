@@ -31,6 +31,7 @@ public class NotificationHelper {
     private static final int NOTIFICATION_ID_BLOCKED_CALL = 2;
     public static final int NOTIFICATION_ID_MONITORING_SERVICE = 3;
     public static final int NOTIFICATION_ID_TASKS = 4;
+    private static final int NOTIFICATION_ID_PHONE_BLOCK_TOKEN = 5;
 
     private static final String CHANNEL_GROUP_ID_INCOMING_CALLS = "incoming_calls";
     private static final String CHANNEL_GROUP_ID_BLOCKED_CALLS = "blocked_calls";
@@ -44,6 +45,7 @@ public class NotificationHelper {
     private static final String CHANNEL_ID_BLOCKED_INFO = "blocked_info";
     private static final String CHANNEL_ID_MONITORING_SERVICE = "monitoring_service";
     private static final String CHANNEL_ID_TASKS = "tasks";
+    private static final String CHANNEL_ID_WARNINGS = "warnings";
 
     private static boolean notificationChannelsInitialized;
 
@@ -111,6 +113,36 @@ public class NotificationHelper {
                 .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setShowWhen(false)
                 .build();
+    }
+
+    /**
+     * Tells the user that the PhoneBlock token stopped working.
+     *
+     * <p>Nothing else would: the list is downloaded in the background, and a token that was
+     * revoked only shows up when it is used.
+     */
+    public static void showPhoneBlockTokenNotification(Context context) {
+        PendingIntent contentIntent = pendingActivity(context,
+                new Intent(context, SettingsActivity.class));
+
+        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_WARNINGS)
+                .setSmallIcon(R.drawable.ic_error_24dp)
+                .setColor(UiUtils.getColorInt(context, R.color.rateNegative))
+                .setContentTitle(context.getString(R.string.phone_block_token_invalid_title))
+                .setContentText(context.getString(R.string.phone_block_token_invalid_text))
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(context.getString(R.string.phone_block_token_invalid_text)))
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setCategory(NotificationCompat.CATEGORY_ERROR)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .build();
+
+        notify(context, NOTIFICATION_ID_PHONE_BLOCK_TOKEN, notification);
+    }
+
+    public static void hidePhoneBlockTokenNotification(Context context) {
+        NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_PHONE_BLOCK_TOKEN);
     }
 
     public static Notification createServiceNotification(Context context, String title) {
@@ -309,11 +341,21 @@ public class NotificationHelper {
         if (!numberInfo.noNumber && numberInfo.contactItem == null) {
             builder.addAction(0, context.getString(R.string.online_reviews),
                     createReviewsIntent(context, numberInfo));
+
+            if (PhoneBlockHelper.canReport()) {
+                builder.addAction(0, context.getString(R.string.phone_block_report_action),
+                        createReportIntent(context, numberInfo));
+            }
         }
     }
 
     private static PendingIntent createInfoIntent(Context context, NumberInfo numberInfo) {
         return pendingActivity(context, InfoDialogActivity.getIntent(context, numberInfo.number));
+    }
+
+    private static PendingIntent createReportIntent(Context context, NumberInfo numberInfo) {
+        return pendingActivity(context,
+                InfoDialogActivity.getReportIntent(context, numberInfo.number));
     }
 
     private static PendingIntent createReviewsIntent(Context context, NumberInfo numberInfo) {
@@ -408,6 +450,14 @@ public class NotificationHelper {
             channel = new NotificationChannel(
                     CHANNEL_ID_TASKS, context.getString(R.string.notification_channel_name_tasks),
                     NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setGroup(channelGroupServices.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_WARNINGS,
+                    context.getString(R.string.notification_channel_name_warnings),
+                    NotificationManager.IMPORTANCE_DEFAULT
             );
             channel.setGroup(channelGroupServices.getId());
             channels.add(channel);

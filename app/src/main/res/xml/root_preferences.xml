@@ -57,6 +57,12 @@
             app:title="@string/phone_block_token" />
         <Preference
             app:dependency="usePhoneBlock"
+            app:key="phoneBlockCheckToken"
+            app:persistent="false"
+            app:summary="@string/phone_block_check_token_summary"
+            app:title="@string/phone_block_check_token" />
+        <Preference
+            app:dependency="usePhoneBlock"
             app:key="phoneBlockUpdate"
             app:persistent="false"
             app:title="@string/phone_block_update" />

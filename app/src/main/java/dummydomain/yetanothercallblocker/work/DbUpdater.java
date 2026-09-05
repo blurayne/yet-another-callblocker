@@ -1,6 +1,7 @@
 package dummydomain.yetanothercallblocker.work;
 
 import dummydomain.yetanothercallblocker.App;
+import dummydomain.yetanothercallblocker.PhoneBlockHelper;
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
@@ -40,6 +41,10 @@ public class DbUpdater {
 
         // the community list has its own pace, which it keeps track of itself
         new PhoneBlockService(settings, YacbHolder.getPhoneBlockList()).update(false);
+
+        // the token is checked here because this is what runs daily
+        App app = App.getInstance();
+        if (app != null) PhoneBlockHelper.checkTokenIfDue(app, settings);
     }
 
 }

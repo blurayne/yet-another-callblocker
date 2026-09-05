@@ -278,6 +278,10 @@ public class MainActivity extends AppCompatActivity {
         startActivity(BlacklistActivity.getIntent(this));
     }
 
+    public void onOpenWhitelist(MenuItem item) {
+        startActivity(WhitelistActivity.getIntent(this));
+    }
+
     public void onOpenSettings(MenuItem item) {
         startActivity(new Intent(this, SettingsActivity.class));
     }

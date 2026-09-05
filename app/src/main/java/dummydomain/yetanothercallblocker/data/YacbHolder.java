@@ -26,6 +26,7 @@ public class YacbHolder {
 
     private static BlacklistDao blacklistDao;
     private static BlacklistService blacklistService;
+    private static WhitelistService whitelistService;
 
     private static NumberInfoService numberInfoService;
     private static NumberInfoCache numberInfoCache;
@@ -72,6 +73,10 @@ public class YacbHolder {
 
     static void setBlacklistDao(BlacklistDao blacklistDao) {
         YacbHolder.blacklistDao = blacklistDao;
+    }
+
+    static void setWhitelistService(WhitelistService whitelistService) {
+        YacbHolder.whitelistService = whitelistService;
     }
 
     static void setBlacklistService(BlacklistService blacklistService) {
@@ -138,6 +143,11 @@ public class YacbHolder {
 
     public static BlacklistDao getBlacklistDao() {
         return blacklistDao;
+    }
+
+    /** The whitelist and the changes to it. */
+    public static WhitelistService getWhitelistService() {
+        return whitelistService;
     }
 
     public static BlacklistService getBlacklistService() {

@@ -63,6 +63,13 @@ public class BlacklistDao {
                 .orderAsc(BlacklistItemDao.Properties.Pattern));
     }
 
+    /** All the items with exactly this pattern (there can be several, with different names). */
+    public List<BlacklistItem> findAllByPattern(String pattern) {
+        return getBlacklistItemDao().queryBuilder()
+                .where(BlacklistItemDao.Properties.Pattern.eq(pattern))
+                .list();
+    }
+
     public BlacklistItem findByNameAndPattern(String name, String pattern) {
         return first(getBlacklistItemDao().queryBuilder()
                 .where(BlacklistItemDao.Properties.Name.eq(name))

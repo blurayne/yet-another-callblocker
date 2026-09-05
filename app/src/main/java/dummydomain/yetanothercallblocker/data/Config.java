@@ -159,6 +159,11 @@ public class Config {
         numberInfoService.setPhoneBlockList(phoneBlockList);
         numberInfoService.setPhoneBlockPersonalLists(phoneBlockPersonalLists);
         numberInfoService.setWhitelist(new Whitelist(settings));
+
+        // each list takes a number off the other when it is put on as itself
+        WhitelistService whitelistService = new WhitelistService(settings, blacklistService);
+        blacklistService.setWhitelistService(whitelistService);
+        YacbHolder.setWhitelistService(whitelistService);
         YacbHolder.setNumberInfoService(numberInfoService);
 
         YacbHolder.setNumberInfoCache(new NumberInfoCache());

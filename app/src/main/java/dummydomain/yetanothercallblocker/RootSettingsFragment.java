@@ -27,6 +27,7 @@ import java.io.IOException;
 import dummydomain.yetanothercallblocker.data.PhoneBlockList;
 import dummydomain.yetanothercallblocker.data.PhoneBlockPersonalLists;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
+import dummydomain.yetanothercallblocker.data.Whitelist;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
 import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
@@ -45,6 +46,7 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_PHONE_BLOCK_INFO = "phoneBlockInfo";
     private static final String PREF_PHONE_BLOCK_UPDATE = "phoneBlockUpdate";
     private static final String PREF_PHONE_BLOCK_CHECK_TOKEN = "phoneBlockCheckToken";
+    private static final String PREF_WHITELIST_SCREEN = "whitelistScreen";
     private static final String PREF_CATEGORY_NOTIFICATIONS = "categoryNotifications";
     private static final String PREF_CATEGORY_NOTIFICATIONS_LEGACY = "categoryNotificationsLegacy";
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
@@ -121,6 +123,8 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         updateCallerIdOverlayPreference();
 
         updatePhoneBlockPreference();
+
+        updateWhitelistPreference();
     }
 
     @Override
@@ -167,6 +171,11 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
         requirePreference(PREF_PHONE_BLOCK_UPDATE).setOnPreferenceClickListener(preference -> {
             TaskService.start(requireContext(), TaskService.TASK_UPDATE_PHONE_BLOCK);
+            return true;
+        });
+
+        requirePreference(PREF_WHITELIST_SCREEN).setOnPreferenceClickListener(preference -> {
+            startActivity(WhitelistActivity.getIntent(requireContext()));
             return true;
         });
 
@@ -378,6 +387,15 @@ private void exportLogcat() {
         }
 
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+    }
+
+    /** Says how many entries the whitelist has. */
+    private void updateWhitelistPreference() {
+        int count = Whitelist.parse(App.getSettings().getWhitelist()).size();
+
+        requirePreference(PREF_WHITELIST_SCREEN).setSummary(count > 0
+                ? getResources().getQuantityString(R.plurals.whitelist_count, count, count)
+                : getString(R.string.whitelist_summary));
     }
 
     /** Asks PhoneBlock whether the token works and says what it answered. */

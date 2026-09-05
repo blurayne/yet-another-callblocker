@@ -38,6 +38,10 @@
         android:title="@string/open_blacklist_activity" />
 
     <item
+        android:onClick="onOpenWhitelist"
+        android:title="@string/open_whitelist_activity" />
+
+    <item
         android:onClick="onOpenSettings"
         android:title="@string/open_settings_activity" />
 

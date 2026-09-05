@@ -273,7 +273,7 @@ public class NotificationHelper {
     }
 
     private static String getWhitelistDescriptionPart(Context context, NumberInfo numberInfo) {
-        return numberInfo.whitelisted ? context.getString(R.string.info_whitelisted) : null;
+        return NumberInfoUtils.getWhitelistStatus(context, numberInfo);
     }
 
     private static String getPhoneBlockDescriptionPart(Context context, NumberInfo numberInfo) {
@@ -306,7 +306,7 @@ public class NotificationHelper {
     private static String getBlacklistDescriptionPart(Context context, NumberInfo numberInfo) {
         if (numberInfo.blacklistItem != null && numberInfo.contactItem == null) {
             String name = numberInfo.blacklistItem.getName();
-            return context.getString(R.string.info_in_blacklist)
+            return NumberInfoUtils.getBlacklistStatus(context, numberInfo)
                     + (!TextUtils.isEmpty(name) ? " (" + name + ")" : "");
         }
 

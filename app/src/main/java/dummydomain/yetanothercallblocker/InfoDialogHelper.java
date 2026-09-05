@@ -10,13 +10,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
 import dummydomain.yetanothercallblocker.data.NumberInfo;
 import dummydomain.yetanothercallblocker.data.SiaNumberCategoryUtils;
-import dummydomain.yetanothercallblocker.data.Whitelist;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabaseItem;
@@ -74,17 +72,10 @@ public class InfoDialogHelper {
                 ? numberInfo.blacklistItem.getName() : null;
         setText(view, R.id.blacklist_name, blacklistName);
 
-        view.findViewById(R.id.whitelisted).setVisibility(
-                numberInfo.whitelisted ? View.VISIBLE : View.GONE);
-
-        TextView inBlacklistView = view.findViewById(R.id.in_blacklist);
-        if (numberInfo.blacklistItem != null) {
-            if (numberInfo.contactItem != null) {
-                inBlacklistView.setText(R.string.info_in_blacklist_contact);
-            }
-        } else {
-            inBlacklistView.setVisibility(View.GONE);
-        }
+        // the lists the number is on, each with the entry that matched when it isn't the
+        // number itself - a pattern covering the number is worth knowing about
+        setText(view, R.id.whitelisted, NumberInfoUtils.getWhitelistStatus(context, numberInfo));
+        setText(view, R.id.in_blacklist, NumberInfoUtils.getBlacklistStatus(context, numberInfo));
 
         TextView phoneBlockView = view.findViewById(R.id.phone_block);
         String phoneBlockText = NumberInfoUtils.getPhoneBlockStatus(context, numberInfo);
@@ -119,14 +110,11 @@ public class InfoDialogHelper {
 
         String number = numberInfo.number;
 
+        // the number can be turned into a pattern before it is added; the dialog stays until
+        // that is done, so that going back returns to it
         bindAction(view, R.id.action_whitelist, R.drawable.ic_check_24dp,
-                R.string.add_to_whitelist, !numberInfo.whitelisted, () -> {
-                    Settings settings = App.getSettings();
-                    settings.setWhitelist(Whitelist.add(settings.getWhitelist(), number));
-
-                    Toast.makeText(context, R.string.added_to_whitelist, Toast.LENGTH_SHORT).show();
-                    dialog.dismiss();
-                });
+                R.string.add_to_whitelist, !numberInfo.whitelisted,
+                () -> WhitelistDialogHelper.showAddDialog(context, number, dialog::dismiss));
 
         bindAction(view, R.id.action_blacklist, R.drawable.ic_brick_24dp,
                 numberInfo.blacklistItem != null

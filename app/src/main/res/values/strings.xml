@@ -292,8 +292,23 @@
     <string name="info_call_time">Called: %1$s</string>
     <string name="info_call_time_last">%1$d calls, last: %2$s</string>
     <string name="whitelist">Whitelist</string>
-    <string name="whitelist_summary">Numbers that are never blocked, whatever else is known about them - one per line. They are written like the blacklist patterns: * stands for any digits, # for one</string>
+    <string name="whitelist_summary">Numbers that are never blocked, whatever else is known about them</string>
+    <plurals name="whitelist_count">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+    <string name="open_whitelist_activity">Whitelist</string>
+    <string name="title_whitelist_activity">Whitelist</string>
+    <string name="whitelist_empty">Nothing is on the whitelist yet. Numbers on it are never blocked, whatever else is known about them - and a number put on it is taken off the blacklist.</string>
+    <string name="whitelist_add">Add</string>
+    <string name="whitelist_remove">Remove</string>
+    <string name="whitelist_add_title">Add to whitelist</string>
+    <string name="whitelist_edit_title">Edit whitelist entry</string>
+    <string name="whitelist_entry_hint">Number or pattern</string>
+    <string name="whitelist_pattern_help">Replace the last digits with * to let a whole range through (+4940655801* allows every extension); # stands for exactly one digit. The whitelist wins over every other list.</string>
+    <string name="whitelist_delete_confirmation">Remove %1$s from the whitelist?</string>
     <string name="info_whitelisted">In whitelist</string>
+    <string name="info_list_entry">%1$s (%2$s)</string>
     <string name="add_to_whitelist">Add to whitelist</string>
     <string name="added_to_whitelist">The number was added to the whitelist.</string>
     <string name="info_in_blacklist">In blacklist</string>

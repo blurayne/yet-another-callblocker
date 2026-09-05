@@ -27,6 +27,8 @@ public class NumberInfo {
     public boolean failedVerification;
     /** Whether the user put the number on the whitelist, which allows it whatever else says. */
     public boolean whitelisted;
+    /** The whitelist entry that lets the number through (the number itself, or a pattern). */
+    public String whitelistEntry;
     public ContactItem contactItem;
     public CommunityDatabaseItem communityDatabaseItem;
     public FeaturedDatabaseItem featuredDatabaseItem;

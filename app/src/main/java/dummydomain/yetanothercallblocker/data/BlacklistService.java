@@ -2,7 +2,9 @@ package dummydomain.yetanothercallblocker.data;
 
 import android.text.TextUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 import dummydomain.yetanothercallblocker.data.db.BlacklistDao;
@@ -21,9 +23,16 @@ public class BlacklistService {
     private final Callback callback;
     private final BlacklistDao blacklistDao;
 
+    private WhitelistService whitelistService;
+
     public BlacklistService(Callback callback, BlacklistDao blacklistDao) {
         this.callback = callback;
         this.blacklistDao = blacklistDao;
+    }
+
+    /** The whitelist, so that a number put on the blacklist is taken off it. */
+    public void setWhitelistService(WhitelistService whitelistService) {
+        this.whitelistService = whitelistService;
     }
 
     public BlacklistItem getBlacklistItemForNumber(String number) {
@@ -40,6 +49,8 @@ public class BlacklistService {
         sanitize(blacklistItem);
         blacklistDao.save(blacklistItem);
 
+        takeOffWhitelist(blacklistItem);
+
         blacklistChanged(!newItem);
     }
 
@@ -47,7 +58,35 @@ public class BlacklistService {
         sanitize(blacklistItem);
         blacklistDao.insert(blacklistItem);
 
+        takeOffWhitelist(blacklistItem);
+
         blacklistChanged(false);
+    }
+
+    /**
+     * Deletes the items whose pattern is exactly this one, because it was put on the whitelist.
+     *
+     * @return whether there was anything to delete
+     */
+    public boolean removeExactPattern(String pattern) {
+        if (TextUtils.isEmpty(pattern)) return false;
+
+        List<BlacklistItem> items = blacklistDao.findAllByPattern(pattern);
+        if (items.isEmpty()) return false;
+
+        List<Long> ids = new ArrayList<>(items.size());
+        for (BlacklistItem item : items) {
+            ids.add(item.getId());
+        }
+
+        delete(ids);
+        return true;
+    }
+
+    private void takeOffWhitelist(BlacklistItem blacklistItem) {
+        if (whitelistService != null && !blacklistItem.getInvalid()) {
+            whitelistService.removeExactPattern(blacklistItem.getPattern());
+        }
     }
 
     public void addCall(BlacklistItem blacklistItem, Date date) {

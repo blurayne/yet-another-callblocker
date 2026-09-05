@@ -31,7 +31,7 @@
     <string name="no">Nein</string>
     <string name="yes">Ja</string>
     <string name="back">Zurück</string>
-    <string name="add_web_review">Rezension hinzufügen (web)</string>
+    <string name="add_web_review">Report to shouldianswer.com</string>
     <string name="online_reviews">Online-Rezensionen</string>
     <string name="secondary_db_updating">Datenbank wird aktualisiert …</string>
     <string name="download_main_db">Datenbank herunterladen</string>

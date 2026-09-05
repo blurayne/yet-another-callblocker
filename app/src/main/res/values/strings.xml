@@ -77,7 +77,7 @@
     <string name="secondary_db_updating">Updating DB…</string>
 
     <string name="online_reviews">Online reviews</string>
-    <string name="add_web_review">Add review (web)</string>
+    <string name="add_web_review">Report to shouldianswer.com</string>
     <string name="back">Back</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>

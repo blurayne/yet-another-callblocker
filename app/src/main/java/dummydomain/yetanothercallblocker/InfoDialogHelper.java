@@ -40,15 +40,18 @@ public class InfoDialogHelper {
      */
     public static void showDialog(Context context, NumberInfo numberInfo, CharSequence callInfo,
                                   DialogInterface.OnDismissListener onDismissListener) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context)
-                .setTitle(!numberInfo.noNumber
-                        ? numberInfo.number : context.getString(R.string.no_number));
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
         @SuppressLint("InflateParams")
         View view = LayoutInflater.from(context).inflate(R.layout.info_dialog, null);
         builder.setView(view);
 
         // what is known about the number
+
+        // the number is part of the view rather than the dialog title, so that it is centered
+        // like everything else in the header
+        setText(view, R.id.number, !numberInfo.noNumber
+                ? numberInfo.number : context.getString(R.string.no_number));
 
         String contactName = numberInfo.contactItem != null
                 ? numberInfo.contactItem.displayName : null;

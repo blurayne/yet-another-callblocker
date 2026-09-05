@@ -35,6 +35,7 @@ public class NumberInfoService {
     protected final ContactsProvider contactsProvider;
     protected final BlacklistService blacklistService;
     protected PhoneBlockList phoneBlockList;
+    protected PhoneBlockPersonalLists phoneBlockPersonalLists;
     protected Whitelist whitelist;
 
     public NumberInfoService(Settings settings, HiddenNumberDetector hiddenNumberDetector,
@@ -52,6 +53,10 @@ public class NumberInfoService {
 
     public void setPhoneBlockList(PhoneBlockList phoneBlockList) {
         this.phoneBlockList = phoneBlockList;
+    }
+
+    public void setPhoneBlockPersonalLists(PhoneBlockPersonalLists phoneBlockPersonalLists) {
+        this.phoneBlockPersonalLists = phoneBlockPersonalLists;
     }
 
     public void setWhitelist(Whitelist whitelist) {
@@ -141,11 +146,24 @@ public class NumberInfoService {
         }
         LOG.trace("getNumberInfo() rating={}", numberInfo.rating);
 
-        if (phoneBlockList != null && settings.getUsePhoneBlock()) {
-            numberInfo.phoneBlockRating = phoneBlockList.getRating(
-                    PhoneBlockService.parseNumber(normalizedNumber));
+        if (settings.getUsePhoneBlock()) {
+            long phoneBlockNumber = PhoneBlockService.parseNumber(normalizedNumber);
+
+            if (phoneBlockList != null) {
+                numberInfo.phoneBlockRating = phoneBlockList.getRating(phoneBlockNumber);
+            }
+
+            // the user's own lists win over what the community says, as PhoneBlock intends
+            if (phoneBlockPersonalLists != null && phoneBlockNumber > 0) {
+                numberInfo.phoneBlockPersonalAllowed
+                        = phoneBlockPersonalLists.isAllowed(phoneBlockNumber);
+                numberInfo.phoneBlockPersonalBlocked = !numberInfo.phoneBlockPersonalAllowed
+                        && phoneBlockPersonalLists.isBlocked(phoneBlockNumber);
+            }
         }
-        LOG.trace("getNumberInfo() phoneBlockRating={}", numberInfo.phoneBlockRating);
+        LOG.trace("getNumberInfo() phoneBlockRating={}, personalAllowed={}, personalBlocked={}",
+                numberInfo.phoneBlockRating, numberInfo.phoneBlockPersonalAllowed,
+                numberInfo.phoneBlockPersonalBlocked);
 
         if (blacklistService != null && settings.getBlacklistIsNotEmpty()) {
             // avoid loading blacklist if blocking for other reason
@@ -163,7 +181,7 @@ public class NumberInfoService {
     }
 
     protected NumberInfo.BlockingReason getBlockingReason(NumberInfo numberInfo) {
-        if (numberInfo.contactItem != null || numberInfo.whitelisted) return null;
+        if (isAllowed(numberInfo)) return null;
 
         if (numberInfo.isHiddenNumber && settings.getBlockHiddenNumbers()) {
             return NumberInfo.BlockingReason.HIDDEN_NUMBER;
@@ -180,13 +198,21 @@ public class NumberInfoService {
             return NumberInfo.BlockingReason.BLACKLISTED;
         }
 
-        if (numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam()
-                && settings.getBlockPhoneBlock()
+        boolean phoneBlockSpam = numberInfo.phoneBlockPersonalBlocked
+                || numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam();
+
+        if (phoneBlockSpam && settings.getBlockPhoneBlock()
                 && canBlock(NumberInfo.BlockingReason.PHONE_BLOCK)) {
             return NumberInfo.BlockingReason.PHONE_BLOCK;
         }
 
         return null;
+    }
+
+    /** Whether the user said the number is welcome, whatever any list says about it. */
+    protected boolean isAllowed(NumberInfo numberInfo) {
+        return numberInfo.contactItem != null || numberInfo.whitelisted
+                || numberInfo.phoneBlockPersonalAllowed;
     }
 
     protected boolean canBlock(NumberInfo.BlockingReason reason) {
@@ -220,7 +246,7 @@ public class NumberInfoService {
      * just like they are never blocked.
      */
     public boolean shouldSilence(NumberInfo numberInfo) {
-        if (numberInfo.contactItem != null || numberInfo.whitelisted) return false;
+        if (isAllowed(numberInfo)) return false;
 
         Set<String> ratings = settings.getSilenceCalls();
         if (ratings.isEmpty()) return false;

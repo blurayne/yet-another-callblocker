@@ -277,9 +277,7 @@ public class NotificationHelper {
     }
 
     private static String getPhoneBlockDescriptionPart(Context context, NumberInfo numberInfo) {
-        return numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam()
-                ? NumberInfoUtils.getPhoneBlockDescription(context, numberInfo.phoneBlockRating)
-                : null;
+        return NumberInfoUtils.getPhoneBlockStatus(context, numberInfo);
     }
 
     private static String getVerificationDescriptionPart(Context context, NumberInfo numberInfo) {

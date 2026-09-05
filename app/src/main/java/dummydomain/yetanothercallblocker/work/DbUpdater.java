@@ -40,7 +40,10 @@ public class DbUpdater {
         }
 
         // the community list has its own pace, which it keeps track of itself
-        new PhoneBlockService(settings, YacbHolder.getPhoneBlockList()).update(false);
+        PhoneBlockService phoneBlockService = new PhoneBlockService(settings,
+                YacbHolder.getPhoneBlockList(), YacbHolder.getPhoneBlockPersonalLists());
+        phoneBlockService.update(false);
+        phoneBlockService.updatePersonalLists(false);
 
         // the token is checked here because this is what runs daily
         App app = App.getInstance();

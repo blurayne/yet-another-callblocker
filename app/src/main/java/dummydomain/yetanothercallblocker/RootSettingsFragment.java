@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 
 import dummydomain.yetanothercallblocker.data.PhoneBlockList;
+import dummydomain.yetanothercallblocker.data.PhoneBlockPersonalLists;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
@@ -391,7 +392,8 @@ private void exportLogcat() {
                 = new AsyncTask<Void, Void, PhoneBlockService.TokenStatus>() {
             @Override
             protected PhoneBlockService.TokenStatus doInBackground(Void... voids) {
-                return new PhoneBlockService(settings, YacbHolder.getPhoneBlockList()).checkToken();
+                return new PhoneBlockService(settings, YacbHolder.getPhoneBlockList(),
+                        YacbHolder.getPhoneBlockPersonalLists()).checkToken();
             }
 
             @Override
@@ -425,6 +427,13 @@ private void exportLogcat() {
             summary = getString(R.string.phone_block_status, list.getSize(),
                     DateUtils.getRelativeTimeSpanString(lastUpdate, System.currentTimeMillis(),
                             DateUtils.MINUTE_IN_MILLIS));
+        }
+
+        // the account's own lists say more about whether the token works than anything else
+        PhoneBlockPersonalLists personalLists = YacbHolder.getPhoneBlockPersonalLists();
+        if (personalLists != null && !personalLists.isEmpty()) {
+            summary += "\n" + getString(R.string.phone_block_personal_status,
+                    personalLists.getBlockedCount(), personalLists.getAllowedCount());
         }
 
         requirePreference(PREF_PHONE_BLOCK_UPDATE).setSummary(summary);

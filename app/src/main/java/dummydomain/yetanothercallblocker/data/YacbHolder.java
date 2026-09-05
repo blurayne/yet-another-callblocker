@@ -30,6 +30,7 @@ public class YacbHolder {
     private static NumberInfoService numberInfoService;
     private static NumberInfoCache numberInfoCache;
     private static PhoneBlockList phoneBlockList;
+    private static PhoneBlockPersonalLists phoneBlockPersonalLists;
 
     @SuppressLint("StaticFieldLeak")
     private static NotificationService notificationService;
@@ -83,6 +84,10 @@ public class YacbHolder {
 
     static void setPhoneBlockList(PhoneBlockList phoneBlockList) {
         YacbHolder.phoneBlockList = phoneBlockList;
+    }
+
+    static void setPhoneBlockPersonalLists(PhoneBlockPersonalLists phoneBlockPersonalLists) {
+        YacbHolder.phoneBlockPersonalLists = phoneBlockPersonalLists;
     }
 
     static void setNumberInfoCache(NumberInfoCache numberInfoCache) {
@@ -146,6 +151,11 @@ public class YacbHolder {
     /** The PhoneBlock community list kept on the device. */
     public static PhoneBlockList getPhoneBlockList() {
         return phoneBlockList;
+    }
+
+    /** The lists of the user's own PhoneBlock account. */
+    public static PhoneBlockPersonalLists getPhoneBlockPersonalLists() {
+        return phoneBlockPersonalLists;
     }
 
     public static NumberInfoCache getNumberInfoCache() {

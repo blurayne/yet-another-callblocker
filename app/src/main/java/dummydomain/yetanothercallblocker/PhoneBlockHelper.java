@@ -128,7 +128,16 @@ public class PhoneBlockHelper {
                 = new AsyncTask<Void, Void, PhoneBlockService.ReportStatus>() {
             @Override
             protected PhoneBlockService.ReportStatus doInBackground(Void... voids) {
-                return newService(settings).report(number, rating, comment);
+                PhoneBlockService service = newService(settings);
+
+                PhoneBlockService.ReportStatus status = service.report(number, rating, comment);
+
+                // the report went onto the account's own list too, so fetch it right away
+                if (status == PhoneBlockService.ReportStatus.REPORTED) {
+                    service.updatePersonalLists(true);
+                }
+
+                return status;
             }
 
             @Override
@@ -199,7 +208,8 @@ public class PhoneBlockHelper {
     }
 
     private static PhoneBlockService newService(Settings settings) {
-        return new PhoneBlockService(settings, YacbHolder.getPhoneBlockList());
+        return new PhoneBlockService(settings, YacbHolder.getPhoneBlockList(),
+                YacbHolder.getPhoneBlockPersonalLists());
     }
 
     private PhoneBlockHelper() {

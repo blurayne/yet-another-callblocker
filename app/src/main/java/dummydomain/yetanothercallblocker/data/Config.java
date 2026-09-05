@@ -149,10 +149,15 @@ public class Config {
         PhoneBlockList phoneBlockList = new PhoneBlockList(storage::getDataDirPath);
         YacbHolder.setPhoneBlockList(phoneBlockList);
 
+        PhoneBlockPersonalLists phoneBlockPersonalLists
+                = new PhoneBlockPersonalLists(storage::getDataDirPath);
+        YacbHolder.setPhoneBlockPersonalLists(phoneBlockPersonalLists);
+
         NumberInfoService numberInfoService = new NumberInfoService(
                 settings, NumberUtils::isHiddenNumber, NumberUtils::normalizeNumber,
                 communityDatabase, featuredDatabase, contactsProvider, blacklistService);
         numberInfoService.setPhoneBlockList(phoneBlockList);
+        numberInfoService.setPhoneBlockPersonalLists(phoneBlockPersonalLists);
         numberInfoService.setWhitelist(new Whitelist(settings));
         YacbHolder.setNumberInfoService(numberInfoService);
 

@@ -139,6 +139,9 @@
     <string name="phone_block_rating_fraud">fraud</string>
     <string name="phone_block_rating_unknown">unwanted caller</string>
     <string name="phone_block_rating_legitimate">legitimate caller</string>
+    <string name="info_phone_block_personal_blocked">Blocked in your PhoneBlock account</string>
+    <string name="info_phone_block_personal_allowed">Allowed in your PhoneBlock account</string>
+    <string name="phone_block_personal_status">Your account: %1$d blocked, %2$d allowed</string>
     <string name="phone_block_report_action">Report</string>
     <string name="phone_block_report_title_short">Report to PhoneBlock</string>
     <string name="phone_block_report_title">Report %1$s</string>
@@ -297,6 +300,7 @@
     <string name="info_in_blacklist_contact">In blacklist (contacts are not blocked)</string>
     <string name="add_to_contacts">Add to contacts</string>
     <string name="add_to_blacklist">Add to blacklist</string>
+    <string name="edit_blacklist_entry">Edit blacklist entry</string>
 
     <string name="open_db_management_activity">Manage database</string>
     <string name="db_management_activity_label">DB management</string>

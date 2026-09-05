@@ -3,6 +3,7 @@ package dummydomain.yetanothercallblocker.data;
 import android.text.TextUtils;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +98,11 @@ public class PhoneBlockService {
 
     private static final String ENDPOINT_RATE = "rate";
     private static final String ENDPOINT_TEST_CONNECT = "test-connect";
+    private static final String ENDPOINT_PERSONAL_BLACKLIST = "blacklist";
+    private static final String ENDPOINT_PERSONAL_WHITELIST = "whitelist";
+
+    /** The user's own lists are small, so they are fetched daily like the community changes. */
+    private static final long PERSONAL_UPDATE_INTERVAL = TimeUnit.HOURS.toMillis(23);
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
@@ -106,10 +112,13 @@ public class PhoneBlockService {
 
     private final Settings settings;
     private final PhoneBlockList list;
+    private final PhoneBlockPersonalLists personalLists;
 
-    public PhoneBlockService(Settings settings, PhoneBlockList list) {
+    public PhoneBlockService(Settings settings, PhoneBlockList list,
+                             PhoneBlockPersonalLists personalLists) {
         this.settings = settings;
         this.list = list;
+        this.personalLists = personalLists;
     }
 
     /** Whether an update would be fetched now. */
@@ -235,6 +244,95 @@ public class PhoneBlockService {
 
         LOG.info("apply() the list holds {} numbers", list.getSize());
         return new Result(Status.UPDATED, list.getSize());
+    }
+
+    /**
+     * Fetches the lists of the user's own account.
+     *
+     * <p>The community list doesn't carry them: a number the user blocked on the PhoneBlock
+     * website is only in their account, and it is meant to win over what the community says.
+     *
+     * @param force whether to fetch even if they were fetched recently
+     */
+    public Status updatePersonalLists(boolean force) {
+        LOG.debug("updatePersonalLists({})", force);
+
+        if (personalLists == null) return Status.NOT_CONFIGURED;
+
+        if (!canReport()) { // the lists belong to an account, so there's nothing to fetch without one
+            if (!personalLists.isEmpty()) {
+                LOG.info("updatePersonalLists() there's no account any more, dropping the lists");
+                personalLists.clear();
+            }
+            return Status.NOT_CONFIGURED;
+        }
+
+        if (!force) {
+            long due = settings.getPhoneBlockPersonalNextUpdateTime();
+            if (due > 0 && System.currentTimeMillis() < due) {
+                LOG.debug("updatePersonalLists() not due yet");
+                return Status.NOT_DUE;
+            }
+        }
+
+        try {
+            List<Long> blocked = fetchPersonalList(ENDPOINT_PERSONAL_BLACKLIST);
+            if (blocked == null) return Status.FAILED;
+
+            List<Long> allowed = fetchPersonalList(ENDPOINT_PERSONAL_WHITELIST);
+            if (allowed == null) return Status.FAILED;
+
+            personalLists.apply(blocked, allowed);
+
+            settings.setPhoneBlockPersonalNextUpdateTime(
+                    System.currentTimeMillis() + PERSONAL_UPDATE_INTERVAL
+                            + (long) (RANDOM.nextDouble() * UPDATE_INTERVAL_SPREAD));
+
+            LOG.info("updatePersonalLists() {} blocked, {} allowed", blocked.size(), allowed.size());
+            return Status.UPDATED;
+        } catch (Exception e) {
+            LOG.error("updatePersonalLists() failed", e);
+            return Status.FAILED;
+        }
+    }
+
+    /** @return the numbers of one of the account's lists, or null if it couldn't be fetched */
+    private List<Long> fetchPersonalList(String endpoint) throws IOException {
+        HttpUrl url = apiUrl(endpoint);
+        if (url == null) return null;
+
+        try (Response response = newClient(60).newCall(newRequest(url).build()).execute()) {
+            if (!response.isSuccessful()) {
+                LOG.warn("fetchPersonalList({}) the server answered {}", endpoint, response.code());
+
+                if (isUnauthorized(response.code())) noteTokenRejected();
+
+                return null;
+            }
+
+            noteTokenAccepted();
+
+            ResponseBody body = response.body();
+            if (body == null) return null;
+
+            List<Long> numbers = new ArrayList<>();
+
+            JSONArray entries = new JSONObject(body.string()).optJSONArray("numbers");
+            int count = entries != null ? Math.min(entries.length(), MAX_ENTRIES) : 0;
+
+            for (int i = 0; i < count; i++) {
+                JSONObject entry = entries.optJSONObject(i);
+                if (entry == null) continue;
+
+                long number = parseNumber(entry.optString("phone"));
+                if (number > 0) numbers.add(number);
+            }
+
+            return numbers;
+        } catch (JSONException e) {
+            LOG.error("fetchPersonalList({}) couldn't read the answer", endpoint, e);
+            return null;
+        }
     }
 
     /**

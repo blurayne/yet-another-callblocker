@@ -33,6 +33,10 @@ public class NumberInfo {
     public BlacklistItem blacklistItem;
     /** What the PhoneBlock community list says about the number, null if it doesn't know it. */
     public PhoneBlockList.Rating phoneBlockRating;
+    /** Whether the number is on the blacklist of the user's own PhoneBlock account. */
+    public boolean phoneBlockPersonalBlocked;
+    /** Whether the number is on the whitelist of the user's own PhoneBlock account. */
+    public boolean phoneBlockPersonalAllowed;
 
     // computed rating
     public Rating rating = Rating.UNKNOWN;

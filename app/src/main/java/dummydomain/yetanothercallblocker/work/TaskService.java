@@ -155,8 +155,11 @@ public class TaskService extends IntentService {
     }
 
     private void updatePhoneBlock() {
-        PhoneBlockService.Result result = new PhoneBlockService(
-                App.getSettings(), YacbHolder.getPhoneBlockList()).update(true);
+        PhoneBlockService service = new PhoneBlockService(App.getSettings(),
+                YacbHolder.getPhoneBlockList(), YacbHolder.getPhoneBlockPersonalLists());
+
+        PhoneBlockService.Result result = service.update(true);
+        service.updatePersonalLists(true);
 
         // the update may have run into a token that isn't accepted any more
         PhoneBlockHelper.checkTokenIfDue(getApplicationContext(), App.getSettings());

@@ -33,6 +33,25 @@ public class NumberInfoUtils {
         return null;
     }
 
+    /**
+     * What PhoneBlock says about the number, the user's own lists first, or null if nothing.
+     */
+    public static String getPhoneBlockStatus(Context context, NumberInfo numberInfo) {
+        if (numberInfo.phoneBlockPersonalAllowed) {
+            return context.getString(R.string.info_phone_block_personal_allowed);
+        }
+
+        if (numberInfo.phoneBlockPersonalBlocked) {
+            return context.getString(R.string.info_phone_block_personal_blocked);
+        }
+
+        if (numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam()) {
+            return getPhoneBlockDescription(context, numberInfo.phoneBlockRating);
+        }
+
+        return null;
+    }
+
     /** What the PhoneBlock community says the number is used for. */
     public static String getPhoneBlockDescription(Context context, PhoneBlockList.Rating rating) {
         return context.getString(R.string.phone_block_description,

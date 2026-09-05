@@ -59,6 +59,8 @@ public class Settings extends GenericSettings {
     public static final String PREF_PHONE_BLOCK_LAST_UPDATE_TIME = "phoneBlockLastUpdateTime";
     public static final String PREF_PHONE_BLOCK_LAST_FULL_UPDATE_TIME = "phoneBlockLastFullUpdateTime";
     public static final String PREF_PHONE_BLOCK_NEXT_UPDATE_TIME = "phoneBlockNextUpdateTime";
+    public static final String PREF_PHONE_BLOCK_PERSONAL_NEXT_UPDATE_TIME
+            = "phoneBlockPersonalNextUpdateTime";
     public static final String PREF_PHONE_BLOCK_TOKEN_VALID = "phoneBlockTokenValid";
     public static final String PREF_PHONE_BLOCK_LAST_TOKEN_CHECK_TIME = "phoneBlockLastTokenCheckTime";
     public static final String PREF_PHONE_BLOCK_TOKEN_PROBLEM_NOTIFIED
@@ -230,6 +232,15 @@ public class Settings extends GenericSettings {
         setLong(PREF_PHONE_BLOCK_NEXT_UPDATE_TIME, time);
     }
 
+    /** When the lists of the user's own PhoneBlock account are fetched again. */
+    public long getPhoneBlockPersonalNextUpdateTime() {
+        return getLong(PREF_PHONE_BLOCK_PERSONAL_NEXT_UPDATE_TIME, 0);
+    }
+
+    public void setPhoneBlockPersonalNextUpdateTime(long time) {
+        setLong(PREF_PHONE_BLOCK_PERSONAL_NEXT_UPDATE_TIME, time);
+    }
+
     /** Whether the API token was accepted the last time it was used. */
     public boolean getPhoneBlockTokenValid() {
         return getBoolean(PREF_PHONE_BLOCK_TOKEN_VALID, true);
@@ -261,6 +272,7 @@ public class Settings extends GenericSettings {
         setPhoneBlockTokenValid(true);
         setPhoneBlockLastTokenCheckTime(0);
         setPhoneBlockTokenProblemNotified(false);
+        setPhoneBlockPersonalNextUpdateTime(0); // the lists belong to whoever the token belongs to
     }
 
     public boolean getCallBlockingEnabled() {

@@ -62,7 +62,7 @@ public class NumberInfoUtils {
         if (!numberInfo.whitelisted) return null;
 
         return withEntry(context, context.getString(R.string.info_whitelisted),
-                numberInfo.whitelistEntry, numberInfo.number);
+                numberInfo.whitelistItem.getPattern(), numberInfo.number);
     }
 
     /**

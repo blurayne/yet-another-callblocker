@@ -72,6 +72,10 @@ public class InfoDialogHelper {
                 ? numberInfo.blacklistItem.getName() : null;
         setText(view, R.id.blacklist_name, blacklistName);
 
+        String whitelistName = numberInfo.whitelistItem != null
+                ? numberInfo.whitelistItem.getName() : null;
+        setText(view, R.id.whitelist_name, whitelistName);
+
         // the lists the number is on, each with the entry that matched when it isn't the
         // number itself - a pattern covering the number is worth knowing about
         setText(view, R.id.whitelisted, NumberInfoUtils.getWhitelistStatus(context, numberInfo));
@@ -110,11 +114,25 @@ public class InfoDialogHelper {
 
         String number = numberInfo.number;
 
-        // the number can be turned into a pattern before it is added; the dialog stays until
-        // that is done, so that going back returns to it
+        // a new entry starts out with what the number is known as
+        String suggestedName = numberInfo.contactItem != null
+                ? numberInfo.contactItem.displayName
+                : numberInfo.featuredDatabaseItem != null
+                ? numberInfo.featuredDatabaseItem.getName() : null;
+
+        // the entry is opened for editing first, so that the number can be given a name or
+        // turned into a pattern before it is saved - the way the blacklist works
         bindAction(view, R.id.action_whitelist, R.drawable.ic_check_24dp,
-                R.string.add_to_whitelist, !numberInfo.whitelisted,
-                () -> WhitelistDialogHelper.showAddDialog(context, number, dialog::dismiss));
+                numberInfo.whitelisted
+                        ? R.string.edit_whitelist_entry : R.string.add_to_whitelist, true,
+                () -> {
+                    context.startActivity(numberInfo.whitelisted
+                            ? EditWhitelistItemActivity.getEditIntent(
+                                    context, numberInfo.whitelistItem.getPattern())
+                            : EditWhitelistItemActivity.getIntent(
+                                    context, suggestedName, number));
+                    dialog.dismiss();
+                });
 
         bindAction(view, R.id.action_blacklist, R.drawable.ic_brick_24dp,
                 numberInfo.blacklistItem != null

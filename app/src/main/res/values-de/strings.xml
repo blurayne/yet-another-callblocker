@@ -132,7 +132,7 @@
     <string name="add_to_blacklist">Zur schwarzen Liste hinzufügen</string>
     <string name="edit_blacklist_entry">Eintrag der schwarzen Liste bearbeiten</string>
     <string name="add_to_whitelist">Zur weißen Liste hinzufügen</string>
-    <string name="added_to_whitelist">Die Nummer wurde zur weißen Liste hinzugefügt.</string>
+    <string name="edit_whitelist_entry">Eintrag der weißen Liste bearbeiten</string>
     <string name="add_to_contacts">Zu den Kontakten hinzufügen</string>
 
     <!-- Schwarze Liste -->
@@ -170,12 +170,13 @@
     <string name="title_whitelist_activity">Weiße Liste</string>
     <string name="whitelist_empty">Die weiße Liste ist noch leer. Nummern auf ihr werden nie blockiert, egal was sonst über sie bekannt ist – und eine Nummer, die hier eingetragen wird, verschwindet von der schwarzen Liste.</string>
     <string name="whitelist_add">Hinzufügen</string>
-    <string name="whitelist_remove">Entfernen</string>
-    <string name="whitelist_add_title">Zur weißen Liste hinzufügen</string>
-    <string name="whitelist_edit_title">Eintrag bearbeiten</string>
-    <string name="whitelist_entry_hint">Nummer oder Muster</string>
-    <string name="whitelist_pattern_help">Ersetzen Sie die letzten Ziffern durch *, um einen ganzen Nummernbereich zuzulassen (+4940655801* lässt jede Durchwahl durch); # steht für genau eine Ziffer. Die weiße Liste hat Vorrang vor allen anderen Listen.</string>
-    <string name="whitelist_delete_confirmation">%1$s von der weißen Liste entfernen?</string>
+    <string name="whitelist_select_all">Alle auswählen</string>
+    <string name="whitelist_delete">Löschen</string>
+    <string name="whitelist_delete_confirmation">Die ausgewählten Einträge löschen?</string>
+    <string name="title_add_whitelist_item_activity">Nummer hinzufügen</string>
+    <string name="title_edit_whitelist_item_activity">Nummer bearbeiten</string>
+    <string name="whitelist_pattern_in_use">Ein anderer Eintrag hat bereits dieses Muster</string>
+    <string name="whitelist_pattern_help">Nummern auf der weißen Liste werden nie blockiert, und eine Nummer, die hier eingetragen wird, verschwindet von der schwarzen Liste. Ersetzen Sie die letzten Ziffern durch *, um einen ganzen Nummernbereich zuzulassen (+4940655801* lässt jede Durchwahl durch).</string>
 
     <!-- Einstellungen -->
     <string name="title_settings_activity">Einstellungen</string>

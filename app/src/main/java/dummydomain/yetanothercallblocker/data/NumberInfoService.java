@@ -93,8 +93,8 @@ public class NumberInfoService {
         LOG.trace("getNumberInfo() contactItem={}", numberInfo.contactItem);
 
         if (whitelist != null) {
-            numberInfo.whitelistEntry = whitelist.getMatch(number);
-            numberInfo.whitelisted = numberInfo.whitelistEntry != null;
+            numberInfo.whitelistItem = whitelist.getMatch(number);
+            numberInfo.whitelisted = numberInfo.whitelistItem != null;
         }
         LOG.trace("getNumberInfo() whitelisted={}", numberInfo.whitelisted);
 

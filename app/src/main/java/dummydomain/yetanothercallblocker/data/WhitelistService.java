@@ -5,6 +5,8 @@ import android.text.TextUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import dummydomain.yetanothercallblocker.Settings;
@@ -32,62 +34,94 @@ public class WhitelistService {
         this.blacklistService = blacklistService;
     }
 
-    /** The entries, sorted. */
-    public List<String> getEntries() {
-        return Whitelist.parseSorted(settings.getWhitelist());
+    /** The entries, in the order the screens show them. */
+    public List<WhitelistItem> getItems() {
+        return Whitelist.parse(settings.getWhitelist());
     }
 
-    /** Whether the entry is on the list as it is. */
-    public boolean contains(String entry) {
-        return Whitelist.contains(settings.getWhitelist(), entry);
+    public int getCount() {
+        return getItems().size();
+    }
+
+    /** The entry with this pattern, or null if there is none. */
+    public WhitelistItem findByPattern(String pattern) {
+        pattern = Whitelist.normalize(pattern);
+
+        for (WhitelistItem item : getItems()) {
+            if (item.getPattern().equals(pattern)) return item;
+        }
+
+        return null;
+    }
+
+    public boolean contains(String pattern) {
+        return findByPattern(pattern) != null;
     }
 
     /**
-     * Adds an entry, and takes the same entry off the blacklist.
+     * Adds an entry, and takes the same pattern off the blacklist.
      *
-     * @return whether the entry was added (it isn't when it's empty or already there)
+     * @return whether the entry was added (it isn't when it's unusable or already there)
      */
-    public boolean add(String entry) {
-        entry = Whitelist.normalize(entry);
-        if (entry.isEmpty()) return false;
+    public boolean add(WhitelistItem item) {
+        if (!item.isValid()) return false;
 
-        String value = settings.getWhitelist();
-        String newValue = Whitelist.add(value, entry);
-        if (TextUtils.equals(value, newValue)) return false;
+        List<WhitelistItem> items = getItems();
+        if (contains(items, item.getPattern())) return false;
 
         LOG.debug("add() adding an entry");
 
-        settings.setWhitelist(newValue);
-        takeOffBlacklist(entry);
+        items.add(item);
+        save(items);
 
-        postEvent(new WhitelistChangedEvent());
+        takeOffBlacklist(item.getPattern());
+
         return true;
     }
 
-    /** Replaces an entry with an edited one; the new one is taken off the blacklist. */
-    public void replace(String oldEntry, String newEntry) {
-        String value = settings.getWhitelist();
-        String newValue = Whitelist.replace(value, oldEntry, newEntry);
-        if (TextUtils.equals(value, newValue)) return;
+    /**
+     * Replaces an entry with an edited one; the new pattern is taken off the blacklist.
+     *
+     * @param oldPattern the pattern the entry had before it was edited
+     * @return whether the entry was saved (it isn't when the new pattern is already used)
+     */
+    public boolean replace(String oldPattern, WhitelistItem item) {
+        if (!item.isValid()) return false;
+
+        oldPattern = Whitelist.normalize(oldPattern);
+
+        List<WhitelistItem> items = getItems();
+
+        if (!item.getPattern().equals(oldPattern) && contains(items, item.getPattern())) {
+            LOG.info("replace() not saving because another entry has the same pattern");
+            return false;
+        }
 
         LOG.debug("replace() replacing an entry");
 
-        settings.setWhitelist(newValue);
-        takeOffBlacklist(Whitelist.normalize(newEntry));
+        remove(items, oldPattern);
+        items.add(item);
+        save(items);
 
-        postEvent(new WhitelistChangedEvent());
+        takeOffBlacklist(item.getPattern());
+
+        return true;
     }
 
-    public void remove(String entry) {
-        String value = settings.getWhitelist();
-        String newValue = Whitelist.remove(value, entry);
-        if (TextUtils.equals(value, newValue)) return;
+    /** Removes the entries with these patterns. */
+    public void remove(Collection<String> patterns) {
+        List<WhitelistItem> items = getItems();
 
-        LOG.debug("remove() removing an entry");
+        boolean changed = false;
+        for (String pattern : patterns) {
+            changed |= remove(items, Whitelist.normalize(pattern));
+        }
 
-        settings.setWhitelist(newValue);
+        if (!changed) return;
 
-        postEvent(new WhitelistChangedEvent());
+        LOG.debug("remove() removing {} entries", patterns.size());
+
+        save(items);
     }
 
     /**
@@ -102,13 +136,39 @@ public class WhitelistService {
         if (!contains(entry)) return;
 
         LOG.info("removeExactPattern() the entry was put on the blacklist, taking it off");
-        remove(entry);
+
+        List<String> patterns = new ArrayList<>(1);
+        patterns.add(entry);
+        remove(patterns);
     }
 
-    private void takeOffBlacklist(String entry) {
-        if (blacklistService == null || entry.isEmpty()) return;
+    private void save(List<WhitelistItem> items) {
+        settings.setWhitelist(Whitelist.serialize(items));
 
-        blacklistService.removeExactPattern(BlacklistUtils.patternFromHumanReadable(entry));
+        postEvent(new WhitelistChangedEvent());
+    }
+
+    private void takeOffBlacklist(String pattern) {
+        if (blacklistService == null || pattern.isEmpty()) return;
+
+        blacklistService.removeExactPattern(BlacklistUtils.patternFromHumanReadable(pattern));
+    }
+
+    private static boolean contains(List<WhitelistItem> items, String pattern) {
+        for (WhitelistItem item : items) {
+            if (item.getPattern().equals(pattern)) return true;
+        }
+        return false;
+    }
+
+    private static boolean remove(List<WhitelistItem> items, String pattern) {
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).getPattern().equals(pattern)) {
+                items.remove(i);
+                return true;
+            }
+        }
+        return false;
     }
 
 }

@@ -2,11 +2,14 @@ package dummydomain.yetanothercallblocker.data;
 
 import android.text.TextUtils;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -15,21 +18,38 @@ import dummydomain.yetanothercallblocker.Settings;
 /**
  * The numbers that are never blocked, whatever else is known about them.
  *
- * <p>Written the way the blacklist patterns are written ({@code *} for any digits, {@code #} for
- * one), one per line, and kept in the settings rather than in the database: a whitelist is a
- * handful of numbers, and it has to be readable before the device is unlocked, like everything
+ * <p>The entries are written the way the blacklist patterns are ({@code *} for any digits,
+ * {@code #} for one) and are kept in the settings rather than in the database: a whitelist is a
+ * handful of entries, and it has to be readable before the device is unlocked, like everything
  * else a call is decided by.
  */
 public class Whitelist {
 
-    private static final Pattern SEPARATOR = Pattern.compile("[\\n,;]");
+    /** Named entries first, by name; the rest by pattern - the way the blacklist is ordered. */
+    private static final Comparator<WhitelistItem> ORDER = (a, b) -> {
+        boolean aNamed = !TextUtils.isEmpty(a.getName());
+        boolean bNamed = !TextUtils.isEmpty(b.getName());
+
+        if (aNamed != bNamed) return aNamed ? -1 : 1;
+
+        int result = aNamed
+                ? a.getName().compareToIgnoreCase(b.getName()) : 0;
+
+        return result != 0 ? result : a.getPattern().compareTo(b.getPattern());
+    };
+
+    private static final String JSON_NAME = "name";
+    private static final String JSON_PATTERN = "pattern";
+
+    /** How the entries were written before they could have names. */
+    private static final Pattern LEGACY_SEPARATOR = Pattern.compile("[\\n,;]");
 
     private static final Logger LOG = LoggerFactory.getLogger(Whitelist.class);
 
     private final Settings settings;
 
     private String source;
-    private List<String> entries = Collections.emptyList();
+    private List<WhitelistItem> items = Collections.emptyList();
     private List<Pattern> patterns = Collections.emptyList();
 
     public Whitelist(Settings settings) {
@@ -47,7 +67,7 @@ public class Whitelist {
      * <p>An entry that is the number itself wins over a pattern that merely covers it, so that
      * the screens can say which one applies.
      */
-    public synchronized String getMatch(String number) {
+    public synchronized WhitelistItem getMatch(String number) {
         if (TextUtils.isEmpty(number)) return null;
 
         checkParsed();
@@ -55,15 +75,15 @@ public class Whitelist {
 
         String cleanNumber = BlacklistUtils.cleanNumber(number);
 
-        String match = null;
+        WhitelistItem match = null;
 
         for (int i = 0; i < patterns.size(); i++) {
             if (!patterns.get(i).matcher(cleanNumber).matches()) continue;
 
-            String entry = entries.get(i);
-            if (entry.equals(cleanNumber)) return entry; // the number itself
+            WhitelistItem item = items.get(i);
+            if (item.isExactly(cleanNumber)) return item; // the number itself
 
-            if (match == null) match = entry;
+            if (match == null) match = item;
         }
 
         if (match != null) LOG.debug("getMatch() the number is whitelisted");
@@ -71,83 +91,75 @@ public class Whitelist {
         return match;
     }
 
-    /** Turns what the user typed into an entry, or an empty string if nothing is left. */
-    public static String normalize(String entry) {
-        if (TextUtils.isEmpty(entry)) return "";
+    /** Turns what the user typed into a pattern, or an empty string if nothing is left. */
+    public static String normalize(String pattern) {
+        if (TextUtils.isEmpty(pattern)) return "";
 
-        return BlacklistUtils.patternToHumanReadable(BlacklistUtils.cleanPattern(entry.trim()));
+        return BlacklistUtils.patternToHumanReadable(BlacklistUtils.cleanPattern(pattern.trim()));
     }
 
-    /** Whether the entry is one that can match something. */
-    public static boolean isValid(String entry) {
-        return BlacklistUtils.isValidPattern(BlacklistUtils.patternFromHumanReadable(entry));
-    }
+    /** The entries, in the order the screens show them. */
+    public static List<WhitelistItem> parse(String value) {
+        List<WhitelistItem> items = new ArrayList<>();
 
-    /** The entries as they are kept, in order. */
-    public static List<String> parse(String value) {
-        List<String> result = new ArrayList<>();
+        if (TextUtils.isEmpty(value)) return items;
 
-        if (TextUtils.isEmpty(value)) return result;
+        if (value.trim().startsWith("[")) {
+            try {
+                JSONArray array = new JSONArray(value);
 
-        for (String entry : SEPARATOR.split(value)) {
-            entry = normalize(entry);
-            if (!entry.isEmpty() && !result.contains(entry)) result.add(entry);
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject entry = array.optJSONObject(i);
+                    if (entry == null) continue;
+
+                    add(items, new WhitelistItem(
+                            entry.optString(JSON_NAME), entry.optString(JSON_PATTERN)));
+                }
+            } catch (Exception e) {
+                LOG.error("parse() couldn't read the whitelist", e);
+            }
+        } else {
+            // the entries as they were written before they could have names
+            for (String pattern : LEGACY_SEPARATOR.split(value)) {
+                add(items, new WhitelistItem(null, pattern));
+            }
         }
 
-        return result;
+        Collections.sort(items, ORDER);
+
+        return items;
     }
 
-    /** The entries in the order the screens show them. */
-    public static List<String> parseSorted(String value) {
-        List<String> entries = parse(value);
-        Collections.sort(entries);
-        return entries;
+    /** Turns the entries back into what is kept in the settings. */
+    public static String serialize(List<WhitelistItem> items) {
+        JSONArray array = new JSONArray();
+
+        for (WhitelistItem item : items) {
+            if (item.getPattern().isEmpty()) continue;
+
+            try {
+                JSONObject entry = new JSONObject();
+                entry.put(JSON_PATTERN, item.getPattern());
+                if (!TextUtils.isEmpty(item.getName())) entry.put(JSON_NAME, item.getName());
+
+                array.put(entry);
+            } catch (Exception e) {
+                LOG.error("serialize() couldn't write an entry", e);
+            }
+        }
+
+        return array.length() != 0 ? array.toString() : "";
     }
 
-    /** Turns entries back into what is kept in the settings. */
-    public static String join(List<String> entries) {
-        return TextUtils.join("\n", entries);
-    }
+    /** @return whether the entry was added (it isn't when it's empty or already there) */
+    private static boolean add(List<WhitelistItem> items, WhitelistItem item) {
+        if (item.getPattern().isEmpty()) return false;
 
-    /** Adds an entry, keeping what is already there. */
-    public static String add(String value, String entry) {
-        List<String> entries = parseSorted(value);
+        for (WhitelistItem existing : items) {
+            if (existing.getPattern().equals(item.getPattern())) return false;
+        }
 
-        entry = normalize(entry);
-        if (entry.isEmpty() || entries.contains(entry)) return value;
-
-        entries.add(entry);
-        Collections.sort(entries);
-
-        return join(entries);
-    }
-
-    /** Removes an entry, if it is there. */
-    public static String remove(String value, String entry) {
-        List<String> entries = parseSorted(value);
-
-        if (!entries.remove(normalize(entry))) return value;
-
-        return join(entries);
-    }
-
-    /** Replaces an entry with another one (the same one edited, usually). */
-    public static String replace(String value, String oldEntry, String newEntry) {
-        List<String> entries = parseSorted(value);
-
-        entries.remove(normalize(oldEntry));
-
-        newEntry = normalize(newEntry);
-        if (!newEntry.isEmpty() && !entries.contains(newEntry)) entries.add(newEntry);
-
-        Collections.sort(entries);
-
-        return join(entries);
-    }
-
-    /** Whether the entry is there as it is (rather than covered by a pattern). */
-    public static boolean contains(String value, String entry) {
-        return parse(value).contains(normalize(entry));
+        return items.add(item);
     }
 
     private void checkParsed() {
@@ -156,18 +168,19 @@ public class Whitelist {
 
         source = value;
 
-        List<String> entries = new ArrayList<>();
+        List<WhitelistItem> items = new ArrayList<>();
         List<Pattern> patterns = new ArrayList<>();
 
-        for (String entry : parse(value)) {
-            Pattern pattern = toPattern(BlacklistUtils.patternFromHumanReadable(entry));
+        for (WhitelistItem item : parse(value)) {
+            Pattern pattern = toPattern(
+                    BlacklistUtils.patternFromHumanReadable(item.getPattern()));
             if (pattern == null) continue;
 
-            entries.add(entry);
+            items.add(item);
             patterns.add(pattern);
         }
 
-        this.entries = entries;
+        this.items = items;
         this.patterns = patterns;
 
         LOG.debug("checkParsed() {} patterns", patterns.size());

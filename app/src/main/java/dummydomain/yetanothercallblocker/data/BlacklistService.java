@@ -4,8 +4,11 @@ import android.text.TextUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import dummydomain.yetanothercallblocker.data.db.BlacklistDao;
 import dummydomain.yetanothercallblocker.data.db.BlacklistItem;
@@ -25,8 +28,19 @@ public class BlacklistService {
 
     private WhitelistService whitelistService;
 
+    /**
+     * How many entries the app is willing to match itself. A list longer than this stays with
+     * the database, which matches the same patterns apart from the alternatives (those are
+     * looked up separately either way).
+     */
+    private static final int FULL_MATCHING_LIMIT = 20000;
+
     /** Whether any pattern has alternatives in it; null until it has been looked up. */
     private volatile Boolean hasAlternatives;
+
+    /** The list as the app matches it itself, with the patterns compiled; null until needed. */
+    private volatile List<BlacklistItem> validItems;
+    private final Map<String, Pattern> compiledPatterns = new HashMap<>();
 
     public BlacklistService(Callback callback, BlacklistDao blacklistDao) {
         this.callback = callback;
@@ -61,6 +75,63 @@ public class BlacklistService {
         }
 
         return null;
+    }
+
+    /**
+     * The entry for a number, matched by the app itself: every wildcard a pattern may contain
+     * works here, in either notation, and an entry that is the number itself is preferred over
+     * a pattern that merely covers it, so the screens can say which entry applies.
+     *
+     * @param numberVariants the forms of the number, cleaned, the number itself first
+     */
+    public BlacklistItem getFullMatch(List<String> numberVariants) {
+        if (numberVariants == null || numberVariants.isEmpty()) return null;
+
+        List<BlacklistItem> items = getValidItems();
+        if (items == null) return getBlacklistItemForNumber(numberVariants); // too long to match here
+
+        BlacklistItem match = null;
+
+        for (String number : numberVariants) {
+            for (BlacklistItem item : items) {
+                String pattern = item.getPattern();
+                if (TextUtils.isEmpty(pattern)) continue;
+
+                if (pattern.equals(number)) return item; // the number itself
+
+                if (match == null) {
+                    Pattern compiled = getCompiledPattern(pattern);
+                    if (compiled != null && compiled.matcher(number).matches()) match = item;
+                }
+            }
+        }
+
+        return match;
+    }
+
+    /** The valid entries, kept until the list changes, or null if there are too many of them. */
+    private List<BlacklistItem> getValidItems() {
+        List<BlacklistItem> items = validItems;
+
+        if (items == null) {
+            if (blacklistDao.countValid() > FULL_MATCHING_LIMIT) return null;
+
+            validItems = items = blacklistDao.findAllValid();
+        }
+
+        return items;
+    }
+
+    private Pattern getCompiledPattern(String pattern) {
+        synchronized (compiledPatterns) {
+            Pattern compiled = compiledPatterns.get(pattern);
+
+            if (compiled == null && !compiledPatterns.containsKey(pattern)) {
+                compiledPatterns.put(pattern, compiled = BlacklistUtils.compilePattern(pattern));
+            }
+
+            return compiled;
+        }
     }
 
     private BlacklistItem getMatch(String cleanNumber) {
@@ -163,7 +234,13 @@ public class BlacklistService {
     }
 
     private void blacklistChanged(boolean itemUpdate) {
-        hasAlternatives = null; // a pattern may have been added or changed
+        // a pattern may have been added or changed, so nothing kept about them is valid now
+        hasAlternatives = null;
+        validItems = null;
+        synchronized (compiledPatterns) {
+            compiledPatterns.clear();
+        }
+
         callback.changed(blacklistDao.countValid() != 0);
 
         postEvent(itemUpdate ? new BlacklistItemChangedEvent() : new BlacklistChangedEvent());

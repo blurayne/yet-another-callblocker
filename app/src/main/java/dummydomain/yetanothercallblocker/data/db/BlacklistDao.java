@@ -100,6 +100,19 @@ public class BlacklistDao {
     }
 
     /**
+     * Every valid item, for matching a number in the app rather than in the database.
+     *
+     * <p>{@code LIKE} only knows the wildcards the database has; the app knows all of them,
+     * so the screens match the list themselves.
+     */
+    public List<BlacklistItem> findAllValid() {
+        return getBlacklistItemDao().queryBuilder()
+                .where(BlacklistItemDao.Properties.Invalid.notEq(true))
+                .orderAsc(BlacklistItemDao.Properties.CreationDate)
+                .list();
+    }
+
+    /**
      * The valid items whose pattern offers alternatives.
      *
      * <p>{@code LIKE} knows nothing about {@code {30,40}}, so those are matched in the app.

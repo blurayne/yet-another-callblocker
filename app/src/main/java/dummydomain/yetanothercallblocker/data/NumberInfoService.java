@@ -182,7 +182,15 @@ public class NumberInfoService {
         if (blacklistService != null && (full || settings.getBlacklistIsNotEmpty())) {
             // avoid loading blacklist if blocking for other reason
             if (full || getBlockingReason(numberInfo) == null) {
-                numberInfo.blacklistItem = blacklistService.getBlacklistItemForNumber(numberVariants);
+                /*
+                 * The full lookup matches the list in the app, where every wildcard works and
+                 * the entry that is the number itself wins over one that merely covers it;
+                 * the answer-only lookup leaves the matching to the database, which is cheaper
+                 * during a call.
+                 */
+                numberInfo.blacklistItem = full
+                        ? blacklistService.getFullMatch(numberVariants)
+                        : blacklistService.getBlacklistItemForNumber(numberVariants);
             }
         }
         LOG.trace("getNumberInfo() blacklistItem={}", numberInfo.blacklistItem);

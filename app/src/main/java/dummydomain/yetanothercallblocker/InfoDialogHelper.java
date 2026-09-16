@@ -149,13 +149,23 @@ public class InfoDialogHelper {
                     dialog.dismiss();
                 });
 
+        // the entry that matched is the one opened for editing - a pattern covering the number
+        // is edited where it is, rather than shadowed by a second entry for this one number
         bindAction(view, R.id.action_blacklist, R.drawable.ic_brick_24dp,
                 numberInfo.blacklistItem != null
                         ? R.string.edit_blacklist_entry : R.string.add_to_blacklist,
                 true, () -> {
-                    FeaturedDatabaseItem featuredItem = numberInfo.featuredDatabaseItem;
-                    String name = featuredItem != null ? featuredItem.getName() : null;
-                    context.startActivity(EditBlacklistItemActivity.getIntent(context, name, number));
+                    Intent intent;
+                    if (numberInfo.blacklistItem != null) {
+                        intent = EditBlacklistItemActivity.getIntent(
+                                context, numberInfo.blacklistItem.getId());
+                    } else {
+                        FeaturedDatabaseItem featuredItem = numberInfo.featuredDatabaseItem;
+                        String name = featuredItem != null ? featuredItem.getName() : null;
+                        intent = EditBlacklistItemActivity.getIntent(context, name, number);
+                    }
+
+                    context.startActivity(intent);
                     dialog.dismiss();
                 });
 

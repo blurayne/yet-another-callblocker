@@ -22,8 +22,14 @@ import java.util.regex.Pattern;
  */
 public class BlacklistUtils {
 
-    /** The characters a pattern is made of, besides the groups of alternatives. */
-    private static final String PATTERN_CHARS = "0123456789%_";
+    /**
+     * The characters a pattern is made of, besides the groups of alternatives.
+     *
+     * <p>Both notations are accepted: the stored one ({@code %} and {@code _}) and the one the
+     * user writes ({@code *} and {@code #}), so that a pattern matches whichever way it got
+     * into the list.
+     */
+    private static final String PATTERN_CHARS = "0123456789%_*#";
 
     /** The characters a regular expression gives a meaning of its own. */
     private static final String REGEX_SPECIAL_CHARS = "\\^$.|?*+()[]{}";
@@ -113,7 +119,7 @@ public class BlacklistUtils {
         return !TextUtils.isEmpty(pattern) && pattern.indexOf('{') != -1;
     }
 
-    /** Whether the pattern covers the number, the way the database would match it. */
+    /** Whether the pattern covers the number, with every wildcard the app knows. */
     public static boolean matches(String pattern, String cleanNumber) {
         if (TextUtils.isEmpty(pattern) || TextUtils.isEmpty(cleanNumber)) return false;
 
@@ -176,9 +182,9 @@ public class BlacklistUtils {
 
     /** Appends one character of a pattern: a wildcard as one, anything else as itself. */
     private static void appendChar(StringBuilder builder, char c) {
-        if (c == '%') {
+        if (c == '%' || c == '*') {
             builder.append(".*"); // any digits, or none
-        } else if (c == '_') {
+        } else if (c == '_' || c == '#') {
             builder.append('.'); // exactly one
         } else {
             if (REGEX_SPECIAL_CHARS.indexOf(c) != -1) builder.append('\\');

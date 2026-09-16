@@ -216,7 +216,8 @@
     <string name="block_phone_block">Nummern aus der Liste blockieren</string>
     <string name="block_phone_block_summary">Anrufe von Nummern blockieren, vor denen die PhoneBlock-Community warnt, statt nur anzuzeigen, was sie über sie sagt. Kontakte werden nie blockiert</string>
     <string name="phone_block_token">API-Token</string>
-    <string name="phone_block_token_summary">Das Token Ihres PhoneBlock-Kontos – nötig, falls die Liste nicht ohne heruntergeladen werden kann, und zum Melden von Nummern. Es wird auf der PhoneBlock-Website erstellt</string>
+    <string name="phone_block_token_summary">Das Token Ihres PhoneBlock-Kontos – nötig, falls die Liste nicht ohne heruntergeladen werden kann, und zum Melden von Nummern. Registrieren Sie sich auf phoneblock.net; das Token steht dann unter phoneblock.net/phoneblock/show-api-key</string>
+    <string name="phone_block_get_token">Token holen</string>
     <string name="phone_block_check_token">API-Token prüfen</string>
     <string name="phone_block_check_token_summary">Bei PhoneBlock nachfragen, ob das Token noch gültig ist. Das passiert einmal täglich auch von selbst</string>
     <string name="phone_block_checking_token">Token wird geprüft …</string>
@@ -224,7 +225,7 @@
     <string name="phone_block_token_missing">Es ist kein Token eingetragen.</string>
     <string name="phone_block_check_token_failed">Das Token konnte nicht geprüft werden – PhoneBlock war nicht erreichbar.</string>
     <string name="phone_block_token_invalid_title">Das PhoneBlock-Token funktioniert nicht mehr</string>
-    <string name="phone_block_token_invalid_text">PhoneBlock akzeptiert das API-Token nicht mehr. Erstellen Sie auf der PhoneBlock-Website ein neues und tragen Sie es in den Einstellungen ein.</string>
+    <string name="phone_block_token_invalid_text">PhoneBlock akzeptiert das API-Token nicht mehr. Holen Sie das aktuelle unter phoneblock.net/phoneblock/show-api-key und tragen Sie es in den Einstellungen ein.</string>
     <string name="phone_block_update">Liste jetzt aktualisieren</string>
     <string name="phone_block_updating">PhoneBlock-Liste wird aktualisiert …</string>
     <string name="phone_block_update_result">Die Liste enthält %1$d Nummern.</string>
@@ -255,7 +256,7 @@
     <string name="phone_block_report_done">Die Nummer wurde an PhoneBlock gemeldet.</string>
     <string name="phone_block_report_rejected">PhoneBlock hat die Meldung nicht angenommen.</string>
     <string name="phone_block_report_failed">Die Meldung konnte nicht gesendet werden.</string>
-    <string name="phone_block_report_no_token">Zum Melden ist ein PhoneBlock-Konto nötig: Tragen Sie dessen API-Token in den Einstellungen ein.</string>
+    <string name="phone_block_report_no_token">Zum Melden ist ein PhoneBlock-Konto nötig. Registrieren Sie sich auf phoneblock.net, holen Sie das Token unter phoneblock.net/phoneblock/show-api-key und tragen Sie es in den Einstellungen ein.</string>
 
     <string name="settings_category_caller_id">Anruferanzeige</string>
     <string name="caller_id_directory">Anruferinfo in der Telefon-App</string>

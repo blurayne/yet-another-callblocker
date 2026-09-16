@@ -455,8 +455,7 @@ public class PhoneBlockService {
     /**
      * The page about a number on the PhoneBlock website.
      *
-     * <p>Built from the configured API address, which points into the same installation:
-     * the API lives at {@code .../api/blocklist}, the pages at {@code .../nums/<number>}.
+     * <p>Built from the configured API address, which points into the same installation.
      *
      * @return null if there's no number or no usable address
      */
@@ -464,18 +463,36 @@ public class PhoneBlockService {
         String pageNumber = toPageNumber(number);
         if (pageNumber.isEmpty()) return null;
 
+        return webPageUrl("nums", pageNumber);
+    }
+
+    /**
+     * The page that shows the API token of the account, which is what the app needs to report
+     * a number - and to download the list, where the server asks for one.
+     */
+    public String getTokenPageUrl() {
+        return webPageUrl("show-api-key");
+    }
+
+    /** A page of the website the configured API address points into. */
+    private String webPageUrl(String... segments) {
         HttpUrl url = HttpUrl.parse(settings.getPhoneBlockUrl());
         if (url == null) url = HttpUrl.parse(DEFAULT_URL);
         if (url == null) return null;
 
-        List<String> segments = url.pathSegments();
+        List<String> pathSegments = url.pathSegments();
         HttpUrl.Builder builder = url.newBuilder().query(null);
 
-        for (int i = 0, drop = Math.min(2, segments.size()); i < drop; i++) {
-            builder.removePathSegment(segments.size() - 1 - i);
+        // the API lives under .../api/blocklist, the pages next to that
+        for (int i = 0, drop = Math.min(2, pathSegments.size()); i < drop; i++) {
+            builder.removePathSegment(pathSegments.size() - 1 - i);
         }
 
-        return builder.addPathSegment("nums").addPathSegment(pageNumber).build().toString();
+        for (String segment : segments) {
+            builder.addPathSegment(segment);
+        }
+
+        return builder.build().toString();
     }
 
     /** The pages know a number as {@code 004922147258578} rather than {@code +4922147258578}. */

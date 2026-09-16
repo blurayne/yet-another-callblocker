@@ -122,7 +122,7 @@
     <string name="block_phone_block">Block numbers from the list</string>
     <string name="block_phone_block_summary">Block calls from numbers the PhoneBlock community warns about, instead of only showing what it says about them. Contacts are never blocked</string>
     <string name="phone_block_token">API token</string>
-    <string name="phone_block_token_summary">The token of your PhoneBlock account, if the list can\'t be downloaded without one, and what reporting a number needs. It is created on the PhoneBlock website</string>
+    <string name="phone_block_token_summary">The token of your PhoneBlock account, if the list can\'t be downloaded without one, and what reporting a number needs. Register on phoneblock.net, then find it at phoneblock.net/phoneblock/show-api-key</string>
     <string name="phone_block_update">Update the list now</string>
     <string name="phone_block_updating">Updating the PhoneBlock list\u2026</string>
     <string name="phone_block_update_result">The list holds %1$d numbers.</string>
@@ -153,9 +153,10 @@
     <string name="phone_block_report_done">The number was reported to PhoneBlock.</string>
     <string name="phone_block_report_rejected">PhoneBlock didn\'t accept the report.</string>
     <string name="phone_block_report_failed">The report couldn\'t be sent.</string>
-    <string name="phone_block_report_no_token">Reporting needs a PhoneBlock account: put its API token in the settings.</string>
+    <string name="phone_block_report_no_token">Reporting needs a PhoneBlock account. Register on phoneblock.net, take the token from phoneblock.net/phoneblock/show-api-key and put it in the settings.</string>
     <string name="phone_block_token_invalid_title">The PhoneBlock token isn\'t working</string>
-    <string name="phone_block_token_invalid_text">PhoneBlock doesn\'t accept the API token any more. Create a new one on the PhoneBlock website and put it in the settings.</string>
+    <string name="phone_block_token_invalid_text">PhoneBlock doesn\'t accept the API token any more. Get the current one from phoneblock.net/phoneblock/show-api-key and put it in the settings.</string>
+    <string name="phone_block_get_token">Get a token</string>
     <string name="phone_block_check_token">Check the API token</string>
     <string name="phone_block_check_token_summary">Ask PhoneBlock whether the token still works. This happens once a day on its own</string>
     <string name="phone_block_checking_token">Checking the token\u2026</string>

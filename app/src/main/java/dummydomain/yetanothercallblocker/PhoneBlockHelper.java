@@ -213,6 +213,12 @@ public class PhoneBlockHelper {
         return settings != null ? newService(settings).getNumberPageUrl(number) : null;
     }
 
+    /** The address of the page that shows the API token of the user's PhoneBlock account. */
+    public static String getTokenPageUrl() {
+        Settings settings = App.getSettings();
+        return settings != null ? newService(settings).getTokenPageUrl() : null;
+    }
+
     private static PhoneBlockService newService(Settings settings) {
         return new PhoneBlockService(settings, YacbHolder.getPhoneBlockList(),
                 YacbHolder.getPhoneBlockPersonalLists());

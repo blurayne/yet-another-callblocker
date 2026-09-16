@@ -161,11 +161,21 @@ public class RootSettingsFragment extends BaseSettingsFragment {
                 });
 
         requirePreference(PREF_PHONE_BLOCK_INFO).setOnPreferenceClickListener(pref -> {
-            new AlertDialog.Builder(requireActivity())
+            String tokenPageUrl = PhoneBlockHelper.getTokenPageUrl();
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity())
                     .setTitle(R.string.settings_category_phone_block)
                     .setMessage(pref.getSummary())
-                    .setNegativeButton(R.string.back, null)
-                    .show();
+                    .setNegativeButton(R.string.back, null);
+
+            // the token is on a page of the account, which is easier opened than typed
+            if (tokenPageUrl != null) {
+                builder.setPositiveButton(R.string.phone_block_get_token, (d, w) ->
+                        IntentHelper.startActivity(requireContext(),
+                                IntentHelper.getWebIntent(tokenPageUrl)));
+            }
+
+            builder.show();
             return true;
         });
 

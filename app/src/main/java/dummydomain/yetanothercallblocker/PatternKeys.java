@@ -1,5 +1,7 @@
 package dummydomain.yetanothercallblocker;
 
+import android.text.InputType;
+import android.text.method.NumberKeyListener;
 import android.view.View;
 import android.widget.EditText;
 
@@ -17,18 +19,26 @@ public class PatternKeys {
      * @param field the field they write into
      */
     public static void setUp(View keys, EditText field) {
-        bind(keys, R.id.keyAnyDigits, field, "*", 1);
-        bind(keys, R.id.keyOneDigit, field, "#", 1);
-        bind(keys, R.id.keyGroup, field, "{}", 1); // the cursor lands between the braces
-        bind(keys, R.id.keyComma, field, ",", 1);
+        /*
+         * The keypad comes with a filter of its own that drops everything a phone number can't
+         * hold - including anything put in from here, which is how the braces went missing.
+         * This one asks for the same keypad but accepts what a pattern is made of.
+         */
+        field.setKeyListener(new PatternKeyListener());
+
+        bind(keys, R.id.keyAnyDigits, field, "*");
+        bind(keys, R.id.keyOneDigit, field, "#");
+        bind(keys, R.id.keyGroupOpen, field, "{");
+        bind(keys, R.id.keyGroupClose, field, "}");
+        bind(keys, R.id.keyComma, field, ",");
     }
 
-    private static void bind(View keys, int id, EditText field, String text, int cursorOffset) {
-        keys.findViewById(id).setOnClickListener(v -> insert(field, text, cursorOffset));
+    private static void bind(View keys, int id, EditText field, String text) {
+        keys.findViewById(id).setOnClickListener(v -> insert(field, text));
     }
 
     /** Puts the text where the cursor is, replacing what is selected. */
-    private static void insert(EditText field, String text, int cursorOffset) {
+    private static void insert(EditText field, String text) {
         int start = Math.max(field.getSelectionStart(), 0);
         int end = Math.max(field.getSelectionEnd(), 0);
 
@@ -36,9 +46,26 @@ public class PatternKeys {
         int to = Math.max(start, end);
 
         field.getText().replace(from, to, text);
-        field.setSelection(Math.min(from + cursorOffset, field.getText().length()));
+        field.setSelection(Math.min(from + text.length(), field.getText().length()));
 
         field.requestFocus();
+    }
+
+    /** The phone keypad, accepting everything a pattern is written with. */
+    private static class PatternKeyListener extends NumberKeyListener {
+
+        private static final char[] ACCEPTED = "0123456789+*#{},".toCharArray();
+
+        @Override
+        protected char[] getAcceptedChars() {
+            return ACCEPTED;
+        }
+
+        @Override
+        public int getInputType() {
+            return InputType.TYPE_CLASS_PHONE;
+        }
+
     }
 
     private PatternKeys() {

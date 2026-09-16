@@ -27,13 +27,23 @@
         android:textSize="18sp" />
 
     <Button
-        android:id="@+id/keyGroup"
+        android:id="@+id/keyGroupOpen"
         style="?attr/borderlessButtonStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:minWidth="0dp"
-        android:text="@string/pattern_key_group"
+        android:text="@string/pattern_key_group_open"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/keyGroupClose"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:minWidth="0dp"
+        android:text="@string/pattern_key_group_close"
         android:textSize="18sp" />
 
     <Button

@@ -286,7 +286,8 @@
     <string name="number_pattern_empty">Empty pattern</string>
     <string name="pattern_key_any_digits">*</string>
     <string name="pattern_key_one_digit">#</string>
-    <string name="pattern_key_group">{ }</string>
+    <string name="pattern_key_group_open">{</string>
+    <string name="pattern_key_group_close">}</string>
     <string name="pattern_key_comma">,</string>
     <string name="number_pattern_hint">Enter the number in +COUNTRY-NUMBER format (as Android would show in your dialer). Three things can stand in for digits: \"*\" for any digits or none, \"#\" for exactly one digit, and \"{30,40}\" for one of several alternatives. For example, +49{30,40}* covers every number starting with +4930 or +4940, and +49301234## covers the hundred numbers of that extension range.</string>
     <string name="info_icon_description">Info</string>

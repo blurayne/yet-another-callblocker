@@ -207,6 +207,12 @@ public class PhoneBlockHelper {
         }
     }
 
+    /** The address of the PhoneBlock page about a number, or null if there is none. */
+    public static String getNumberPageUrl(String number) {
+        Settings settings = App.getSettings();
+        return settings != null ? newService(settings).getNumberPageUrl(number) : null;
+    }
+
     private static PhoneBlockService newService(Settings settings) {
         return new PhoneBlockService(settings, YacbHolder.getPhoneBlockList(),
                 YacbHolder.getPhoneBlockPersonalLists());

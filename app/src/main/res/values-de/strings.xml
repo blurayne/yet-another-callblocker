@@ -138,7 +138,9 @@
     <string name="copy_number">Nummer kopieren</string>
     <string name="number_copied">Die Nummer wurde kopiert.</string>
     <string name="web_search">Bei Google suchen</string>
-    <string name="web_search_confirmation_message">Bei der Suche wird die Nummer an Google gesendet. Möchten Sie das wirklich mit einer Nummer aus Ihren Kontakten tun?</string>
+    <string name="phone_block_lookup">Bei phoneblock.net nachschlagen</string>
+    <string name="tellows_lookup">Bei tellows.de nachschlagen</string>
+    <string name="web_lookup_confirmation_message">Beim Nachschlagen wird die Nummer an %1$s gesendet. Möchten Sie das wirklich mit einer Nummer aus Ihren Kontakten tun?</string>
 
     <!-- Schwarze Liste -->
     <string name="title_blacklist_activity">Schwarze Liste</string>

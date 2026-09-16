@@ -177,6 +177,14 @@
             layout="@layout/info_dialog_action" />
 
         <include
+            android:id="@+id/action_phone_block_lookup"
+            layout="@layout/info_dialog_action" />
+
+        <include
+            android:id="@+id/action_tellows"
+            layout="@layout/info_dialog_action" />
+
+        <include
             android:id="@+id/action_web_search"
             layout="@layout/info_dialog_action" />
 

@@ -12,6 +12,8 @@ import android.text.TextUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dummydomain.yetanothercallblocker.data.BlacklistUtils;
+
 public class IntentHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(IntentHelper.class);
@@ -32,6 +34,17 @@ public class IntentHelper {
     public static Intent getViewContactIntent(long contactId) {
         return new Intent(Intent.ACTION_VIEW,
                 ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, contactId));
+    }
+
+    /** Opens an address in whatever app handles web addresses. */
+    public static Intent getWebIntent(String url) {
+        return new Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                .addCategory(Intent.CATEGORY_BROWSABLE);
+    }
+
+    /** The page about the number on tellows, which knows it in the {@code +49...} form. */
+    public static String getTellowsUrl(String number) {
+        return "https://www.tellows.de/num/" + Uri.encode(BlacklistUtils.cleanNumber(number));
     }
 
     /**

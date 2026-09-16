@@ -105,6 +105,7 @@ public class InfoDialogHelper {
             for (int id : new int[]{R.id.action_copy, R.id.action_open_contact,
                     R.id.action_whitelist, R.id.action_blacklist, R.id.action_contacts,
                     R.id.action_phone_block, R.id.action_reviews, R.id.action_web_review,
+                    R.id.action_phone_block_lookup, R.id.action_tellows,
                     R.id.action_web_search}) {
                 view.findViewById(id).setVisibility(View.GONE);
             }
@@ -188,13 +189,29 @@ public class InfoDialogHelper {
                             dialog.dismiss();
                         }));
 
+        String phoneBlockUrl = PhoneBlockHelper.getNumberPageUrl(number);
+
+        bindAction(view, R.id.action_phone_block_lookup, R.drawable.ic_search_24dp,
+                R.string.phone_block_lookup, phoneBlockUrl != null,
+                () -> confirmForLookup(context, numberInfo, "phoneblock.net", () -> {
+                    IntentHelper.startActivity(context, IntentHelper.getWebIntent(phoneBlockUrl));
+                    dialog.dismiss();
+                }));
+
+        bindAction(view, R.id.action_tellows, R.drawable.ic_search_24dp,
+                R.string.tellows_lookup, true,
+                () -> confirmForLookup(context, numberInfo, "tellows.de", () -> {
+                    IntentHelper.startActivity(context,
+                            IntentHelper.getWebIntent(IntentHelper.getTellowsUrl(number)));
+                    dialog.dismiss();
+                }));
+
         bindAction(view, R.id.action_web_search, R.drawable.ic_search_24dp,
-                R.string.web_search, true, () -> confirmForContact(context, numberInfo,
-                        R.string.web_search_confirmation_message, () -> {
-                            IntentHelper.startActivity(context,
-                                    IntentHelper.getWebSearchIntent(number));
-                            dialog.dismiss();
-                        }));
+                R.string.web_search, true,
+                () -> confirmForLookup(context, numberInfo, "Google", () -> {
+                    IntentHelper.startActivity(context, IntentHelper.getWebSearchIntent(number));
+                    dialog.dismiss();
+                }));
 
         dialog.show();
     }
@@ -225,9 +242,21 @@ public class InfoDialogHelper {
         row.setOnClickListener(v -> action.run());
     }
 
-    /** Runs the action, after asking when the number is a contact's. */
+    /** Runs the action, after asking when the number is a contact's and would be sent away. */
+    private static void confirmForLookup(Context context, NumberInfo numberInfo,
+                                         String where, Runnable action) {
+        confirmForContact(context, numberInfo,
+                context.getString(R.string.web_lookup_confirmation_message, where), action);
+    }
+
     private static void confirmForContact(Context context, NumberInfo numberInfo,
                                           int messageResId, Runnable action) {
+        confirmForContact(context, numberInfo, context.getString(messageResId), action);
+    }
+
+    /** Runs the action, after asking when the number is a contact's. */
+    private static void confirmForContact(Context context, NumberInfo numberInfo,
+                                          CharSequence message, Runnable action) {
         if (numberInfo.contactItem == null) {
             action.run();
             return;
@@ -235,7 +264,7 @@ public class InfoDialogHelper {
 
         new AlertDialog.Builder(context)
                 .setTitle(R.string.are_you_sure)
-                .setMessage(messageResId)
+                .setMessage(message)
                 .setPositiveButton(R.string.yes, (d, w) -> action.run())
                 .setNegativeButton(R.string.no, null)
                 .show();

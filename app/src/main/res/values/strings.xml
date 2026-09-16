@@ -319,7 +319,9 @@
     <string name="copy_number">Copy number</string>
     <string name="number_copied">The number was copied.</string>
     <string name="web_search">Search on Google</string>
-    <string name="web_search_confirmation_message">Searching sends the number to Google. Are you sure you want to do this with a number in your contacts?</string>
+    <string name="phone_block_lookup">Look up on phoneblock.net</string>
+    <string name="tellows_lookup">Look up on tellows.de</string>
+    <string name="web_lookup_confirmation_message">Looking the number up sends it to %1$s. Are you sure you want to do this with a number in your contacts?</string>
     <string name="add_to_blacklist">Add to blacklist</string>
     <string name="edit_blacklist_entry">Edit blacklist entry</string>
 

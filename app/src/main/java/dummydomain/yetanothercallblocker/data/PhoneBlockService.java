@@ -452,6 +452,40 @@ public class PhoneBlockService {
         }
     }
 
+    /**
+     * The page about a number on the PhoneBlock website.
+     *
+     * <p>Built from the configured API address, which points into the same installation:
+     * the API lives at {@code .../api/blocklist}, the pages at {@code .../nums/<number>}.
+     *
+     * @return null if there's no number or no usable address
+     */
+    public String getNumberPageUrl(String number) {
+        String pageNumber = toPageNumber(number);
+        if (pageNumber.isEmpty()) return null;
+
+        HttpUrl url = HttpUrl.parse(settings.getPhoneBlockUrl());
+        if (url == null) url = HttpUrl.parse(DEFAULT_URL);
+        if (url == null) return null;
+
+        List<String> segments = url.pathSegments();
+        HttpUrl.Builder builder = url.newBuilder().query(null);
+
+        for (int i = 0, drop = Math.min(2, segments.size()); i < drop; i++) {
+            builder.removePathSegment(segments.size() - 1 - i);
+        }
+
+        return builder.addPathSegment("nums").addPathSegment(pageNumber).build().toString();
+    }
+
+    /** The pages know a number as {@code 004922147258578} rather than {@code +4922147258578}. */
+    private static String toPageNumber(String number) {
+        if (TextUtils.isEmpty(number)) return "";
+
+        String clean = BlacklistUtils.cleanNumber(number);
+        return clean.startsWith("+") ? "00" + clean.substring(1) : clean;
+    }
+
     /** An endpoint next to the one the list is downloaded from. */
     private HttpUrl apiUrl(String endpoint) {
         HttpUrl url = HttpUrl.parse(settings.getPhoneBlockUrl());

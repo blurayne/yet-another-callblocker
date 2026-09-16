@@ -96,6 +96,8 @@ public class EditWhitelistItemActivity extends AppCompatActivity {
             return false;
         });
 
+        PatternKeys.setUp(findViewById(R.id.patternKeys), patternEditText);
+
         String name = getIntent().getStringExtra(PARAM_NAME);
         String pattern = Whitelist.normalize(getIntent().getStringExtra(PARAM_PATTERN));
 

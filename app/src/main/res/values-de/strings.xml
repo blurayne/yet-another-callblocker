@@ -162,6 +162,10 @@
     <string name="edit_blacklist_item_number_pattern">Nummer oder Muster</string>
     <string name="number_pattern_incorrect">Ungültiges Muster</string>
     <string name="number_pattern_empty">Kein Muster angegeben</string>
+    <string name="pattern_key_any_digits">*</string>
+    <string name="pattern_key_one_digit">#</string>
+    <string name="pattern_key_group">{ }</string>
+    <string name="pattern_key_comma">,</string>
     <string name="number_pattern_hint">Geben Sie die Nummer im Format +LAND-NUMMER ein (so, wie Android sie im Telefon anzeigt). Drei Dinge können für Ziffern stehen: „*“ für beliebig viele Ziffern (auch keine), „#“ für genau eine Ziffer und „{30,40}“ für eine von mehreren Möglichkeiten. So erfasst +49{30,40}* jede Nummer, die mit +4930 oder +4940 beginnt, und +49301234## die hundert Nummern dieses Durchwahlbereichs.</string>
     <string name="contacts_are_not_blocked_blacklist_notice">Anrufe von Kontakten werden nie blockiert (auch wenn ein Muster passt)</string>
     <string name="contacts_are_not_blocked_no_permission">Anrufe von Kontakten werden möglicherweise blockiert, weil die Berechtigung „Kontakte“ fehlt!</string>

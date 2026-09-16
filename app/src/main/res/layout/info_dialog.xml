@@ -145,6 +145,14 @@
 
         <!-- what can be done with it; each row is shown when it applies -->
         <include
+            android:id="@+id/action_copy"
+            layout="@layout/info_dialog_action" />
+
+        <include
+            android:id="@+id/action_open_contact"
+            layout="@layout/info_dialog_action" />
+
+        <include
             android:id="@+id/action_whitelist"
             layout="@layout/info_dialog_action" />
 
@@ -166,6 +174,10 @@
 
         <include
             android:id="@+id/action_web_review"
+            layout="@layout/info_dialog_action" />
+
+        <include
+            android:id="@+id/action_web_search"
             layout="@layout/info_dialog_action" />
 
     </LinearLayout>

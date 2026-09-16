@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
 
     <string name="notification_channel_group_name_incoming_calls">Incoming calls</string>
     <string name="notification_channel_group_name_blocked_calls">Blocked calls</string>
@@ -63,7 +63,7 @@
     <string name="default_caller_id_app">Default \"Caller ID app\"</string>
     <string name="default_caller_id_app_unset">Select a different app as the \"Caller ID app\" in \"Default apps\" in system settings</string>
     <string name="default_phone_app">Default \"Phone app\"</string>
-    <string name="default_phone_app_set">Select \"Yet Another Call Blocker\" as the \"Phone app\" in \"Default apps\" in system settings</string>
+    <string name="default_phone_app_set">Select \"Caller ID &amp; Spam\" as the \"Phone app\" in \"Default apps\" in system settings</string>
     <string name="default_phone_app_unset">Select a different app as the \"Phone app\" in \"Default apps\" in system settings</string>
     <string name="open_system_settings">Open Settings</string>
 
@@ -315,6 +315,11 @@
     <string name="info_in_blacklist">In blacklist</string>
     <string name="info_in_blacklist_contact">In blacklist (contacts are not blocked)</string>
     <string name="add_to_contacts">Add to contacts</string>
+    <string name="open_contact">Open contact</string>
+    <string name="copy_number">Copy number</string>
+    <string name="number_copied">The number was copied.</string>
+    <string name="web_search">Search on Google</string>
+    <string name="web_search_confirmation_message">Searching sends the number to Google. Are you sure you want to do this with a number in your contacts?</string>
     <string name="add_to_blacklist">Add to blacklist</string>
     <string name="edit_blacklist_entry">Edit blacklist entry</string>
 

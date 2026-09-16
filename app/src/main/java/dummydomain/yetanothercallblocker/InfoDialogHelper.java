@@ -102,9 +102,10 @@ public class InfoDialogHelper {
 
         if (numberInfo.noNumber) {
             view.findViewById(R.id.actions_divider).setVisibility(View.GONE);
-            for (int id : new int[]{R.id.action_whitelist, R.id.action_blacklist,
-                    R.id.action_contacts, R.id.action_phone_block, R.id.action_reviews,
-                    R.id.action_web_review}) {
+            for (int id : new int[]{R.id.action_copy, R.id.action_open_contact,
+                    R.id.action_whitelist, R.id.action_blacklist, R.id.action_contacts,
+                    R.id.action_phone_block, R.id.action_reviews, R.id.action_web_review,
+                    R.id.action_web_search}) {
                 view.findViewById(id).setVisibility(View.GONE);
             }
 
@@ -119,6 +120,19 @@ public class InfoDialogHelper {
                 ? numberInfo.contactItem.displayName
                 : numberInfo.featuredDatabaseItem != null
                 ? numberInfo.featuredDatabaseItem.getName() : null;
+
+        bindAction(view, R.id.action_copy, R.drawable.ic_content_copy_24dp,
+                R.string.copy_number, true, () -> {
+                    UiUtils.copyToClipboard(context, number);
+                    dialog.dismiss();
+                });
+
+        bindAction(view, R.id.action_open_contact, R.drawable.ic_person_24dp,
+                R.string.open_contact, numberInfo.contactItem != null, () -> {
+                    IntentHelper.startActivity(context,
+                            IntentHelper.getViewContactIntent(numberInfo.contactItem.id));
+                    dialog.dismiss();
+                });
 
         // the entry is opened for editing first, so that the number can be given a name or
         // turned into a pattern before it is saved - the way the blacklist works
@@ -159,17 +173,28 @@ public class InfoDialogHelper {
         // the reviews are fetched from the web, which tells the web service about the number:
         // for a contact, that is asked about first
         bindAction(view, R.id.action_reviews, R.drawable.ic_thumbs_up_down_24dp,
-                R.string.online_reviews, true, () -> confirmForContact(context, numberInfo, () -> {
-                    ReviewsActivity.startForNumber(context, number);
-                    dialog.dismiss();
-                }));
+                R.string.online_reviews, true, () -> confirmForContact(context, numberInfo,
+                        R.string.load_reviews_confirmation_message, () -> {
+                            ReviewsActivity.startForNumber(context, number);
+                            dialog.dismiss();
+                        }));
 
         bindAction(view, R.id.action_web_review, R.drawable.ic_plus_24dp,
-                R.string.add_web_review, true, () -> confirmForContact(context, numberInfo, () -> {
-                    Uri uri = Uri.parse(YacbHolder.getWebService().getWebReviewsUrlPart() + number);
-                    IntentHelper.startActivity(context, new Intent(Intent.ACTION_VIEW, uri));
-                    dialog.dismiss();
-                }));
+                R.string.add_web_review, true, () -> confirmForContact(context, numberInfo,
+                        R.string.load_reviews_confirmation_message, () -> {
+                            Uri uri = Uri.parse(
+                                    YacbHolder.getWebService().getWebReviewsUrlPart() + number);
+                            IntentHelper.startActivity(context, new Intent(Intent.ACTION_VIEW, uri));
+                            dialog.dismiss();
+                        }));
+
+        bindAction(view, R.id.action_web_search, R.drawable.ic_search_24dp,
+                R.string.web_search, true, () -> confirmForContact(context, numberInfo,
+                        R.string.web_search_confirmation_message, () -> {
+                            IntentHelper.startActivity(context,
+                                    IntentHelper.getWebSearchIntent(number));
+                            dialog.dismiss();
+                        }));
 
         dialog.show();
     }
@@ -201,7 +226,8 @@ public class InfoDialogHelper {
     }
 
     /** Runs the action, after asking when the number is a contact's. */
-    private static void confirmForContact(Context context, NumberInfo numberInfo, Runnable action) {
+    private static void confirmForContact(Context context, NumberInfo numberInfo,
+                                          int messageResId, Runnable action) {
         if (numberInfo.contactItem == null) {
             action.run();
             return;
@@ -209,7 +235,7 @@ public class InfoDialogHelper {
 
         new AlertDialog.Builder(context)
                 .setTitle(R.string.are_you_sure)
-                .setMessage(R.string.load_reviews_confirmation_message)
+                .setMessage(messageResId)
                 .setPositiveButton(R.string.yes, (d, w) -> action.run())
                 .setNegativeButton(R.string.no, null)
                 .show();

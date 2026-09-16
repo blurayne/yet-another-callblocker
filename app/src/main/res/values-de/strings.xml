@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
     <string name="motto">Unerwünschte Anrufe mühelos blockieren</string>
 
     <!-- Allgemein -->
@@ -46,7 +46,7 @@
     <string name="denied_call_screening_role_message">Die erweiterte Anrufblockierung funktioniert nicht, weil die App nicht als „Anrufer-ID-App“ festgelegt ist</string>
     <string name="open_system_settings">Einstellungen öffnen</string>
     <string name="default_phone_app">Standard-„Telefon-App“</string>
-    <string name="default_phone_app_set">Legen Sie Yet Another Call Blocker in den Systemeinstellungen als „Telefon-App“ fest</string>
+    <string name="default_phone_app_set">Legen Sie Caller ID &amp; Spam in den Systemeinstellungen als „Telefon-App“ fest</string>
     <string name="default_phone_app_unset">Legen Sie in den Systemeinstellungen eine andere App als „Telefon-App“ fest</string>
     <string name="default_caller_id_app">Standard-„Anrufer-ID-App“</string>
     <string name="default_caller_id_app_unset">Legen Sie in den Systemeinstellungen eine andere App als „Anrufer-ID-App“ fest</string>
@@ -134,6 +134,11 @@
     <string name="add_to_whitelist">Zur weißen Liste hinzufügen</string>
     <string name="edit_whitelist_entry">Eintrag der weißen Liste bearbeiten</string>
     <string name="add_to_contacts">Zu den Kontakten hinzufügen</string>
+    <string name="open_contact">Kontakt öffnen</string>
+    <string name="copy_number">Nummer kopieren</string>
+    <string name="number_copied">Die Nummer wurde kopiert.</string>
+    <string name="web_search">Bei Google suchen</string>
+    <string name="web_search_confirmation_message">Bei der Suche wird die Nummer an Google gesendet. Möchten Sie das wirklich mit einer Nummer aus Ihren Kontakten tun?</string>
 
     <!-- Schwarze Liste -->
     <string name="title_blacklist_activity">Schwarze Liste</string>

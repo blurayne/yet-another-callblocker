@@ -94,6 +94,27 @@ public class BlacklistDao {
                 .where(BlacklistItemDao.Properties.Invalid.notEq(true)).count();
     }
 
+    /** How many valid items have a pattern with alternatives in it. */
+    public long countWithAlternatives() {
+        return withAlternativesQueryBuilder().count();
+    }
+
+    /**
+     * The valid items whose pattern offers alternatives.
+     *
+     * <p>{@code LIKE} knows nothing about {@code {30,40}}, so those are matched in the app.
+     */
+    public List<BlacklistItem> findAllWithAlternatives() {
+        return withAlternativesQueryBuilder().list();
+    }
+
+    private QueryBuilder<BlacklistItem> withAlternativesQueryBuilder() {
+        return getBlacklistItemDao().queryBuilder()
+                .where(BlacklistItemDao.Properties.Invalid.notEq(true),
+                        BlacklistItemDao.Properties.Pattern.like("%{%"))
+                .orderAsc(BlacklistItemDao.Properties.CreationDate);
+    }
+
     public BlacklistItem getFirstMatch(String number) {
         return first(getMatchesQueryBuilder(number));
     }

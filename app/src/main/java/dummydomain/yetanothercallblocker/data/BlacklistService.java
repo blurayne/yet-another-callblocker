@@ -25,6 +25,9 @@ public class BlacklistService {
 
     private WhitelistService whitelistService;
 
+    /** Whether any pattern has alternatives in it; null until it has been looked up. */
+    private volatile Boolean hasAlternatives;
+
     public BlacklistService(Callback callback, BlacklistDao blacklistDao) {
         this.callback = callback;
         this.blacklistDao = blacklistDao;
@@ -40,7 +43,31 @@ public class BlacklistService {
 
         number = BlacklistUtils.cleanNumber(number);
 
-        return blacklistDao.getFirstMatch(number);
+        BlacklistItem item = blacklistDao.getFirstMatch(number);
+        if (item != null) return item;
+
+        return getAlternativesMatch(number);
+    }
+
+    /**
+     * Matches the patterns the database can't: the ones with alternatives in them.
+     *
+     * <p>Most blacklists have none, so whether there are any is remembered - a call then costs
+     * nothing beyond the query the database does anyway.
+     */
+    private BlacklistItem getAlternativesMatch(String cleanNumber) {
+        Boolean hasAlternatives = this.hasAlternatives;
+        if (hasAlternatives == null) {
+            this.hasAlternatives = hasAlternatives = blacklistDao.countWithAlternatives() != 0;
+        }
+
+        if (!hasAlternatives) return null;
+
+        for (BlacklistItem item : blacklistDao.findAllWithAlternatives()) {
+            if (BlacklistUtils.matches(item.getPattern(), cleanNumber)) return item;
+        }
+
+        return null;
     }
 
     public void save(BlacklistItem blacklistItem) {
@@ -113,6 +140,7 @@ public class BlacklistService {
     }
 
     private void blacklistChanged(boolean itemUpdate) {
+        hasAlternatives = null; // a pattern may have been added or changed
         callback.changed(blacklistDao.countValid() != 0);
 
         postEvent(itemUpdate ? new BlacklistItemChangedEvent() : new BlacklistChangedEvent());

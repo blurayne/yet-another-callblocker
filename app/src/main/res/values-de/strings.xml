@@ -160,7 +160,7 @@
     <string name="edit_blacklist_item_number_pattern">Nummer oder Muster</string>
     <string name="number_pattern_incorrect">Ungültiges Muster</string>
     <string name="number_pattern_empty">Kein Muster angegeben</string>
-    <string name="number_pattern_hint">Geben Sie die Nummer im Format +LAND-NUMMER ein (so, wie Android sie im Telefon anzeigt). „*“ steht für beliebig viele Ziffern (auch keine), „#“ für genau eine Ziffer.</string>
+    <string name="number_pattern_hint">Geben Sie die Nummer im Format +LAND-NUMMER ein (so, wie Android sie im Telefon anzeigt). Drei Dinge können für Ziffern stehen: „*“ für beliebig viele Ziffern (auch keine), „#“ für genau eine Ziffer und „{30,40}“ für eine von mehreren Möglichkeiten. So erfasst +49{30,40}* jede Nummer, die mit +4930 oder +4940 beginnt, und +49301234## die hundert Nummern dieses Durchwahlbereichs.</string>
     <string name="contacts_are_not_blocked_blacklist_notice">Anrufe von Kontakten werden nie blockiert (auch wenn ein Muster passt)</string>
     <string name="contacts_are_not_blocked_no_permission">Anrufe von Kontakten werden möglicherweise blockiert, weil die Berechtigung „Kontakte“ fehlt!</string>
     <string name="contacts_are_not_blocked_not_enabled">Anrufe von Kontakten werden möglicherweise blockiert, weil „Kontakte verwenden“ ausgeschaltet ist!</string>
@@ -181,7 +181,7 @@
     <string name="title_add_whitelist_item_activity">Nummer hinzufügen</string>
     <string name="title_edit_whitelist_item_activity">Nummer bearbeiten</string>
     <string name="whitelist_pattern_in_use">Ein anderer Eintrag hat bereits dieses Muster</string>
-    <string name="whitelist_pattern_help">Nummern auf der weißen Liste werden nie blockiert, und eine Nummer, die hier eingetragen wird, verschwindet von der schwarzen Liste. Ersetzen Sie die letzten Ziffern durch *, um einen ganzen Nummernbereich zuzulassen (+4940655801* lässt jede Durchwahl durch).</string>
+    <string name="whitelist_pattern_help">Nummern auf der weißen Liste werden nie blockiert, egal was sonst über sie bekannt ist, und eine Nummer, die hier eingetragen wird, verschwindet von der schwarzen Liste. Das Muster wird genauso geschrieben wie ein Muster der schwarzen Liste.</string>
 
     <!-- Einstellungen -->
     <string name="title_settings_activity">Einstellungen</string>

@@ -172,7 +172,7 @@ public class Whitelist {
         List<Pattern> patterns = new ArrayList<>();
 
         for (WhitelistItem item : parse(value)) {
-            Pattern pattern = toPattern(
+            Pattern pattern = BlacklistUtils.compilePattern(
                     BlacklistUtils.patternFromHumanReadable(item.getPattern()));
             if (pattern == null) continue;
 
@@ -184,30 +184,6 @@ public class Whitelist {
         this.patterns = patterns;
 
         LOG.debug("checkParsed() {} patterns", patterns.size());
-    }
-
-    /** Turns a pattern into one that can be matched here, the way the database matches them. */
-    private static Pattern toPattern(String likePattern) {
-        StringBuilder builder = new StringBuilder(likePattern.length() * 2);
-
-        for (int i = 0; i < likePattern.length(); i++) {
-            char c = likePattern.charAt(i);
-
-            if (c == '%') {
-                builder.append(".*"); // any digits, or none
-            } else if (c == '_') {
-                builder.append('.'); // exactly one
-            } else {
-                builder.append(Pattern.quote(String.valueOf(c)));
-            }
-        }
-
-        try {
-            return Pattern.compile(builder.toString());
-        } catch (Exception e) {
-            LOG.warn("toPattern() couldn't use {}", likePattern, e);
-            return null;
-        }
     }
 
 }

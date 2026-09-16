@@ -53,8 +53,12 @@ class IconAndColor {
     }
 
     /**
-     * The icon for a number: why it would be blocked, if it would be, and what is known about
-     * it otherwise. Contacts keep their own icon, the same way they are never blocked.
+     * The icon for a number: what the user said about it, then what the app would do about a
+     * call from it, then what is known about it otherwise.
+     *
+     * <p>The lists win over everything else, in the call log as much as during a call: a number
+     * that has been put on one of them since is shown as being on it, whether or not the call
+     * it was heard on was treated that way at the time.
      */
     static IconAndColor forNumberInfo(NumberInfo numberInfo) {
         // a forged number says more about the call than anything known about the number itself
@@ -62,16 +66,18 @@ class IconAndColor {
             return of(R.drawable.ic_shield_s_24dp, R.color.rateNegative);
         }
 
-        if (numberInfo.contactItem == null) {
-            if (numberInfo.blacklistItem != null) {
-                return of(R.drawable.ic_middle_finger_24dp,
-                        numberInfo.rating == NumberInfo.Rating.NEGATIVE
-                                ? R.color.rateNegative : R.color.blacklisted);
-            }
+        if (numberInfo.whitelisted) {
+            return of(R.drawable.ic_check_24dp, R.color.ratePositive);
+        }
 
-            if (isBlockedAsSpam(numberInfo)) {
-                return of(R.drawable.ic_spam_24dp, R.color.rateNegative);
-            }
+        if (numberInfo.blacklistItem != null) {
+            return of(R.drawable.ic_middle_finger_24dp,
+                    numberInfo.rating == NumberInfo.Rating.NEGATIVE
+                            ? R.color.rateNegative : R.color.blacklisted);
+        }
+
+        if (numberInfo.contactItem == null && isBlockedAsSpam(numberInfo)) {
+            return of(R.drawable.ic_spam_24dp, R.color.rateNegative);
         }
 
         return forNumberRating(numberInfo.rating, numberInfo.contactItem != null);

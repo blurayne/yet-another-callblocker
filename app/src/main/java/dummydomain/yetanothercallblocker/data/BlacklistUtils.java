@@ -14,12 +14,19 @@ import java.util.regex.Pattern;
  * included), {@code #} for exactly one digit, and {@code {30,40,555}} for one of several
  * alternatives. They are stored with the database's own wildcards ({@code %} and {@code _}),
  * because the blacklist is matched by the database, and shown the way the user writes them.
+ *
+ * <p>Nothing here is allowed to throw: a pattern is read on every call and on every keystroke
+ * of the screens that write one, so anything that can't be read is simply not a pattern.
+ * For the same reason the only regular expressions built here are character classes, which
+ * every regex engine reads the same way - a pattern with braces in it is checked by hand.
  */
 public class BlacklistUtils {
 
-    /** What a pattern may be made of: digits, wildcards, and groups of alternatives. */
-    private static final Pattern BLACKLIST_ITEM_VALID_PATTERN
-            = Pattern.compile("\\+?(?:[0-9%_]|\\{[+0-9%_]+(?:,[+0-9%_]+)*})+");
+    /** The characters a pattern is made of, besides the groups of alternatives. */
+    private static final String PATTERN_CHARS = "0123456789%_";
+
+    /** The characters a regular expression gives a meaning of its own. */
+    private static final String REGEX_SPECIAL_CHARS = "\\^$.|?*+()[]{}";
 
     private static final Pattern PATTERN_CLEANING_PATTERN = Pattern.compile("[^+0-9%_*#{},]");
     private static final Pattern NUMBER_CLEANING_PATTERN = Pattern.compile("[^+0-9]");
@@ -42,8 +49,58 @@ public class BlacklistUtils {
         return NUMBER_CLEANING_PATTERN.matcher(number).replaceAll("");
     }
 
+    /**
+     * Whether the pattern is one that can be matched: a number, with the wildcards and the
+     * groups of alternatives in the places they are allowed.
+     */
     public static boolean isValidPattern(String pattern) {
-        return BLACKLIST_ITEM_VALID_PATTERN.matcher(pattern).matches();
+        if (TextUtils.isEmpty(pattern)) return false;
+
+        int index = pattern.charAt(0) == '+' ? 1 : 0; // the country prefix
+        boolean anything = false;
+
+        while (index < pattern.length()) {
+            char c = pattern.charAt(index);
+
+            if (PATTERN_CHARS.indexOf(c) != -1) {
+                anything = true;
+                index++;
+            } else if (c == '{') {
+                int end = pattern.indexOf('}', index);
+                if (end == -1) return false; // the group is never closed
+
+                if (!isValidGroup(pattern.substring(index + 1, end))) return false;
+
+                anything = true;
+                index = end + 1;
+            } else {
+                return false;
+            }
+        }
+
+        return anything;
+    }
+
+    /** Whether {@code 30,40,555} is a usable group: alternatives, none of them empty. */
+    private static boolean isValidGroup(String group) {
+        if (group.isEmpty()) return false;
+
+        int alternativeLength = 0;
+
+        for (int i = 0; i < group.length(); i++) {
+            char c = group.charAt(i);
+
+            if (c == ',') {
+                if (alternativeLength == 0) return false; // an empty alternative
+                alternativeLength = 0;
+            } else if (PATTERN_CHARS.indexOf(c) != -1 || c == '+') {
+                alternativeLength++;
+            } else {
+                return false;
+            }
+        }
+
+        return alternativeLength != 0; // the last alternative isn't empty either
     }
 
     /**
@@ -70,16 +127,14 @@ public class BlacklistUtils {
      * @return null if the pattern can't be used
      */
     public static Pattern compilePattern(String pattern) {
+        if (TextUtils.isEmpty(pattern)) return null;
+
         StringBuilder builder = new StringBuilder(pattern.length() * 2);
 
         for (int i = 0; i < pattern.length(); i++) {
             char c = pattern.charAt(i);
 
-            if (c == '%') {
-                builder.append(".*"); // any digits, or none
-            } else if (c == '_') {
-                builder.append('.'); // exactly one
-            } else if (c == '{') {
+            if (c == '{') {
                 int end = pattern.indexOf('}', i);
                 if (end == -1) {
                     LOG.warn("compilePattern() a group isn't closed");
@@ -90,7 +145,7 @@ public class BlacklistUtils {
 
                 i = end;
             } else {
-                builder.append(Pattern.quote(String.valueOf(c)));
+                appendChar(builder, c);
             }
         }
 
@@ -112,20 +167,23 @@ public class BlacklistUtils {
             first = false;
 
             for (int i = 0; i < alternative.length(); i++) {
-                char c = alternative.charAt(i);
-
-                // the wildcards work inside a group as well
-                if (c == '%') {
-                    builder.append(".*");
-                } else if (c == '_') {
-                    builder.append('.');
-                } else {
-                    builder.append(Pattern.quote(String.valueOf(c)));
-                }
+                appendChar(builder, alternative.charAt(i));
             }
         }
 
         builder.append(')');
+    }
+
+    /** Appends one character of a pattern: a wildcard as one, anything else as itself. */
+    private static void appendChar(StringBuilder builder, char c) {
+        if (c == '%') {
+            builder.append(".*"); // any digits, or none
+        } else if (c == '_') {
+            builder.append('.'); // exactly one
+        } else {
+            if (REGEX_SPECIAL_CHARS.indexOf(c) != -1) builder.append('\\');
+            builder.append(c);
+        }
     }
 
 }

@@ -34,6 +34,10 @@ jobs:
       # the SDK tools need a recent JDK, so this is done before switching to JDK 11 below
       - name: Set up the Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # the action installs the obsolete "tools" package by default, which Google has
+          # removed from the repository - everything the build needs is installed below
+          packages: ''
 
       - name: Install the SDK packages
         run: sdkmanager 'platforms;android-33' 'build-tools;33.0.2'

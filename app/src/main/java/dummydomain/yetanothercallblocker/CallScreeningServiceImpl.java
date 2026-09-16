@@ -17,6 +17,7 @@ import androidx.annotation.RequiresApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dummydomain.yetanothercallblocker.data.CallDecisionLog;
 import dummydomain.yetanothercallblocker.data.NumberInfo;
 import dummydomain.yetanothercallblocker.data.NumberInfoService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
@@ -160,6 +161,18 @@ public class CallScreeningServiceImpl extends CallScreeningService {
             } catch (Exception e) {
                 LOG.error("onScreenCall() error invoking respondToCall()", e);
                 blocked = false;
+            }
+
+            // what the app did is written down: the call log can't tell a silenced call from a
+            // missed one, or a call that was let through on purpose from any other
+            if (numberInfo != null && !numberInfo.noNumber) {
+                CallDecisionLog decisionLog = YacbHolder.getCallDecisionLog();
+                if (decisionLog != null) {
+                    decisionLog.record(numberInfo.number, System.currentTimeMillis(),
+                            blocked ? CallDecisionLog.Decision.BLOCKED
+                                    : shouldSilence ? CallDecisionLog.Decision.SILENCED
+                                    : CallDecisionLog.Decision.ALLOWED);
+                }
             }
 
             if (blocked) {

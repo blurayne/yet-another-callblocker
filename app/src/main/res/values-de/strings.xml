@@ -35,6 +35,12 @@
     <string name="open_about_activity">Über</string>
     <string name="open_db_management_activity">Datenbank verwalten</string>
     <string name="call_log_permission_message">Erteilen Sie die Berechtigung „Telefon“, um die letzten Anrufe anzuzeigen</string>
+    <!-- was aus einem Anruf wurde -->
+    <string name="call_status_blocked">Blockiert</string>
+    <string name="call_status_silenced">Stumm gestellt</string>
+    <string name="call_status_let_through">Durchgestellt</string>
+    <string name="call_status_rejected">Abgelehnt</string>
+    <string name="call_status_and_duration">%1$s \u00b7 %2$s</string>
     <string name="call_log_number_withheld">Unterdrückte Nummer</string>
     <string name="call_log_number_unknown">Unbekannte Nummer</string>
     <string name="call_log_number_payphone">Münztelefon</string>

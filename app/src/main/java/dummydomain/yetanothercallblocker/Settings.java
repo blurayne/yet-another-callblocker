@@ -31,6 +31,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_BLACKLIST_IS_NOT_EMPTY = "blacklistIsNotEmpty";
     public static final String PREF_USE_CONTACTS = "useContacts";
     public static final String PREF_WHITELIST = "whitelist";
+    public static final String PREF_CALL_DECISIONS = "callDecisions";
     public static final String PREF_UI_MODE = "uiMode";
     public static final String PREF_CALL_LOG_GROUPING = "callLogGrouping";
     public static final String PREF_USE_MONITORING_SERVICE = "useMonitoringService";
@@ -337,6 +338,15 @@ public class Settings extends GenericSettings {
 
     public void setWhitelist(String whitelist) {
         setString(PREF_WHITELIST, whitelist);
+    }
+
+    /** What the app did about the last calls; written by {@code CallDecisionLog}. */
+    public String getCallDecisions() {
+        return getString(PREF_CALL_DECISIONS, "");
+    }
+
+    public void setCallDecisions(String value) {
+        setString(PREF_CALL_DECISIONS, value);
     }
 
     public boolean getUseContacts() {

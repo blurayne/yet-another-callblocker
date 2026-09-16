@@ -28,6 +28,8 @@ public class YacbHolder {
     private static BlacklistService blacklistService;
     private static WhitelistService whitelistService;
 
+    private static CallDecisionLog callDecisionLog;
+
     private static NumberInfoService numberInfoService;
     private static NumberInfoCache numberInfoCache;
     private static PhoneBlockList phoneBlockList;
@@ -77,6 +79,14 @@ public class YacbHolder {
 
     static void setWhitelistService(WhitelistService whitelistService) {
         YacbHolder.whitelistService = whitelistService;
+    }
+
+    static void setCallDecisionLog(CallDecisionLog callDecisionLog) {
+        YacbHolder.callDecisionLog = callDecisionLog;
+    }
+
+    public static CallDecisionLog getCallDecisionLog() {
+        return callDecisionLog;
     }
 
     static void setBlacklistService(BlacklistService blacklistService) {

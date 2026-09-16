@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,6 +156,10 @@ public class CallLogDataSource extends ItemKeyedDataSource<CallLogDataSource.Gro
     private List<CallLogItem> loadInfo(List<CallLogItem> items) {
         String countryCode = App.getSettings().getCachedAutoDetectedCountryCode();
 
+        CallDecisionLog decisionLog = YacbHolder.getCallDecisionLog();
+        List<CallDecisionLog.Entry> decisions = decisionLog != null
+                ? decisionLog.getEntries() : Collections.emptyList();
+
         for (CallLogItem item : items) {
             // a withheld number is looked up as no number at all rather than as its placeholder
             String number = item.presentation.hasNumber() ? item.number : null;
@@ -166,6 +171,9 @@ public class CallLogDataSource extends ItemKeyedDataSource<CallLogDataSource.Gro
             }
 
             item.numberInfo = numberInfo;
+
+            // what the app did about this very call, which the call log itself doesn't say
+            item.decision = CallDecisionLog.find(decisions, number, item.timestamp);
         }
 
         return items;

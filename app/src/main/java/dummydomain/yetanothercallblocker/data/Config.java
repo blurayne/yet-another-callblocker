@@ -168,6 +168,9 @@ public class Config {
 
         YacbHolder.setNumberInfoCache(new NumberInfoCache());
 
+        // the call log shows what the app did about a call, which only the app knows
+        YacbHolder.setCallDecisionLog(new CallDecisionLog(settings));
+
         NotificationService notificationService = new NotificationService(context);
         YacbHolder.setNotificationService(notificationService);
 

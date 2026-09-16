@@ -250,6 +250,12 @@
     <string name="db_filtering_filter_db_summary">Run the database filtering now (to filter the existing data)</string>
     <string name="filtering_db">Filtering DB…</string>
 
+    <!-- what became of a call: what the app did about it, or what the system recorded -->
+    <string name="call_status_blocked">Blocked</string>
+    <string name="call_status_silenced">Silenced</string>
+    <string name="call_status_let_through">Let through</string>
+    <string name="call_status_rejected">Rejected</string>
+    <string name="call_status_and_duration">%1$s \u00b7 %2$s</string>
     <string name="call_log_number_withheld">Withheld number</string>
     <string name="call_log_number_unknown">Unknown number</string>
     <string name="call_log_number_payphone">Payphone</string>

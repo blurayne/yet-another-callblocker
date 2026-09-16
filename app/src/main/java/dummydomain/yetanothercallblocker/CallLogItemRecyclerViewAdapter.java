@@ -86,13 +86,8 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
 
             label.setText(getLabel(context, item));
 
-            IconAndColor iconAndColor = IconAndColor.forNumberInfo(numberInfo);
-
-            if (!iconAndColor.noInfo) {
-                iconAndColor.applyToImageView(numberInfoIcon);
-            } else {
-                numberInfoIcon.setImageDrawable(null);
-            }
+            // a number nothing is known about gets the question mark rather than nothing at all
+            IconAndColor.forNumberInfo(numberInfo).applyToImageView(numberInfoIcon);
 
             if (item.duration == 0 && item.type == CallLogItem.Type.MISSED
                     || item.type == CallLogItem.Type.REJECTED) {

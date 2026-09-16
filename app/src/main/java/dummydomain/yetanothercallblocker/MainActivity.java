@@ -2,10 +2,12 @@ package dummydomain.yetanothercallblocker;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.database.ContentObserver;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.provider.ContactsContract;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,11 +32,14 @@ import java.util.Objects;
 import dummydomain.yetanothercallblocker.data.CallLogDataSource;
 import dummydomain.yetanothercallblocker.data.CallLogItem;
 import dummydomain.yetanothercallblocker.data.CallLogItemGroup;
+import dummydomain.yetanothercallblocker.data.NumberInfoCache;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.event.BlacklistChangedEvent;
 import dummydomain.yetanothercallblocker.event.CallEndedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
+import dummydomain.yetanothercallblocker.event.WhitelistChangedEvent;
 import dummydomain.yetanothercallblocker.work.TaskService;
 import dummydomain.yetanothercallblocker.work.UpdateScheduler;
 
@@ -53,6 +58,13 @@ public class MainActivity extends AppCompatActivity {
 
     private Parcelable callLogLayoutManagerState;
 
+    private Handler handler;
+
+    /** Watches the contacts, so that a number that has just become one is shown as one. */
+    private ContentObserver contactsObserver;
+
+    private final Runnable refreshCallLogRunnable = this::refreshCallLog;
+
     private AsyncTask<Void, Void, Boolean> checkMainDbTask;
 
     private boolean activityFirstStart = true;
@@ -61,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        handler = new Handler(getMainLooper());
 
         callLogAdapter = new CallLogItemRecyclerViewAdapter(this::onCallLogItemClicked);
         recyclerView = findViewById(R.id.callLogList);
@@ -147,18 +161,24 @@ public class MainActivity extends AppCompatActivity {
 
         checkPermissions();
 
+        registerContactsObserver();
+
         updateCallLogVisibility();
         if (activityFirstStart) {
             activityFirstStart = false;
         } else {
             callLogDsFactory.setGroupConverter(getCallLogGroupConverter());
-            reloadCallLog();
+
+            // the lists and the contacts may have changed while the app was away
+            refreshCallLog();
         }
     }
 
     @Override
     protected void onStop() {
         EventUtils.unregister(this);
+
+        unregisterContactsObserver();
 
         super.onStop();
     }
@@ -190,6 +210,16 @@ public class MainActivity extends AppCompatActivity {
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onCallEvent(CallEndedEvent event) {
         new Handler(getMainLooper()).postDelayed(this::reloadCallLog, 1000);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onBlacklistChanged(BlacklistChangedEvent event) {
+        refreshCallLog();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onWhitelistChanged(WhitelistChangedEvent event) {
+        refreshCallLog();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
@@ -309,6 +339,53 @@ public class MainActivity extends AppCompatActivity {
 
     private void reloadCallLog() {
         callLogDsFactory.invalidate();
+    }
+
+    /**
+     * Reloads the call log with what is known about the numbers looked up again.
+     *
+     * <p>The rows are built from the contacts and the lists, so adding a contact or blacklisting
+     * a number changes what they should show - the info kept from the last call is dropped for
+     * that reason.
+     */
+    private void refreshCallLog() {
+        NumberInfoCache cache = YacbHolder.getNumberInfoCache();
+        if (cache != null) cache.clear();
+
+        reloadCallLog();
+    }
+
+    private void registerContactsObserver() {
+        if (contactsObserver != null || !PermissionHelper.hasContactsPermission(this)) return;
+
+        contactsObserver = new ContentObserver(handler) {
+            @Override
+            public void onChange(boolean selfChange) {
+                // a sync can report many changes in a row; one reload is enough for all of them
+                handler.removeCallbacks(refreshCallLogRunnable);
+                handler.postDelayed(refreshCallLogRunnable, 500);
+            }
+        };
+
+        try {
+            getContentResolver().registerContentObserver(
+                    ContactsContract.Contacts.CONTENT_URI, true, contactsObserver);
+        } catch (Exception e) { // the permission may have been taken away in the meantime
+            contactsObserver = null;
+        }
+    }
+
+    private void unregisterContactsObserver() {
+        if (contactsObserver == null) return;
+
+        handler.removeCallbacks(refreshCallLogRunnable);
+
+        try {
+            getContentResolver().unregisterContentObserver(contactsObserver);
+        } catch (Exception ignored) {
+        }
+
+        contactsObserver = null;
     }
 
     private void updateCallLogVisibility() {

@@ -290,7 +290,7 @@
     <string name="pattern_key_group_open">{</string>
     <string name="pattern_key_group_close">}</string>
     <string name="pattern_key_comma">,</string>
-    <string name="number_pattern_hint">Enter the number in +COUNTRY-NUMBER format (as Android would show in your dialer). Three things can stand in for digits: \"*\" for any digits or none, \"#\" for exactly one digit, and \"{30,40}\" for one of several alternatives. For example, +49{30,40}* covers every number starting with +4930 or +4940, and +49301234## covers the hundred numbers of that extension range.</string>
+    <string name="number_pattern_hint">Enter the number in +COUNTRY-NUMBER format (as Android would show in your dialer). Three things can stand in for digits: \"*\" for any digits or none, \"#\" for exactly one digit, and \"{30,40}\" for one of several alternatives. For example, +49{30,40}* covers every number starting with +4930 or +4940, and +49301234## covers the hundred numbers of that extension range. The form the number was dialled or logged in does not matter: an entry written as +49221472585 also covers a call logged as 0221472585.</string>
     <string name="info_icon_description">Info</string>
     <string name="contacts_are_not_blocked_blacklist_notice">Calls from contacts are never blocked (even on pattern match)</string>
     <string name="contacts_are_not_blocked_not_enabled">Calls from contacts may be blocked because the \"Use contacts\" option is not enabled!</string>

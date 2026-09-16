@@ -71,9 +71,7 @@ class IconAndColor {
         }
 
         if (numberInfo.blacklistItem != null) {
-            return of(R.drawable.ic_middle_finger_24dp,
-                    numberInfo.rating == NumberInfo.Rating.NEGATIVE
-                            ? R.color.rateNegative : R.color.blacklisted);
+            return of(R.drawable.ic_middle_finger_24dp, R.color.rateNegative);
         }
 
         if (numberInfo.contactItem == null && isBlockedAsSpam(numberInfo)) {

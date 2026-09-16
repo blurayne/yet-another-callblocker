@@ -181,10 +181,10 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
 
             if (numberInfo.name != null) return numberInfo.name;
 
-            if (numberInfo.blacklistItem != null
-                    && !TextUtils.isEmpty(numberInfo.blacklistItem.getName())) {
-                return numberInfo.blacklistItem.getName();
-            }
+            // an entry only lends the row its name when it is this very number: the name of a
+            // pattern is about the range it covers, not about the number that fell in it
+            String listEntryName = NumberInfoUtils.getListEntryName(numberInfo);
+            if (listEntryName != null) return listEntryName;
 
             return item.number;
         }

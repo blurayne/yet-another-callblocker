@@ -54,6 +54,31 @@ public class NumberInfoUtils {
     }
 
     /**
+     * What the entry that matched is called, but only when that entry is this very number.
+     *
+     * <p>A pattern covers a whole range of numbers, so its name belongs to the range and not
+     * to the number that happened to fall in it.
+     *
+     * @return null when no entry matched, when the entry that did is a pattern, or when it
+     * has no name
+     */
+    public static String getListEntryName(NumberInfo numberInfo) {
+        if (numberInfo.blacklistItem != null
+                && BlacklistUtils.isLiteralPattern(numberInfo.blacklistItem.getPattern())
+                && !TextUtils.isEmpty(numberInfo.blacklistItem.getName())) {
+            return numberInfo.blacklistItem.getName();
+        }
+
+        if (numberInfo.whitelistItem != null
+                && BlacklistUtils.isLiteralPattern(numberInfo.whitelistItem.getPattern())
+                && !TextUtils.isEmpty(numberInfo.whitelistItem.getName())) {
+            return numberInfo.whitelistItem.getName();
+        }
+
+        return null;
+    }
+
+    /**
      * "In whitelist", with the entry that matched when it is a pattern rather than the number.
      *
      * @return null if the number isn't on the whitelist

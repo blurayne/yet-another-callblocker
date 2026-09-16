@@ -110,6 +110,22 @@ public class BlacklistUtils {
     }
 
     /**
+     * Whether the pattern is one number and nothing else: no wildcards, no alternatives.
+     *
+     * <p>Such an entry was made for that one number, so what it is called is about that number.
+     * The name of a pattern covering a whole range says nothing about any number in it.
+     */
+    public static boolean isLiteralPattern(String pattern) {
+        if (TextUtils.isEmpty(pattern)) return false;
+
+        for (int i = 0; i < pattern.length(); i++) {
+            if ("%_*#{},".indexOf(pattern.charAt(i)) != -1) return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Whether the pattern offers alternatives, which the database can't match.
      *
      * <p>The database matches patterns with {@code LIKE}, which knows {@code %} and {@code _}

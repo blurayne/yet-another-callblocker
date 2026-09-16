@@ -41,12 +41,35 @@ public class BlacklistService {
     public BlacklistItem getBlacklistItemForNumber(String number) {
         if (TextUtils.isEmpty(number)) return null;
 
-        number = BlacklistUtils.cleanNumber(number);
+        return getMatch(BlacklistUtils.cleanNumber(number));
+    }
 
-        BlacklistItem item = blacklistDao.getFirstMatch(number);
+    /**
+     * The entry for a number given in every form it can be written in.
+     *
+     * <p>The entry may have been saved as "+4922147258578" while the call was logged as
+     * "022147258578"; it is the same number either way, so every form is looked up.
+     *
+     * @param numberVariants the forms of the number, cleaned, the number itself first
+     */
+    public BlacklistItem getBlacklistItemForNumber(List<String> numberVariants) {
+        if (numberVariants == null || numberVariants.isEmpty()) return null;
+
+        for (String number : numberVariants) {
+            BlacklistItem item = getMatch(number);
+            if (item != null) return item;
+        }
+
+        return null;
+    }
+
+    private BlacklistItem getMatch(String cleanNumber) {
+        if (TextUtils.isEmpty(cleanNumber)) return null;
+
+        BlacklistItem item = blacklistDao.getFirstMatch(cleanNumber);
         if (item != null) return item;
 
-        return getAlternativesMatch(number);
+        return getAlternativesMatch(cleanNumber);
     }
 
     /**

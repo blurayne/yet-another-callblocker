@@ -35,6 +35,7 @@ import dummydomain.yetanothercallblocker.data.CallLogItemGroup;
 import dummydomain.yetanothercallblocker.data.NumberInfoCache;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.BlacklistChangedEvent;
+import dummydomain.yetanothercallblocker.event.BlacklistItemChangedEvent;
 import dummydomain.yetanothercallblocker.event.CallEndedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
@@ -214,6 +215,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onBlacklistChanged(BlacklistChangedEvent event) {
+        refreshCallLog();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onBlacklistItemChanged(BlacklistItemChangedEvent event) {
+        // an entry can be edited into a pattern that covers other numbers in the log, too
         refreshCallLog();
     }
 

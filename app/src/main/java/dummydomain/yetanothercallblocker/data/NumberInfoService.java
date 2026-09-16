@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 import dummydomain.yetanothercallblocker.Settings;
@@ -87,13 +88,25 @@ public class NumberInfoService {
             return numberInfo;
         }
 
+        String normalizedNumber = numberInfo.normalizedNumber
+                = numberNormalizer.normalizeNumber(number, countryCode);
+        LOG.trace("getNumberInfo() normalizedNumber={}", numberInfo.normalizedNumber);
+
+        /*
+         * The lists are matched against every form of the number, not just the one the call
+         * came in as: a number saved as "+4922147258578" is the same number as the
+         * "022147258578" in the call log, and both must find the entry.
+         */
+        List<String> numberVariants = NumberUtils.getVariants(number, normalizedNumber, countryCode);
+        LOG.trace("getNumberInfo() numberVariants={}", numberVariants);
+
         if (contactsProvider != null) {
             numberInfo.contactItem = contactsProvider.get(number);
         }
         LOG.trace("getNumberInfo() contactItem={}", numberInfo.contactItem);
 
         if (whitelist != null) {
-            numberInfo.whitelistItem = whitelist.getMatch(number);
+            numberInfo.whitelistItem = whitelist.getMatch(numberVariants);
             numberInfo.whitelisted = numberInfo.whitelistItem != null;
         }
         LOG.trace("getNumberInfo() whitelisted={}", numberInfo.whitelisted);
@@ -111,10 +124,6 @@ public class NumberInfoService {
                 return numberInfo;
             }
         }
-
-        String normalizedNumber = numberInfo.normalizedNumber
-                = numberNormalizer.normalizeNumber(number, countryCode);
-        LOG.trace("getNumberInfo() normalizedNumber={}", numberInfo.normalizedNumber);
 
         if (communityDatabase != null) {
             numberInfo.communityDatabaseItem = communityDatabase.getDbItemByNumber(normalizedNumber);
@@ -168,10 +177,12 @@ public class NumberInfoService {
                 numberInfo.phoneBlockRating, numberInfo.phoneBlockPersonalAllowed,
                 numberInfo.phoneBlockPersonalBlocked);
 
-        if (blacklistService != null && settings.getBlacklistIsNotEmpty()) {
+        // the flag only spares the screening service the cost of opening the blacklist;
+        // the screens show what the lists say about a number, so they always look it up
+        if (blacklistService != null && (full || settings.getBlacklistIsNotEmpty())) {
             // avoid loading blacklist if blocking for other reason
             if (full || getBlockingReason(numberInfo) == null) {
-                numberInfo.blacklistItem = blacklistService.getBlacklistItemForNumber(number);
+                numberInfo.blacklistItem = blacklistService.getBlacklistItemForNumber(numberVariants);
             }
         }
         LOG.trace("getNumberInfo() blacklistItem={}", numberInfo.blacklistItem);

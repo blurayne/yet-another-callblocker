@@ -70,10 +70,31 @@ public class Whitelist {
     public synchronized WhitelistItem getMatch(String number) {
         if (TextUtils.isEmpty(number)) return null;
 
+        return getCleanMatch(BlacklistUtils.cleanNumber(number));
+    }
+
+    /**
+     * The entry that lets the number through, looked up for every form the number can be
+     * written in - an entry saved as "+4922147258578" also lets "022147258578" through.
+     *
+     * @param numberVariants the forms of the number, cleaned, the number itself first
+     */
+    public synchronized WhitelistItem getMatch(List<String> numberVariants) {
+        if (numberVariants == null || numberVariants.isEmpty()) return null;
+
+        for (String number : numberVariants) {
+            WhitelistItem item = getCleanMatch(number);
+            if (item != null) return item;
+        }
+
+        return null;
+    }
+
+    private WhitelistItem getCleanMatch(String cleanNumber) {
+        if (TextUtils.isEmpty(cleanNumber)) return null;
+
         checkParsed();
         if (patterns.isEmpty()) return null;
-
-        String cleanNumber = BlacklistUtils.cleanNumber(number);
 
         WhitelistItem match = null;
 

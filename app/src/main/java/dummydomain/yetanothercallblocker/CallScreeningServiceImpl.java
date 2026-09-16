@@ -117,9 +117,13 @@ public class CallScreeningServiceImpl extends CallScreeningService {
                  * Where the network supports it (STIR/SHAKEN, Android 11+), it tells us whether
                  * the number the call claims to come from is really the caller's. A call that
                  * fails that check carries a forged number, whatever the number itself says.
+                 *
+                 * It doesn't apply to a number the user vouched for - a contact, the whitelist,
+                 * or their own PhoneBlock account - because those get through whatever any list
+                 * says about them.
                  */
                 numberInfo.failedVerification = hasFailedVerification(callDetails)
-                        && numberInfo.contactItem == null;
+                        && !numberInfoService.isAllowed(numberInfo);
 
                 shouldBlock = blockingEnabled && numberInfoService.shouldBlock(numberInfo);
 

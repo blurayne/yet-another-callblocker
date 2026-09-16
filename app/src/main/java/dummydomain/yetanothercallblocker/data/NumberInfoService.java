@@ -213,7 +213,7 @@ public class NumberInfoService {
     }
 
     /** Whether the user said the number is welcome, whatever any list says about it. */
-    protected boolean isAllowed(NumberInfo numberInfo) {
+    public boolean isAllowed(NumberInfo numberInfo) {
         return numberInfo.contactItem != null || numberInfo.whitelisted
                 || numberInfo.phoneBlockPersonalAllowed;
     }

@@ -90,6 +90,18 @@
     <string name="open_settings_activity">Settings</string>
     <string name="title_settings_activity">Settings</string>
     <!-- the sections of the settings screen -->
+    <!-- carrying the settings and the lists to another phone -->
+    <string name="settings_category_backup">Backup</string>
+    <string name="backup_export">Export settings and lists</string>
+    <string name="backup_export_summary">Settings, blacklist and whitelist as a JSON file</string>
+    <string name="backup_export_message">The file holds your settings and both lists - your own numbers, in other words - so keep it somewhere you would keep those.\n\nThe PhoneBlock token is not in it: it is the password to your account rather than a setting. Enter it again on the other phone; the page it comes from is named in the PhoneBlock settings.</string>
+    <string name="backup_export_confirmation">Export</string>
+    <string name="backup_import">Import settings and lists</string>
+    <string name="backup_import_summary">Read a file written by this app</string>
+    <string name="backup_import_message">The settings in the file replace the ones on this phone. Entries are added to the two lists; entries already there are left as they are, and nothing is deleted.\n\nThe PhoneBlock token is never part of such a file, so it stays as it is here.</string>
+    <string name="backup_import_confirmation">Choose a file</string>
+    <string name="backup_import_result">%1$d settings, %2$d blacklist entries and %3$d whitelist entries read</string>
+    <string name="backup_import_failed">That file is not a backup of this app</string>
     <string name="settings_category_blocking">Blocking</string>
     <string name="settings_category_caller_id_notifications">Caller ID and notifications</string>
     <string name="settings_category_number_sources">Where the numbers come from</string>

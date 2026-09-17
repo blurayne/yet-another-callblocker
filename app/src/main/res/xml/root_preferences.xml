@@ -142,6 +142,20 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <!-- the settings and both lists in one file -->
+    <PreferenceCategory app:title="@string/settings_category_backup">
+        <Preference
+            app:key="backupExport"
+            app:persistent="false"
+            app:summary="@string/backup_export_summary"
+            app:title="@string/backup_export" />
+        <Preference
+            app:key="backupImport"
+            app:persistent="false"
+            app:summary="@string/backup_import_summary"
+            app:title="@string/backup_import" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/settings_screen_advanced">
         <Preference
             app:fragment="dummydomain.yetanothercallblocker.AdvancedSettingsFragment"

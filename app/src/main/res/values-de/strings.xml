@@ -193,6 +193,13 @@
     <string name="whitelist_delete_confirmation">Die ausgewählten Einträge löschen?</string>
     <string name="title_add_whitelist_item_activity">Nummer hinzufügen</string>
     <string name="title_edit_whitelist_item_activity">Nummer bearbeiten</string>
+    <!-- der Dialog bietet diese Nummer und die Regel, unter die sie fällt, getrennt an -->
+    <string name="block_this_number">Diese Nummer blockieren</string>
+    <string name="edit_number_in_blacklist">Eintrag dieser Nummer bearbeiten</string>
+    <string name="edit_blacklist_rule">Blockierregel bearbeiten: %s</string>
+    <string name="allow_this_number">Diese Nummer immer durchlassen</string>
+    <string name="edit_number_in_whitelist">Ausnahme dieser Nummer bearbeiten</string>
+    <string name="edit_whitelist_rule">Ausnahmeregel bearbeiten: %s</string>
     <string name="whitelist_pattern_in_use">Ein anderer Eintrag hat bereits dieses Muster</string>
     <string name="whitelist_pattern_help">Nummern auf der weißen Liste werden nie blockiert, egal was sonst über sie bekannt ist, und eine Nummer, die hier eingetragen wird, verschwindet von der schwarzen Liste. Das Muster wird genauso geschrieben wie ein Muster der schwarzen Liste.</string>
 

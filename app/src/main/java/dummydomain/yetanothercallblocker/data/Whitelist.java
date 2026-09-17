@@ -112,6 +112,30 @@ public class Whitelist {
         return match;
     }
 
+    /**
+     * The entry that covers the number without being it: the rule the number falls under.
+     *
+     * @param numberVariants the forms of the number, cleaned, the number itself first
+     * @return null when nothing covers the number, or when the only entry for it is the
+     * number itself
+     */
+    public synchronized WhitelistItem getRuleMatch(List<String> numberVariants) {
+        if (numberVariants == null || numberVariants.isEmpty()) return null;
+
+        checkParsed();
+
+        for (String number : numberVariants) {
+            for (int i = 0; i < patterns.size(); i++) {
+                WhitelistItem item = items.get(i);
+                if (BlacklistUtils.isLiteralPattern(item.getPattern())) continue; // the number
+
+                if (patterns.get(i).matcher(number).matches()) return item;
+            }
+        }
+
+        return null;
+    }
+
     /** Turns what the user typed into a pattern, or an empty string if nothing is left. */
     public static String normalize(String pattern) {
         if (TextUtils.isEmpty(pattern)) return "";

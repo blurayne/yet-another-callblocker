@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import dummydomain.yetanothercallblocker.Settings;
+import dummydomain.yetanothercallblocker.data.db.BlacklistItem;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseItem;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabase;
@@ -200,6 +201,39 @@ public class NumberInfoService {
 
         LOG.debug("getNumberInfo() finished");
         return numberInfo;
+    }
+
+    /**
+     * The blacklist entry the number falls under without being it, so that the screens can
+     * offer to edit the rule itself rather than only the number.
+     *
+     * @return null when the number is on the list as itself only, or not at all
+     */
+    public BlacklistItem getBlacklistRule(NumberInfo numberInfo) {
+        if (blacklistService == null || !hasNumber(numberInfo)) return null;
+
+        return blacklistService.getFullRuleMatch(getNumberVariants(numberInfo));
+    }
+
+    /** The whitelist entry the number falls under without being it. */
+    public WhitelistItem getWhitelistRule(NumberInfo numberInfo) {
+        if (whitelist == null || !hasNumber(numberInfo)) return null;
+
+        return whitelist.getRuleMatch(getNumberVariants(numberInfo));
+    }
+
+    private static boolean hasNumber(NumberInfo numberInfo) {
+        return numberInfo != null && !numberInfo.noNumber && !TextUtils.isEmpty(numberInfo.number);
+    }
+
+    private List<String> getNumberVariants(NumberInfo numberInfo) {
+        String countryCode = settings.getCachedAutoDetectedCountryCode();
+
+        String normalizedNumber = numberInfo.normalizedNumber != null
+                ? numberInfo.normalizedNumber
+                : numberNormalizer.normalizeNumber(numberInfo.number, countryCode);
+
+        return NumberUtils.getVariants(numberInfo.number, normalizedNumber, countryCode);
     }
 
     protected NumberInfo.BlockingReason getBlockingReason(NumberInfo numberInfo) {

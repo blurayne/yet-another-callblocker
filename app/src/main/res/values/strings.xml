@@ -318,6 +318,13 @@
     <string name="whitelist_delete_confirmation">Delete the selected entries?</string>
     <string name="title_add_whitelist_item_activity">Add number</string>
     <string name="title_edit_whitelist_item_activity">Edit number</string>
+    <!-- the dialog offers this number and, separately, the rule it falls under -->
+    <string name="block_this_number">Block this number</string>
+    <string name="edit_number_in_blacklist">Edit the entry for this number</string>
+    <string name="edit_blacklist_rule">Edit the blocking rule: %s</string>
+    <string name="allow_this_number">Always allow this number</string>
+    <string name="edit_number_in_whitelist">Edit the exception for this number</string>
+    <string name="edit_whitelist_rule">Edit the exception rule: %s</string>
     <string name="whitelist_pattern_in_use">Another entry already has this pattern</string>
     <string name="whitelist_pattern_help">Numbers on the whitelist are never blocked, whatever else is known about them, and a number added here is taken off the blacklist. The pattern is written the same way as a blacklist pattern.</string>
     <string name="info_whitelisted">In whitelist</string>

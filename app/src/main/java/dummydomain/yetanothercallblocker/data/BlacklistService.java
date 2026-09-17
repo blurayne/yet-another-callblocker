@@ -109,6 +109,39 @@ public class BlacklistService {
         return match;
     }
 
+    /**
+     * The entry that covers the number without being it: the rule the number falls under.
+     *
+     * @param numberVariants the forms of the number, cleaned, the number itself first
+     * @return null when nothing covers the number, or when the only entry for it is the
+     * number itself
+     */
+    public BlacklistItem getFullRuleMatch(List<String> numberVariants) {
+        if (numberVariants == null || numberVariants.isEmpty()) return null;
+
+        List<BlacklistItem> items = getValidItems();
+
+        if (items == null) { // too long to match here; the database finds one entry or none
+            BlacklistItem item = getBlacklistItemForNumber(numberVariants);
+            return item != null && !BlacklistUtils.isLiteralPattern(item.getPattern())
+                    ? item : null;
+        }
+
+        for (String number : numberVariants) {
+            for (BlacklistItem item : items) {
+                String pattern = item.getPattern();
+                if (TextUtils.isEmpty(pattern) || BlacklistUtils.isLiteralPattern(pattern)) {
+                    continue; // the entry is a number, not a rule
+                }
+
+                Pattern compiled = getCompiledPattern(pattern);
+                if (compiled != null && compiled.matcher(number).matches()) return item;
+            }
+        }
+
+        return null;
+    }
+
     /** The valid entries, kept until the list changes, or null if there are too many of them. */
     private List<BlacklistItem> getValidItems() {
         List<BlacklistItem> items = validItems;

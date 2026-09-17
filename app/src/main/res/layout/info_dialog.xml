@@ -157,7 +157,15 @@
             layout="@layout/info_dialog_action" />
 
         <include
+            android:id="@+id/action_whitelist_rule"
+            layout="@layout/info_dialog_action" />
+
+        <include
             android:id="@+id/action_blacklist"
+            layout="@layout/info_dialog_action" />
+
+        <include
+            android:id="@+id/action_blacklist_rule"
             layout="@layout/info_dialog_action" />
 
         <include

@@ -13,11 +13,14 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 
+import dummydomain.yetanothercallblocker.data.BlacklistUtils;
 import dummydomain.yetanothercallblocker.data.NumberInfo;
+import dummydomain.yetanothercallblocker.data.NumberInfoService;
 import dummydomain.yetanothercallblocker.data.SiaNumberCategoryUtils;
+import dummydomain.yetanothercallblocker.data.WhitelistItem;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.data.db.BlacklistItem;
 import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
-import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabaseItem;
 
 /**
  * The dialog about a number: what is known about it on top, what can be done with it below.
@@ -103,7 +106,8 @@ public class InfoDialogHelper {
         if (numberInfo.noNumber) {
             view.findViewById(R.id.actions_divider).setVisibility(View.GONE);
             for (int id : new int[]{R.id.action_copy, R.id.action_open_contact,
-                    R.id.action_whitelist, R.id.action_blacklist, R.id.action_contacts,
+                    R.id.action_whitelist, R.id.action_whitelist_rule,
+                    R.id.action_blacklist, R.id.action_blacklist_rule, R.id.action_contacts,
                     R.id.action_phone_block, R.id.action_reviews, R.id.action_web_review,
                     R.id.action_phone_block_lookup, R.id.action_tellows,
                     R.id.action_web_search}) {
@@ -135,37 +139,68 @@ public class InfoDialogHelper {
                     dialog.dismiss();
                 });
 
-        // the entry is opened for editing first, so that the number can be given a name or
-        // turned into a pattern before it is saved - the way the blacklist works
+        /*
+         * Each list offers two things: this number, and the rule it falls under. An entry that
+         * is the number itself is edited where it is; a rule covering a whole range is left
+         * alone unless the user picks it, and this number can be given an entry of its own.
+         *
+         * The entry is opened for editing rather than saved right away, so that it can be
+         * given a name or turned into a pattern first - the way the blacklist works.
+         */
+        NumberInfoService numberInfoService = YacbHolder.getNumberInfoService();
+
+        WhitelistItem whitelistEntry = getEntryForNumber(numberInfo.whitelistItem);
         bindAction(view, R.id.action_whitelist, R.drawable.ic_check_24dp,
-                numberInfo.whitelisted
-                        ? R.string.edit_whitelist_entry : R.string.add_to_whitelist, true,
+                whitelistEntry != null
+                        ? R.string.edit_number_in_whitelist : R.string.allow_this_number, true,
                 () -> {
-                    context.startActivity(numberInfo.whitelisted
+                    context.startActivity(whitelistEntry != null
                             ? EditWhitelistItemActivity.getEditIntent(
-                                    context, numberInfo.whitelistItem.getPattern())
+                                    context, whitelistEntry.getPattern())
                             : EditWhitelistItemActivity.getIntent(
                                     context, suggestedName, number));
                     dialog.dismiss();
                 });
 
-        // the entry that matched is the one opened for editing - a pattern covering the number
-        // is edited where it is, rather than shadowed by a second entry for this one number
+        WhitelistItem whitelistRule = numberInfoService != null
+                ? numberInfoService.getWhitelistRule(numberInfo) : null;
+        bindAction(view, R.id.action_whitelist_rule, R.drawable.ic_check_24dp,
+                whitelistRule != null ? context.getString(
+                        R.string.edit_whitelist_rule, whitelistRule.getPattern()) : null,
+                whitelistRule != null,
+                () -> {
+                    context.startActivity(EditWhitelistItemActivity.getEditIntent(
+                            context, whitelistRule.getPattern()));
+                    dialog.dismiss();
+                });
+
+        BlacklistItem blacklistEntry = getEntryForNumber(numberInfo.blacklistItem);
         bindAction(view, R.id.action_blacklist, R.drawable.ic_brick_24dp,
-                numberInfo.blacklistItem != null
-                        ? R.string.edit_blacklist_entry : R.string.add_to_blacklist,
+                blacklistEntry != null
+                        ? R.string.edit_number_in_blacklist : R.string.block_this_number,
                 true, () -> {
                     Intent intent;
-                    if (numberInfo.blacklistItem != null) {
+                    if (blacklistEntry != null) {
                         intent = EditBlacklistItemActivity.getIntent(
-                                context, numberInfo.blacklistItem.getId());
+                                context, blacklistEntry.getId());
                     } else {
-                        FeaturedDatabaseItem featuredItem = numberInfo.featuredDatabaseItem;
-                        String name = featuredItem != null ? featuredItem.getName() : null;
-                        intent = EditBlacklistItemActivity.getIntent(context, name, number);
+                        intent = EditBlacklistItemActivity.getIntent(
+                                context, suggestedName, number);
                     }
 
                     context.startActivity(intent);
+                    dialog.dismiss();
+                });
+
+        BlacklistItem blacklistRule = numberInfoService != null
+                ? numberInfoService.getBlacklistRule(numberInfo) : null;
+        bindAction(view, R.id.action_blacklist_rule, R.drawable.ic_brick_24dp,
+                blacklistRule != null ? context.getString(R.string.edit_blacklist_rule,
+                        blacklistRule.getHumanReadablePattern()) : null,
+                blacklistRule != null,
+                () -> {
+                    context.startActivity(EditBlacklistItemActivity.getIntent(
+                            context, blacklistRule.getId()));
                     dialog.dismiss();
                 });
 
@@ -240,16 +275,41 @@ public class InfoDialogHelper {
     /** Sets up one of the action rows, or hides it when it doesn't apply. */
     private static void bindAction(View view, int id, int iconResId, int labelResId,
                                    boolean applies, Runnable action) {
+        View row = bindRow(view, id, iconResId, applies, action);
+        if (row != null) row.<TextView>findViewById(R.id.label).setText(labelResId);
+    }
+
+    private static void bindAction(View view, int id, int iconResId, CharSequence label,
+                                   boolean applies, Runnable action) {
+        View row = bindRow(view, id, iconResId, applies, action);
+        if (row != null) row.<TextView>findViewById(R.id.label).setText(label);
+    }
+
+    /** @return the row to put a label on, or null when it doesn't apply to this number */
+    private static View bindRow(View view, int id, int iconResId,
+                                boolean applies, Runnable action) {
         View row = view.findViewById(id);
 
         if (!applies) {
             row.setVisibility(View.GONE);
-            return;
+            return null;
         }
 
+        row.setVisibility(View.VISIBLE);
         row.<ImageView>findViewById(R.id.icon).setImageResource(iconResId);
-        row.<TextView>findViewById(R.id.label).setText(labelResId);
         row.setOnClickListener(v -> action.run());
+
+        return row;
+    }
+
+    /** The entry that is the number itself, or null when a pattern is what matched. */
+    private static BlacklistItem getEntryForNumber(BlacklistItem item) {
+        return item != null && BlacklistUtils.isLiteralPattern(item.getPattern()) ? item : null;
+    }
+
+    /** The entry that is the number itself, or null when a pattern is what matched. */
+    private static WhitelistItem getEntryForNumber(WhitelistItem item) {
+        return item != null && BlacklistUtils.isLiteralPattern(item.getPattern()) ? item : null;
     }
 
     /** Runs the action, after asking when the number is a contact's and would be sent away. */

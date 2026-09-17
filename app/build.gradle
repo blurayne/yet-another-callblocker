@@ -1,12 +1,43 @@
 apply plugin: 'com.android.application'
 apply plugin: 'org.greenrobot.greendao'
 
+/*
+ * Optional release signing.
+ *
+ * The credentials are taken from the environment (that's what the CI uses) or from
+ * a `keystore.properties` file in the project root (for local builds):
+ *
+ *     storeFile=/path/to/keystore.jks
+ *     storePassword=...
+ *     keyAlias=...
+ *     keyPassword=...
+ *
+ * If they aren't provided, the release build is left unsigned as it was before.
+ */
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
+def keystoreValue = { String envName, String propertyName ->
+    def value = System.getenv(envName) ?: keystoreProperties[propertyName]
+    value?.toString()?.trim() ?: null
+}
+
+def keystorePath = keystoreValue('YACB_KEYSTORE_FILE', 'storeFile')
+def signRelease = keystorePath != null && file(keystorePath).exists()
+
+if (keystorePath != null && !signRelease) {
+    logger.warn("The keystore ${keystorePath} doesn't exist, the release build won't be signed")
+}
+
 android {
-    compileSdkVersion 30
+    compileSdkVersion 33
     defaultConfig {
         applicationId "dummydomain.yetanothercallblocker"
         minSdkVersion 14
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionCode 5170
         versionName "0.5.17"
 
@@ -16,10 +47,36 @@ android {
             }
         }
     }
+    signingConfigs {
+        /*
+         * A debug keystore that is part of the repo, so that every build - local or CI - signs
+         * the debug APK with the same key and the builds can be installed over each other.
+         * Android's debug credentials are fixed and public by design; this key is only ever
+         * used for debug builds and must never be used for anything that is distributed.
+         */
+        debug {
+            storeFile rootProject.file('ci-debug.keystore')
+            storeType 'PKCS12'
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+        release {
+            if (signRelease) {
+                storeFile file(keystorePath)
+                storePassword keystoreValue('YACB_KEYSTORE_PASSWORD', 'storePassword')
+                keyAlias keystoreValue('YACB_KEY_ALIAS', 'keyAlias')
+                keyPassword keystoreValue('YACB_KEY_PASSWORD', 'keyPassword')
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (signRelease) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     applicationVariants.all { variant ->
@@ -52,7 +109,9 @@ dependencies {
     implementation 'androidx.paging:paging-runtime:2.1.2'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'androidx.preference:preference:1.1.1'
-    implementation 'androidx.work:work-runtime:2.6.0'
+    // 2.7.0 is the first release that creates its PendingIntents the way Android 12+ demands:
+    // with an older one, WorkManager's initialization crashes an app that targets 31 or above
+    implementation 'androidx.work:work-runtime:2.7.1'
     implementation 'org.greenrobot:greendao:3.3.0'
     implementation "org.greenrobot:eventbus:$eventbus_version"
     annotationProcessor "org.greenrobot:eventbus-annotation-processor:$eventbus_version"

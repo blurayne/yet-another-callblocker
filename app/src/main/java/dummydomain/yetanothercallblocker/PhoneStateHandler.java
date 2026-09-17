@@ -26,6 +26,8 @@ public class PhoneStateHandler {
 
     public enum Source {
         PHONE_STATE_LISTENER,
+        /** Android 12+ replacement for the listener. It never provides a number. */
+        TELEPHONY_CALLBACK,
         PHONE_STATE_BROADCAST_RECEIVER_MONITORING,
         PHONE_STATE_BROADCAST_RECEIVER
     }
@@ -75,6 +77,8 @@ public class PhoneStateHandler {
             }
 
             if (phoneNumber == null) {
+                // TelephonyCallback ends up here: a missing number means nothing on its own,
+                // the number of the call comes from the broadcast receiver
                 LOG.debug("onRinging() ignoring null");
                 ignore = true;
             }
@@ -89,15 +93,17 @@ public class PhoneStateHandler {
 
         if (ignore) return;
 
-        boolean blockingEnabled = settings.getCallBlockingEnabled();
+        boolean blockingEnabled = settings.getCallBlockingEnabled() && !settings.isBlockingPaused();
         boolean showNotifications = settings.getIncomingCallNotifications();
+        boolean callerIdEnabled = settings.getCallerIdEnabled();
 
-        if (!blockingEnabled && !showNotifications) {
+        if (!blockingEnabled && !showNotifications && !callerIdEnabled) {
             return;
         }
 
+        // the full info is needed to display the blacklist entry as the caller ID
         NumberInfo numberInfo = numberInfoService.getNumberInfo(phoneNumber,
-                settings.getCachedAutoDetectedCountryCode(), false);
+                settings.getCachedAutoDetectedCountryCode(), callerIdEnabled);
 
         boolean blocked = false;
         if (blockingEnabled && numberInfoService.shouldBlock(numberInfo)) {
@@ -112,8 +118,12 @@ public class PhoneStateHandler {
             }
         }
 
-        if (!blocked && showNotifications) {
-            notificationService.startCallIndication(numberInfo);
+        if (!blocked) {
+            CallerIdHelper.onIncomingCall(context, numberInfo);
+
+            if (showNotifications) {
+                notificationService.startCallIndication(numberInfo);
+            }
         }
     }
 
@@ -122,6 +132,8 @@ public class PhoneStateHandler {
 
         isOffHook = true;
 
+        CallerIdHelper.onCallFinished(); // the call is answered - the phone app takes over
+
         postEvent(new CallOngoingEvent());
     }
 
@@ -129,6 +141,8 @@ public class PhoneStateHandler {
         LOG.debug("onIdle({}, {})", source, quote(phoneNumber));
 
         isOffHook = false;
+
+        CallerIdHelper.onCallFinished();
 
         notificationService.stopAllCallsIndication();
 

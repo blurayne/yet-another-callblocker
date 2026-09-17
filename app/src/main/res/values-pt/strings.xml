@@ -155,7 +155,7 @@
     <string name="call_log_permission_message">Conceder permissão de \"Telefone\" para ver as chamadas recentes</string>
     <string name="open_system_settings">Abrir configurações</string>
     <string name="default_phone_app_unset">Selecione uma aplicação diferente como \"Aplicação de Telefone\" em \"Aplicações predefinidas\" nas configurações do sistema</string>
-    <string name="default_phone_app_set">Selecione \"Yet Another Call Blocker\" como \"Aplicação de telefone\" em \"Aplicações predefinidas\" nas configurações do sistema</string>
+    <string name="default_phone_app_set">Selecione \"Caller ID &amp; Spam\" como \"Aplicação de telefone\" em \"Aplicações predefinidas\" nas configurações do sistema</string>
     <string name="default_phone_app">\"Aplicação de telefone\" predefinida</string>
     <string name="denied_call_screening_role_message">O bloqueio avançado de chamadas não funcionará devido à aplicação não estar definida como o \"Aplicação identificadora de chamadas\"</string>
     <string name="default_caller_id_app_unset">Selecione uma aplicação diferente como \"Aplicação identificadora de chamadas\" em \"Aplicações predefinidas\" nas configurações do sistema</string>
@@ -209,7 +209,7 @@
     <string name="notification_channel_group_name_services">Serviços</string>
     <string name="notification_channel_group_name_blocked_calls">Chamadas bloqueadas</string>
     <string name="notification_channel_group_name_incoming_calls">Chamadas recebidas</string>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
     <string name="settings_category_database">Base de dados</string>
     <string name="settings_screen_db_filtering">Filtragem da base de dados</string>
     <string name="db_filtering_info">Esclarecimento</string>

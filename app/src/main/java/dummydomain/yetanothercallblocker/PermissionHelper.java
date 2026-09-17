@@ -47,6 +47,12 @@ public class PermissionHelper {
     private static final Logger LOG = LoggerFactory.getLogger(PermissionHelper.class);
 
     private static final Set<String> INFO_PERMISSIONS = new HashSet<>();
+    /**
+     * The permissions the info feature asks for. Unlike {@link #INFO_PERMISSIONS}, this includes
+     * the permission to post notifications, which isn't needed to look a number up
+     * (denying it must not disable the number info itself).
+     */
+    private static final Set<String> INFO_REQUEST_PERMISSIONS = new HashSet<>();
     private static final Set<String> BLOCKING_PERMISSIONS = new HashSet<>();
     private static final Set<String> CONTACTS_PERMISSIONS = new HashSet<>();
 
@@ -54,6 +60,11 @@ public class PermissionHelper {
         INFO_PERMISSIONS.add(Manifest.permission.READ_PHONE_STATE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             INFO_PERMISSIONS.add(Manifest.permission.READ_CALL_LOG);
+        }
+
+        INFO_REQUEST_PERMISSIONS.addAll(INFO_PERMISSIONS);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            INFO_REQUEST_PERMISSIONS.add(Manifest.permission.POST_NOTIFICATIONS);
         }
 
         BLOCKING_PERMISSIONS.addAll(INFO_PERMISSIONS);
@@ -70,7 +81,7 @@ public class PermissionHelper {
                                                      boolean block, boolean contacts) {
         Set<String> requiredPermissions = new HashSet<>();
 
-        if (info) requiredPermissions.addAll(INFO_PERMISSIONS);
+        if (info) requiredPermissions.addAll(INFO_REQUEST_PERMISSIONS);
         if (block) requiredPermissions.addAll(BLOCKING_PERMISSIONS);
         if (contacts) requiredPermissions.addAll(CONTACTS_PERMISSIONS);
 
@@ -125,7 +136,7 @@ public class PermissionHelper {
             for (int i = 0; i < permissions.length; i++) {
                 String permission = permissions[i];
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                    if (INFO_PERMISSIONS.contains(permission)) {
+                    if (INFO_REQUEST_PERMISSIONS.contains(permission)) {
                         infoDenied = true;
                     }
                     if (BLOCKING_PERMISSIONS.contains(permission)) {
@@ -181,6 +192,34 @@ public class PermissionHelper {
     public static boolean hasPermission(Context context, String permission) {
         return ContextCompat.checkSelfPermission(context, permission)
                 == PackageManager.PERMISSION_GRANTED;
+    }
+
+    /** @see CallerIdOverlay */
+    public static boolean hasOverlayPermission(Context context) {
+        return CallerIdOverlay.hasPermission(context);
+    }
+
+    /**
+     * Asks the user to grant the "display over other apps" permission.
+     * Only needed on Android 6+, it's granted on install before that.
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    public static void requestOverlayPermission(Activity activity) {
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.caller_id_overlay_permission)
+                .setMessage(R.string.caller_id_overlay_permission_message)
+                .setPositiveButton(R.string.open_system_settings,
+                        (d, w) -> openOverlaySettings(activity))
+                .show();
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private static void openOverlaySettings(Context context) {
+        if (startActivity(context, new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + BuildConfig.APPLICATION_ID)))) {
+            return;
+        }
+        startActivity(context, new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
     }
 
     public static RequestToken requestCallScreening(Activity activity) {

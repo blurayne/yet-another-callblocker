@@ -1,14 +1,18 @@
 package dummydomain.yetanothercallblocker;
 
 import android.app.PendingIntent;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import dummydomain.yetanothercallblocker.data.BlacklistUtils;
 
 public class IntentHelper {
 
@@ -24,6 +28,45 @@ public class IntentHelper {
             flags = PendingIntent.FLAG_IMMUTABLE;
         }
         return PendingIntent.getActivity(context, 0, intent, flags);
+    }
+
+    /** Opens the contact the number belongs to in the contacts app. */
+    public static Intent getViewContactIntent(long contactId) {
+        return new Intent(Intent.ACTION_VIEW,
+                ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, contactId));
+    }
+
+    /** Opens an address in whatever app handles web addresses. */
+    public static Intent getWebIntent(String url) {
+        return new Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                .addCategory(Intent.CATEGORY_BROWSABLE);
+    }
+
+    /** The page about the number on tellows, which knows it in the {@code +49...} form. */
+    public static String getTellowsUrl(String number) {
+        return "https://www.tellows.de/num/" + Uri.encode(BlacklistUtils.cleanNumber(number));
+    }
+
+    /**
+     * Looks the number up on the web, in whatever app handles web addresses.
+     *
+     * <p>It is an ordinary address rather than a search intent, so that it opens in the
+     * browser instead of whichever app claims searches.
+     */
+    public static Intent getWebSearchIntent(String number) {
+        Uri uri = Uri.parse("https://www.google.com/search").buildUpon()
+                .appendQueryParameter("q", number)
+                .build();
+
+        return new Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE);
+    }
+
+    /** Lets the user store the number, either as a new contact or in an existing one. */
+    public static Intent getAddToContactsIntent(String number) {
+        Intent intent = new Intent(Intent.ACTION_INSERT_OR_EDIT);
+        intent.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
+        intent.putExtra(ContactsContract.Intents.Insert.PHONE, number);
+        return intent;
     }
 
     public static Intent clearTop(Intent intent) {

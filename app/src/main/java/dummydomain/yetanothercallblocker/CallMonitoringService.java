@@ -4,12 +4,15 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.IBinder;
 import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
 import org.slf4j.Logger;
@@ -28,6 +31,7 @@ public class CallMonitoringService extends Service {
     private static final Logger LOG = LoggerFactory.getLogger(CallMonitoringService.class);
 
     private final MyPhoneStateListener phoneStateListener = new MyPhoneStateListener();
+    private MyTelephonyCallback telephonyCallback;
     private final PhoneStateBroadcastReceiver phoneStateBroadcastReceiver
             = new PhoneStateBroadcastReceiver(
             PhoneStateHandler.Source.PHONE_STATE_BROADCAST_RECEIVER_MONITORING);
@@ -35,7 +39,18 @@ public class CallMonitoringService extends Service {
     private boolean monitoringStarted;
 
     public static void start(Context context) {
-        ContextCompat.startForegroundService(context, getIntent(context, ACTION_START));
+        try {
+            ContextCompat.startForegroundService(context, getIntent(context, ACTION_START));
+        } catch (Exception e) {
+            /*
+             * An app targeting Android 12+ can't start a foreground service while it's in the
+             * background, and the app process is started in the background often enough
+             * (an incoming call, a query from the phone app). Failing to monitor is bad,
+             * crashing the process is worse: the service is started again when the app is
+             * opened or the device boots.
+             */
+            LOG.warn("start() couldn't start the monitoring service", e);
+        }
     }
 
     public static void stop(Context context) {
@@ -91,7 +106,12 @@ public class CallMonitoringService extends Service {
         monitoringStarted = true;
 
         try {
-            getTelephonyManager().listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                registerTelephonyCallback();
+            } else {
+                getTelephonyManager().listen(
+                        phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+            }
 
             IntentFilter intentFilter = new IntentFilter();
             intentFilter.addAction(TelephonyManager.EXTRA_STATE_RINGING); // TODO: check
@@ -106,7 +126,11 @@ public class CallMonitoringService extends Service {
         if (!monitoringStarted) return;
 
         try {
-            getTelephonyManager().listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                unregisterTelephonyCallback();
+            } else {
+                getTelephonyManager().listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
+            }
 
             unregisterReceiver(phoneStateBroadcastReceiver);
         } catch (Exception e) {
@@ -114,6 +138,38 @@ public class CallMonitoringService extends Service {
         }
 
         monitoringStarted = false;
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private void registerTelephonyCallback() {
+        MyTelephonyCallback callback = telephonyCallback = new MyTelephonyCallback();
+
+        getTelephonyManager().registerTelephonyCallback(getMainExecutor(), callback);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private void unregisterTelephonyCallback() {
+        if (telephonyCallback == null) return;
+
+        getTelephonyManager().unregisterTelephonyCallback(telephonyCallback);
+        telephonyCallback = null;
+    }
+
+    private static void handleCallState(PhoneStateHandler.Source source,
+                                        int state, String phoneNumber) {
+        PhoneStateHandler phoneStateHandler = YacbHolder.getPhoneStateHandler();
+
+        switch (state) {
+            case TelephonyManager.CALL_STATE_IDLE:
+                phoneStateHandler.onIdle(source, phoneNumber);
+                break;
+            case TelephonyManager.CALL_STATE_RINGING:
+                phoneStateHandler.onRinging(source, phoneNumber);
+                break;
+            case TelephonyManager.CALL_STATE_OFFHOOK:
+                phoneStateHandler.onOffHook(source, phoneNumber);
+                break;
+        }
     }
 
     private TelephonyManager getTelephonyManager() {
@@ -137,20 +193,25 @@ public class CallMonitoringService extends Service {
                 phoneNumber = null;
             }
 
-            PhoneStateHandler phoneStateHandler = YacbHolder.getPhoneStateHandler();
-            PhoneStateHandler.Source source = PhoneStateHandler.Source.PHONE_STATE_LISTENER;
+            handleCallState(PhoneStateHandler.Source.PHONE_STATE_LISTENER, state, phoneNumber);
+        }
+    }
 
-            switch (state) {
-                case TelephonyManager.CALL_STATE_IDLE:
-                    phoneStateHandler.onIdle(source, phoneNumber);
-                    break;
-                case TelephonyManager.CALL_STATE_RINGING:
-                    phoneStateHandler.onRinging(source, phoneNumber);
-                    break;
-                case TelephonyManager.CALL_STATE_OFFHOOK:
-                    phoneStateHandler.onOffHook(source, phoneNumber);
-                    break;
-            }
+    /**
+     * The replacement for {@link PhoneStateListener}, which is deprecated since Android 12.
+     * It only reports the state: the number of the call comes from the broadcast receiver.
+     */
+    @RequiresApi(Build.VERSION_CODES.S)
+    private static class MyTelephonyCallback extends TelephonyCallback
+            implements TelephonyCallback.CallStateListener {
+
+        private static final Logger LOG = LoggerFactory.getLogger(MyTelephonyCallback.class);
+
+        @Override
+        public void onCallStateChanged(int state) {
+            LOG.info("onCallStateChanged({})", state);
+
+            handleCallState(PhoneStateHandler.Source.TELEPHONY_CALLBACK, state, null);
         }
     }
 

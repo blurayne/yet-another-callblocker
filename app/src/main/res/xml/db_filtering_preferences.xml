@@ -37,10 +37,22 @@
         app:summary="@string/db_filtering_keep_short_numbers_max_length_summary"
         app:title="@string/db_filtering_keep_short_numbers_max_length" />
 
+    <SwitchPreferenceCompat
+        app:defaultValue="true"
+        app:key="dbFilteringKeepMaster"
+        app:summary="@string/db_filtering_keep_master_summary"
+        app:title="@string/db_filtering_keep_master" />
+
     <Preference
         app:key="dbFilteringFilterDb"
         app:persistent="false"
         app:summary="@string/db_filtering_filter_db_summary"
         app:title="@string/db_filtering_filter_db" />
+
+    <Preference
+        app:key="dbFilteringRevertToMaster"
+        app:persistent="false"
+        app:summary="@string/db_filtering_revert_to_master_summary"
+        app:title="@string/db_filtering_revert_to_master" />
 
 </PreferenceScreen>

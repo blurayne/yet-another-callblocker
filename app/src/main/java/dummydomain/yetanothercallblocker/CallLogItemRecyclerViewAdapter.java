@@ -86,21 +86,27 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
 
             label.setText(getLabel(context, item));
 
-            IconAndColor iconAndColor = IconAndColor.forNumberRating(
-                    numberInfo.rating, numberInfo.contactItem != null);
+            // a number nothing is known about gets the question mark rather than nothing at all
+            IconAndColor.forNumberInfo(numberInfo).applyToImageView(numberInfoIcon);
 
-            if (!iconAndColor.noInfo) {
-                iconAndColor.applyToImageView(numberInfoIcon);
+            // the line also says what became of the call: what the app did about it when it
+            // came in, or else what the system recorded about it
+            String status = getCallStatus(context, item);
+            String durationString = hasDuration(item) ? getDuration(context, item.duration) : null;
+
+            String statusAndDuration;
+            if (status != null && durationString != null) {
+                statusAndDuration = context.getString(
+                        R.string.call_status_and_duration, status, durationString);
             } else {
-                numberInfoIcon.setImageDrawable(null);
+                statusAndDuration = status != null ? status : durationString;
             }
 
-            if (item.duration == 0 && item.type == CallLogItem.Type.MISSED
-                    || item.type == CallLogItem.Type.REJECTED) {
-                duration.setVisibility(View.GONE);
-            } else {
-                duration.setText(getDuration(context, item.duration));
+            if (!TextUtils.isEmpty(statusAndDuration)) {
+                duration.setText(statusAndDuration);
                 duration.setVisibility(View.VISIBLE);
+            } else {
+                duration.setVisibility(View.GONE);
             }
 
             bindTypeIcons(group);
@@ -124,17 +130,61 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
             time.setText(timeString);
         }
 
+        /** Whether the call lasted long enough for its duration to be worth showing. */
+        private boolean hasDuration(CallLogItem item) {
+            if (item.duration != 0) return true;
+
+            return item.type != CallLogItem.Type.MISSED
+                    && item.type != CallLogItem.Type.REJECTED
+                    && item.type != CallLogItem.Type.BLOCKED;
+        }
+
+        /**
+         * What became of the call: the app's own decision where it has one - only the app knows
+         * that a call was silenced, or that it was let through although something is known
+         * about the number - and otherwise what the system recorded.
+         *
+         * @return null for an ordinary call the app didn't see
+         */
+        private String getCallStatus(Context context, CallLogItem item) {
+            if (item.decision != null) {
+                switch (item.decision) {
+                    case BLOCKED:
+                        return context.getString(R.string.call_status_blocked);
+
+                    case SILENCED:
+                        return context.getString(R.string.call_status_silenced);
+
+                    case ALLOWED:
+                        return context.getString(R.string.call_status_let_through);
+                }
+            }
+
+            switch (item.type) {
+                case BLOCKED:
+                    return context.getString(R.string.call_status_blocked);
+
+                case REJECTED:
+                    return context.getString(R.string.call_status_rejected);
+
+                default:
+                    return null;
+            }
+        }
+
         private String getLabel(Context context, CallLogItem item) {
             NumberInfo numberInfo = item.numberInfo;
+
+            if (!item.presentation.hasNumber()) return getPresentationLabel(context, item);
 
             if (numberInfo.noNumber) return context.getString(R.string.no_number);
 
             if (numberInfo.name != null) return numberInfo.name;
 
-            if (numberInfo.blacklistItem != null
-                    && !TextUtils.isEmpty(numberInfo.blacklistItem.getName())) {
-                return numberInfo.blacklistItem.getName();
-            }
+            // an entry only lends the row its name when it is this very number: the name of a
+            // pattern is about the range it covers, not about the number that fell in it
+            String listEntryName = NumberInfoUtils.getListEntryName(numberInfo);
+            if (listEntryName != null) return listEntryName;
 
             return item.number;
         }
@@ -166,6 +216,7 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
                         break;
 
                     case REJECTED:
+                    case BLOCKED:
                         icon = R.drawable.ic_call_rejected_24dp;
                         break;
                 }
@@ -176,6 +227,20 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
                 view.setVisibility(View.VISIBLE);
             } else {
                 view.setVisibility(View.GONE);
+            }
+        }
+
+        /** Says what kind of call it was when there's no number to show. */
+        private String getPresentationLabel(Context context, CallLogItem item) {
+            switch (item.presentation) {
+                case RESTRICTED:
+                    return context.getString(R.string.call_log_number_withheld);
+
+                case PAYPHONE:
+                    return context.getString(R.string.call_log_number_payphone);
+
+                default:
+                    return context.getString(R.string.call_log_number_unknown);
             }
         }
 

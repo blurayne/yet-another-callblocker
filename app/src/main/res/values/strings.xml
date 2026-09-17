@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
 
     <string name="notification_channel_group_name_incoming_calls">Incoming calls</string>
     <string name="notification_channel_group_name_blocked_calls">Blocked calls</string>
@@ -13,6 +13,7 @@
     <string name="notification_channel_name_blocked_info">Blocked info</string>
     <string name="notification_channel_name_monitoring_service">Monitoring service</string>
     <string name="notification_channel_name_tasks">Tasks</string>
+    <string name="notification_channel_name_warnings">Warnings</string>
 
     <string name="notification_incoming_call_contact">Contact</string>
     <string name="notification_incoming_call_positive">Positive call</string>
@@ -62,7 +63,7 @@
     <string name="default_caller_id_app">Default \"Caller ID app\"</string>
     <string name="default_caller_id_app_unset">Select a different app as the \"Caller ID app\" in \"Default apps\" in system settings</string>
     <string name="default_phone_app">Default \"Phone app\"</string>
-    <string name="default_phone_app_set">Select \"Yet Another Call Blocker\" as the \"Phone app\" in \"Default apps\" in system settings</string>
+    <string name="default_phone_app_set">Select \"Caller ID &amp; Spam\" as the \"Phone app\" in \"Default apps\" in system settings</string>
     <string name="default_phone_app_unset">Select a different app as the \"Phone app\" in \"Default apps\" in system settings</string>
     <string name="open_system_settings">Open Settings</string>
 
@@ -76,7 +77,7 @@
     <string name="secondary_db_updating">Updating DB…</string>
 
     <string name="online_reviews">Online reviews</string>
-    <string name="add_web_review">Add review (web)</string>
+    <string name="add_web_review">Report to shouldianswer.com</string>
     <string name="back">Back</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -88,7 +89,114 @@
 
     <string name="open_settings_activity">Settings</string>
     <string name="title_settings_activity">Settings</string>
+    <!-- the sections of the settings screen -->
+    <!-- carrying the settings and the lists to another phone -->
+    <string name="settings_category_backup">Backup</string>
+    <string name="backup_export">Export settings and lists</string>
+    <string name="backup_export_summary">Settings, blacklist and whitelist as a JSON file</string>
+    <string name="backup_export_message">The file holds your settings and both lists - your own numbers, in other words - so keep it somewhere you would keep those.\n\nThe PhoneBlock token is not in it: it is the password to your account rather than a setting. Enter it again on the other phone; the page it comes from is named in the PhoneBlock settings.</string>
+    <string name="backup_export_confirmation">Export</string>
+    <string name="backup_import">Import settings and lists</string>
+    <string name="backup_import_summary">Read a file written by this app</string>
+    <string name="backup_import_message">The settings in the file replace the ones on this phone. Entries are added to the two lists; entries already there are left as they are, and nothing is deleted.\n\nThe PhoneBlock token is never part of such a file, so it stays as it is here.</string>
+    <string name="backup_import_confirmation">Choose a file</string>
+    <string name="backup_import_result">%1$d settings, %2$d blacklist entries and %3$d whitelist entries read</string>
+    <string name="backup_import_failed">That file is not a backup of this app</string>
+    <string name="settings_category_blocking">Blocking</string>
+    <string name="settings_category_caller_id_notifications">Caller ID and notifications</string>
+    <string name="settings_category_number_sources">Where the numbers come from</string>
+    <string name="settings_category_appearance">Appearance</string>
+    <string name="settings_screen_advanced_summary">Country codes, what happens before the phone is unlocked, debugging</string>
+    <string name="community_database">Community database</string>
+    <string name="blocking_stats">Last 30 days: %1$d blocked, %2$d silenced of %3$d calls</string>
+    <string name="blocking_stats_none">No calls seen yet</string>
+    <string name="blacklist_count_with_rules">%1$d entries, %2$d of them rules</string>
+    <plurals name="blacklist_count">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
     <string name="settings_category_main">Main</string>
+    <string name="db_filtering_keep_master">Keep the unfiltered database</string>
+    <string name="db_filtering_keep_master_summary">Keep a copy of the unfiltered database, so that it can be restored and so that filtering always starts from it instead of narrowing down an already filtered database. The copy needs about as much space as the database itself</string>
+    <string name="db_filtering_revert_to_master">Use the unfiltered database</string>
+    <string name="db_filtering_revert_to_master_summary">Put the kept copy of the unfiltered database back. It can be filtered again afterwards</string>
+    <string name="db_filtering_revert_to_master_summary_unavailable">No copy of the unfiltered database is kept. Download the database again to get an unfiltered one</string>
+    <string name="db_filtering_reverting">Restoring the unfiltered database\u2026</string>
+    <string name="db_filtering_reverted">The unfiltered database is in use again.</string>
+    <string name="db_filtering_revert_failed">Couldn\'t restore the unfiltered database.</string>
+    <string name="db_filtering_progress">Part %1$d of %2$d</string>
+    <string name="db_filtering_cancelling">Stopping\u2026</string>
+    <string name="db_filtering_result_cancelled">Filtering was stopped. The unfiltered database is in use.</string>
+    <string name="db_filtering_result_filtered">Removed %1$d of %2$d entries, %3$d are left.</string>
+    <string name="db_filtering_result_nothing_filtered">Nothing was filtered out: all %1$d entries match the filter, so the database is unchanged.</string>
+    <string name="db_filtering_result_no_filter">Nothing was filtered: database filtering is disabled, or no prefixes to keep are set.</string>
+    <string name="db_filtering_result_no_database">There is no database to filter, and it couldn\'t be downloaded.</string>
+    <string name="silence_calls">Silence calls</string>
+    <string name="silence_calls_summary">Mute the ringer for the selected callers instead of blocking them: the call still goes through, is shown by the phone app and ends up in the call log. Contacts are never silenced. Needs \"Advanced call blocking mode\" and Android 10+.</string>
+    <string name="silence_calls_negative">Negative rating</string>
+    <string name="silence_calls_neutral">Neutral rating</string>
+    <string name="silence_calls_unknown">Unknown numbers</string>
+    <string name="silence_calls_unverified">Forged numbers</string>
+    <string name="block_failed_verification">Block forged numbers</string>
+    <string name="block_failed_verification_summary">Block calls that the network reports as calling from a number that isn\'t theirs (STIR/SHAKEN). Needs Android 11+ and a network that checks it - where it isn\'t in use, no call is ever reported as forged and this does nothing. Contacts are never blocked</string>
+    <string name="info_failed_verification">The number of this call is forged</string>
+    <string name="settings_category_phone_block">PhoneBlock</string>
+    <string name="phone_block_info">About PhoneBlock</string>
+    <string name="phone_block_info_summary">PhoneBlock (phoneblock.net) is a community that collects the numbers of unwanted callers, with a focus on Germany. Its list is downloaded and kept on the device, so looking a number up costs no network and nothing about your calls is sent anywhere</string>
+    <string name="use_phone_block">Use the PhoneBlock list</string>
+    <string name="use_phone_block_summary">Download the list and take it into account for incoming calls. It is fetched as a whole once and followed with the changes since, at most once a day</string>
+    <string name="block_phone_block">Block numbers from the list</string>
+    <string name="block_phone_block_summary">Block calls from numbers the PhoneBlock community warns about, instead of only showing what it says about them. Contacts are never blocked</string>
+    <string name="phone_block_token">API token</string>
+    <string name="phone_block_token_summary">The token of your PhoneBlock account, if the list can\'t be downloaded without one, and what reporting a number needs. Register on phoneblock.net, then find it at phoneblock.net/phoneblock/show-api-key</string>
+    <string name="phone_block_update">Update the list now</string>
+    <string name="phone_block_updating">Updating the PhoneBlock list\u2026</string>
+    <string name="phone_block_update_result">The list holds %1$d numbers.</string>
+    <string name="phone_block_update_not_due">The list was updated recently. It holds %1$d numbers.</string>
+    <string name="phone_block_update_failed">The list couldn\'t be updated. If the server asks for a token, add one above.</string>
+    <string name="phone_block_status">%1$d numbers, last updated %2$s</string>
+    <string name="phone_block_status_empty">The list hasn\'t been downloaded yet</string>
+    <string name="phone_block_description">PhoneBlock: %1$s</string>
+    <string name="phone_block_rating_missed">missed call</string>
+    <string name="phone_block_rating_ping">ping call</string>
+    <string name="phone_block_rating_poll">survey</string>
+    <string name="phone_block_rating_advertising">advertising</string>
+    <string name="phone_block_rating_gamble">gambling</string>
+    <string name="phone_block_rating_fraud">fraud</string>
+    <string name="phone_block_rating_unknown">unwanted caller</string>
+    <string name="phone_block_rating_legitimate">legitimate caller</string>
+    <string name="info_phone_block_personal_blocked">Blocked in your PhoneBlock account</string>
+    <string name="info_phone_block_personal_allowed">Allowed in your PhoneBlock account</string>
+    <string name="phone_block_personal_status">Your account: %1$d blocked, %2$d allowed</string>
+    <string name="phone_block_report_action">Report</string>
+    <string name="phone_block_report_title_short">Report to PhoneBlock</string>
+    <string name="phone_block_report_title">Report %1$s</string>
+    <string name="phone_block_report_message">The number, what you say it was and your comment are sent to phoneblock.net, where they count as a vote of your account. Everything else the app does stays on this device.</string>
+    <string name="phone_block_report_comment_hint">What the call was about (required)</string>
+    <string name="phone_block_report_comment_required">Please describe the call - a report without a comment tells the community nothing.</string>
+    <string name="phone_block_report_submit">Report</string>
+    <string name="phone_block_report_sending">Reporting to PhoneBlock\u2026</string>
+    <string name="phone_block_report_done">The number was reported to PhoneBlock.</string>
+    <string name="phone_block_report_rejected">PhoneBlock didn\'t accept the report.</string>
+    <string name="phone_block_report_failed">The report couldn\'t be sent.</string>
+    <string name="phone_block_report_no_token">Reporting needs a PhoneBlock account. Register on phoneblock.net, take the token from phoneblock.net/phoneblock/show-api-key and put it in the settings.</string>
+    <string name="phone_block_token_invalid_title">The PhoneBlock token isn\'t working</string>
+    <string name="phone_block_token_invalid_text">PhoneBlock doesn\'t accept the API token any more. Get the current one from phoneblock.net/phoneblock/show-api-key and put it in the settings.</string>
+    <string name="phone_block_get_token">Get a token</string>
+    <string name="phone_block_check_token">Check the API token</string>
+    <string name="phone_block_check_token_summary">Ask PhoneBlock whether the token still works. This happens once a day on its own</string>
+    <string name="phone_block_checking_token">Checking the token\u2026</string>
+    <string name="phone_block_token_ok">PhoneBlock accepts the token.</string>
+    <string name="phone_block_token_missing">There is no token to check.</string>
+    <string name="phone_block_check_token_failed">The token couldn\'t be checked - PhoneBlock wasn\'t reachable.</string>
+    <string name="settings_category_caller_id">Caller ID</string>
+    <string name="caller_id_directory">Caller ID in the phone app</string>
+    <string name="caller_id_directory_summary">Provide the caller info to the phone app, so that it is displayed on the incoming call screen and in the call log. Only the numbers the app knows something about are reported, contacts are never affected.</string>
+    <string name="caller_id_overlay">Caller info overlay</string>
+    <string name="caller_id_overlay_summary">Draw the caller info over the incoming call screen. Use this if your phone app ignores the caller ID above. Requires the \"display over other apps\" permission.</string>
+    <string name="caller_id_overlay_close">Close</string>
+    <string name="caller_id_overlay_permission">Display over other apps</string>
+    <string name="caller_id_overlay_permission_message">The caller info overlay needs the permission to display over other apps.</string>
     <string name="settings_category_call_blocking">Call blocking</string>
     <string name="show_notifications_for_known_callers">Notifications for known callers</string>
     <string name="show_notifications_for_known_callers_summary">Display notifications for known callers (numbers in Contacts)</string>
@@ -129,6 +237,10 @@
 
     <string name="settings_screen_advanced">Advanced settings</string>
     <string name="settings_category_database">Database</string>
+    <string name="settings_category_limited_mode">Before the phone is unlocked</string>
+    <string name="limited_mode_info">What Direct Boot mode is</string>
+    <string name="limited_mode_info_summary">After a restart the phone stays encrypted until you unlock it for the first time. Android calls that Direct Boot, and most apps cannot run at all until then. This one can: its lists and its settings are kept where they can be read before unlocking, so calls are screened even right after a restart.</string>
+    <string name="limited_mode_info_option">What it cannot read in that time are your contacts - they stay locked away until the phone is unlocked, so a call from a contact looks like a call from a stranger. The setting below decides which kinds of blocking are allowed until then: a kind you switch off here lets those calls through until you unlock the phone.</string>
     <string name="block_in_limited_mode">Block in Direct Boot mode</string>
     <string name="block_in_limited_mode_summary">Allowed kinds of blocking in Direct Boot mode (Contacts can\'t be reliably used as a whitelist in this mode)</string>
     <string name="block_in_limited_mode_rating">By rating</string>
@@ -168,6 +280,15 @@
     <string name="db_filtering_filter_db_summary">Run the database filtering now (to filter the existing data)</string>
     <string name="filtering_db">Filtering DB…</string>
 
+    <!-- what became of a call: what the app did about it, or what the system recorded -->
+    <string name="call_status_blocked">Blocked</string>
+    <string name="call_status_silenced">Silenced</string>
+    <string name="call_status_let_through">Let through</string>
+    <string name="call_status_rejected">Rejected</string>
+    <string name="call_status_and_duration">%1$s \u00b7 %2$s</string>
+    <string name="call_log_number_withheld">Withheld number</string>
+    <string name="call_log_number_unknown">Unknown number</string>
+    <string name="call_log_number_payphone">Payphone</string>
     <string name="no_number"><![CDATA[<no number>]]></string>
     <string name="save">Save</string>
     <plurals name="selected_count">
@@ -180,6 +301,21 @@
     </plurals>
     <string name="selected_value_nothing">&lt;nothing&gt;</string>
 
+    <!-- pausing what the app does about calls -->
+    <string name="pause_blocking">Pause blocking…</string>
+    <string name="resume_blocking">Resume blocking</string>
+    <string name="resume_blocking_until">Resume blocking (paused until %s)</string>
+    <string name="blocking_paused_until">Blocking is paused until %s</string>
+    <string name="blocking_paused_indefinitely">Blocking is paused until you switch it back on</string>
+    <string name="blocking_resumed">Blocking is on again</string>
+    <string name="blocking_on">Blocking is on</string>
+    <string name="blocking_off">Nothing is switched on to block</string>
+    <string name="pause_blocking_15">15 minutes</string>
+    <string name="pause_blocking_30">30 minutes</string>
+    <string name="pause_blocking_60">1 hour</string>
+    <string name="pause_blocking_120">2 hours</string>
+    <string name="pause_blocking_480">8 hours</string>
+    <string name="pause_blocking_indefinitely">Until I switch it back on</string>
     <string name="open_blacklist_activity">Blacklist</string>
     <string name="title_blacklist_activity">Blacklist</string>
     <plurals name="blacklist_item_stats">
@@ -200,14 +336,58 @@
     <string name="edit_blacklist_item_number_pattern">Number pattern</string>
     <string name="number_pattern_incorrect">Incorrect pattern</string>
     <string name="number_pattern_empty">Empty pattern</string>
-    <string name="number_pattern_hint">Enter the number in +COUNTRY-NUMBER format (as Android would show in your dialer). Use \"*\" as a wildcard for zero or more digits, and \"#\" for exactly one digit.</string>
+    <string name="pattern_key_any_digits">*</string>
+    <string name="pattern_key_one_digit">#</string>
+    <string name="pattern_key_group_open">{</string>
+    <string name="pattern_key_group_close">}</string>
+    <string name="pattern_key_comma">,</string>
+    <string name="number_pattern_hint">Enter the number in +COUNTRY-NUMBER format (as Android would show in your dialer). Three things can stand in for digits: \"*\" for any digits or none, \"#\" for exactly one digit, and \"{30,40}\" for one of several alternatives. For example, +49{30,40}* covers every number starting with +4930 or +4940, and +49301234## covers the hundred numbers of that extension range. The form the number was dialled or logged in does not matter: an entry written as +49221472585 also covers a call logged as 0221472585.</string>
     <string name="info_icon_description">Info</string>
     <string name="contacts_are_not_blocked_blacklist_notice">Calls from contacts are never blocked (even on pattern match)</string>
     <string name="contacts_are_not_blocked_not_enabled">Calls from contacts may be blocked because the \"Use contacts\" option is not enabled!</string>
     <string name="contacts_are_not_blocked_no_permission">Calls from contacts may be blocked because the \"Contacts\" permission is not granted!</string>
+    <string name="info_call_time">Called: %1$s</string>
+    <string name="info_call_time_last">%1$d calls, last: %2$s</string>
+    <string name="whitelist">Whitelist</string>
+    <string name="whitelist_summary">Numbers that are never blocked, whatever else is known about them</string>
+    <plurals name="whitelist_count">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+    <string name="open_whitelist_activity">Whitelist</string>
+    <string name="title_whitelist_activity">Whitelist</string>
+    <string name="whitelist_empty">Nothing is on the whitelist yet. Numbers on it are never blocked, whatever else is known about them - and a number put on it is taken off the blacklist.</string>
+    <string name="whitelist_add">Add</string>
+    <string name="whitelist_select_all">Select all</string>
+    <string name="whitelist_delete">Delete</string>
+    <string name="whitelist_delete_confirmation">Delete the selected entries?</string>
+    <string name="title_add_whitelist_item_activity">Add number</string>
+    <string name="title_edit_whitelist_item_activity">Edit number</string>
+    <!-- the dialog offers this number and, separately, the rule it falls under -->
+    <string name="block_this_number">Block this number</string>
+    <string name="edit_number_in_blacklist">Edit the entry for this number</string>
+    <string name="edit_blacklist_rule">Edit the blocking rule: %s</string>
+    <string name="allow_this_number">Always allow this number</string>
+    <string name="edit_number_in_whitelist">Edit the exception for this number</string>
+    <string name="edit_whitelist_rule">Edit the exception rule: %s</string>
+    <string name="whitelist_pattern_in_use">Another entry already has this pattern</string>
+    <string name="whitelist_pattern_help">Numbers on the whitelist are never blocked, whatever else is known about them, and a number added here is taken off the blacklist. The pattern is written the same way as a blacklist pattern.</string>
+    <string name="info_whitelisted">In whitelist</string>
+    <string name="info_list_entry">%1$s (%2$s)</string>
+    <string name="add_to_whitelist">Add to whitelist</string>
+    <string name="edit_whitelist_entry">Edit whitelist entry</string>
     <string name="info_in_blacklist">In blacklist</string>
     <string name="info_in_blacklist_contact">In blacklist (contacts are not blocked)</string>
+    <string name="add_to_contacts">Add to contacts</string>
+    <string name="open_contact">Open contact</string>
+    <string name="copy_number">Copy number</string>
+    <string name="number_copied">The number was copied.</string>
+    <string name="web_search">Search on Google</string>
+    <string name="phone_block_lookup">Look up on phoneblock.net</string>
+    <string name="tellows_lookup">Look up on tellows.de</string>
+    <string name="web_lookup_confirmation_message">Looking the number up sends it to %1$s. Are you sure you want to do this with a number in your contacts?</string>
     <string name="add_to_blacklist">Add to blacklist</string>
+    <string name="edit_blacklist_entry">Edit blacklist entry</string>
 
     <string name="open_db_management_activity">Manage database</string>
     <string name="db_management_activity_label">DB management</string>
@@ -216,6 +396,16 @@
     <string name="db_management_reset_secondary">Reset updates</string>
     <string name="db_management_update_db">Update DB</string>
     <string name="db_management_update_result">Update finished; DB ver: %d</string>
+    <string name="db_management_export_db">Export DB</string>
+    <string name="db_management_import_db">Import DB</string>
+    <string name="db_management_exporting">Exporting the database\u2026</string>
+    <string name="db_management_export_result">Database exported as %1$s</string>
+    <string name="db_management_export_failed">Couldn\'t export the database. Is it downloaded?</string>
+    <string name="db_management_import_confirmation">The current database will be replaced with the one from the selected file. The blacklist and the settings are not affected.\n\nContinue?</string>
+    <string name="db_management_import_confirm">Replace</string>
+    <string name="db_management_importing">Importing the database\u2026</string>
+    <string name="db_management_import_result">Database imported</string>
+    <string name="db_management_import_failed">Couldn\'t import the database. The selected file is not a database export or it is damaged.</string>
 
     <string name="title_lookup_number">Lookup number</string>
     <string name="lookup_default_test_number" translatable="false">+74995861192</string>

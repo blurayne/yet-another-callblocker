@@ -63,6 +63,13 @@ public class BlacklistDao {
                 .orderAsc(BlacklistItemDao.Properties.Pattern));
     }
 
+    /** All the items with exactly this pattern (there can be several, with different names). */
+    public List<BlacklistItem> findAllByPattern(String pattern) {
+        return getBlacklistItemDao().queryBuilder()
+                .where(BlacklistItemDao.Properties.Pattern.eq(pattern))
+                .list();
+    }
+
     public BlacklistItem findByNameAndPattern(String name, String pattern) {
         return first(getBlacklistItemDao().queryBuilder()
                 .where(BlacklistItemDao.Properties.Name.eq(name))
@@ -85,6 +92,40 @@ public class BlacklistDao {
     public long countValid() {
         return getBlacklistItemDao().queryBuilder()
                 .where(BlacklistItemDao.Properties.Invalid.notEq(true)).count();
+    }
+
+    /** How many valid items have a pattern with alternatives in it. */
+    public long countWithAlternatives() {
+        return withAlternativesQueryBuilder().count();
+    }
+
+    /**
+     * Every valid item, for matching a number in the app rather than in the database.
+     *
+     * <p>{@code LIKE} only knows the wildcards the database has; the app knows all of them,
+     * so the screens match the list themselves.
+     */
+    public List<BlacklistItem> findAllValid() {
+        return getBlacklistItemDao().queryBuilder()
+                .where(BlacklistItemDao.Properties.Invalid.notEq(true))
+                .orderAsc(BlacklistItemDao.Properties.CreationDate)
+                .list();
+    }
+
+    /**
+     * The valid items whose pattern offers alternatives.
+     *
+     * <p>{@code LIKE} knows nothing about {@code {30,40}}, so those are matched in the app.
+     */
+    public List<BlacklistItem> findAllWithAlternatives() {
+        return withAlternativesQueryBuilder().list();
+    }
+
+    private QueryBuilder<BlacklistItem> withAlternativesQueryBuilder() {
+        return getBlacklistItemDao().queryBuilder()
+                .where(BlacklistItemDao.Properties.Invalid.notEq(true),
+                        BlacklistItemDao.Properties.Pattern.like("%{%"))
+                .orderAsc(BlacklistItemDao.Properties.CreationDate);
     }
 
     public BlacklistItem getFirstMatch(String number) {

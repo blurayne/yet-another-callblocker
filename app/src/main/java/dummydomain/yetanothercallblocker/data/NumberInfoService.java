@@ -6,8 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 import dummydomain.yetanothercallblocker.Settings;
+import dummydomain.yetanothercallblocker.data.db.BlacklistItem;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseItem;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabase;
@@ -33,6 +36,9 @@ public class NumberInfoService {
     protected final FeaturedDatabase featuredDatabase;
     protected final ContactsProvider contactsProvider;
     protected final BlacklistService blacklistService;
+    protected PhoneBlockList phoneBlockList;
+    protected PhoneBlockPersonalLists phoneBlockPersonalLists;
+    protected Whitelist whitelist;
 
     public NumberInfoService(Settings settings, HiddenNumberDetector hiddenNumberDetector,
                              NumberNormalizer numberNormalizer, CommunityDatabase communityDatabase,
@@ -45,6 +51,18 @@ public class NumberInfoService {
         this.featuredDatabase = featuredDatabase;
         this.contactsProvider = contactsProvider;
         this.blacklistService = blacklistService;
+    }
+
+    public void setPhoneBlockList(PhoneBlockList phoneBlockList) {
+        this.phoneBlockList = phoneBlockList;
+    }
+
+    public void setPhoneBlockPersonalLists(PhoneBlockPersonalLists phoneBlockPersonalLists) {
+        this.phoneBlockPersonalLists = phoneBlockPersonalLists;
+    }
+
+    public void setWhitelist(Whitelist whitelist) {
+        this.whitelist = whitelist;
     }
 
     public NumberInfo getNumberInfo(String number, String countryCode, boolean full) {
@@ -71,14 +89,42 @@ public class NumberInfoService {
             return numberInfo;
         }
 
+        String normalizedNumber = numberInfo.normalizedNumber
+                = numberNormalizer.normalizeNumber(number, countryCode);
+        LOG.trace("getNumberInfo() normalizedNumber={}", numberInfo.normalizedNumber);
+
+        /*
+         * The lists are matched against every form of the number, not just the one the call
+         * came in as: a number saved as "+4922147258578" is the same number as the
+         * "022147258578" in the call log, and both must find the entry.
+         */
+        List<String> numberVariants = NumberUtils.getVariants(number, normalizedNumber, countryCode);
+        LOG.trace("getNumberInfo() numberVariants={}", numberVariants);
+
         if (contactsProvider != null) {
             numberInfo.contactItem = contactsProvider.get(number);
         }
         LOG.trace("getNumberInfo() contactItem={}", numberInfo.contactItem);
 
-        String normalizedNumber = numberInfo.normalizedNumber
-                = numberNormalizer.normalizeNumber(number, countryCode);
-        LOG.trace("getNumberInfo() normalizedNumber={}", numberInfo.normalizedNumber);
+        if (whitelist != null) {
+            numberInfo.whitelistItem = whitelist.getMatch(numberVariants);
+            numberInfo.whitelisted = numberInfo.whitelistItem != null;
+        }
+        LOG.trace("getNumberInfo() whitelisted={}", numberInfo.whitelisted);
+
+        if (numberInfo.contactItem != null || numberInfo.whitelisted) {
+            if (numberInfo.contactItem != null) numberInfo.name = numberInfo.contactItem.displayName;
+
+            if (!full) {
+                /*
+                 * A call from a contact is allowed whatever the databases say about the number,
+                 * so when the answer is all that's wanted, there is nothing left to look up.
+                 * The full info is still gathered for the screens that show it.
+                 */
+                LOG.debug("getNumberInfo() the number is allowed, finished early");
+                return numberInfo;
+            }
+        }
 
         if (communityDatabase != null) {
             numberInfo.communityDatabaseItem = communityDatabase.getDbItemByNumber(normalizedNumber);
@@ -113,10 +159,39 @@ public class NumberInfoService {
         }
         LOG.trace("getNumberInfo() rating={}", numberInfo.rating);
 
-        if (blacklistService != null && settings.getBlacklistIsNotEmpty()) {
+        if (settings.getUsePhoneBlock()) {
+            long phoneBlockNumber = PhoneBlockService.parseNumber(normalizedNumber);
+
+            if (phoneBlockList != null) {
+                numberInfo.phoneBlockRating = phoneBlockList.getRating(phoneBlockNumber);
+            }
+
+            // the user's own lists win over what the community says, as PhoneBlock intends
+            if (phoneBlockPersonalLists != null && phoneBlockNumber > 0) {
+                numberInfo.phoneBlockPersonalAllowed
+                        = phoneBlockPersonalLists.isAllowed(phoneBlockNumber);
+                numberInfo.phoneBlockPersonalBlocked = !numberInfo.phoneBlockPersonalAllowed
+                        && phoneBlockPersonalLists.isBlocked(phoneBlockNumber);
+            }
+        }
+        LOG.trace("getNumberInfo() phoneBlockRating={}, personalAllowed={}, personalBlocked={}",
+                numberInfo.phoneBlockRating, numberInfo.phoneBlockPersonalAllowed,
+                numberInfo.phoneBlockPersonalBlocked);
+
+        // the flag only spares the screening service the cost of opening the blacklist;
+        // the screens show what the lists say about a number, so they always look it up
+        if (blacklistService != null && (full || settings.getBlacklistIsNotEmpty())) {
             // avoid loading blacklist if blocking for other reason
             if (full || getBlockingReason(numberInfo) == null) {
-                numberInfo.blacklistItem = blacklistService.getBlacklistItemForNumber(number);
+                /*
+                 * The full lookup matches the list in the app, where every wildcard works and
+                 * the entry that is the number itself wins over one that merely covers it;
+                 * the answer-only lookup leaves the matching to the database, which is cheaper
+                 * during a call.
+                 */
+                numberInfo.blacklistItem = full
+                        ? blacklistService.getFullMatch(numberVariants)
+                        : blacklistService.getBlacklistItemForNumber(numberVariants);
             }
         }
         LOG.trace("getNumberInfo() blacklistItem={}", numberInfo.blacklistItem);
@@ -128,8 +203,41 @@ public class NumberInfoService {
         return numberInfo;
     }
 
+    /**
+     * The blacklist entry the number falls under without being it, so that the screens can
+     * offer to edit the rule itself rather than only the number.
+     *
+     * @return null when the number is on the list as itself only, or not at all
+     */
+    public BlacklistItem getBlacklistRule(NumberInfo numberInfo) {
+        if (blacklistService == null || !hasNumber(numberInfo)) return null;
+
+        return blacklistService.getFullRuleMatch(getNumberVariants(numberInfo));
+    }
+
+    /** The whitelist entry the number falls under without being it. */
+    public WhitelistItem getWhitelistRule(NumberInfo numberInfo) {
+        if (whitelist == null || !hasNumber(numberInfo)) return null;
+
+        return whitelist.getRuleMatch(getNumberVariants(numberInfo));
+    }
+
+    private static boolean hasNumber(NumberInfo numberInfo) {
+        return numberInfo != null && !numberInfo.noNumber && !TextUtils.isEmpty(numberInfo.number);
+    }
+
+    private List<String> getNumberVariants(NumberInfo numberInfo) {
+        String countryCode = settings.getCachedAutoDetectedCountryCode();
+
+        String normalizedNumber = numberInfo.normalizedNumber != null
+                ? numberInfo.normalizedNumber
+                : numberNormalizer.normalizeNumber(numberInfo.number, countryCode);
+
+        return NumberUtils.getVariants(numberInfo.number, normalizedNumber, countryCode);
+    }
+
     protected NumberInfo.BlockingReason getBlockingReason(NumberInfo numberInfo) {
-        if (numberInfo.contactItem != null) return null;
+        if (isAllowed(numberInfo)) return null;
 
         if (numberInfo.isHiddenNumber && settings.getBlockHiddenNumbers()) {
             return NumberInfo.BlockingReason.HIDDEN_NUMBER;
@@ -146,7 +254,21 @@ public class NumberInfoService {
             return NumberInfo.BlockingReason.BLACKLISTED;
         }
 
+        boolean phoneBlockSpam = numberInfo.phoneBlockPersonalBlocked
+                || numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam();
+
+        if (phoneBlockSpam && settings.getBlockPhoneBlock()
+                && canBlock(NumberInfo.BlockingReason.PHONE_BLOCK)) {
+            return NumberInfo.BlockingReason.PHONE_BLOCK;
+        }
+
         return null;
+    }
+
+    /** Whether the user said the number is welcome, whatever any list says about it. */
+    public boolean isAllowed(NumberInfo numberInfo) {
+        return numberInfo.contactItem != null || numberInfo.whitelisted
+                || numberInfo.phoneBlockPersonalAllowed;
     }
 
     protected boolean canBlock(NumberInfo.BlockingReason reason) {
@@ -170,6 +292,42 @@ public class NumberInfoService {
 
     public boolean shouldBlock(NumberInfo numberInfo) {
         return numberInfo.blockingReason != null;
+    }
+
+    /**
+     * Whether the ringer should be silenced for the call.
+     *
+     * <p>The call itself isn't affected: it rings silently, is shown by the phone app
+     * and ends up in the call log as usual. Contacts are never silenced,
+     * just like they are never blocked.
+     */
+    public boolean shouldSilence(NumberInfo numberInfo) {
+        if (isAllowed(numberInfo)) return false;
+
+        Set<String> ratings = settings.getSilenceCalls();
+        if (ratings.isEmpty()) return false;
+
+        // the contacts can't be checked before the device is unlocked:
+        // silencing an unrecognized contact would be worse than not silencing a stranger
+        if (settings.getUseContacts() && contactsProvider != null
+                && contactsProvider.isInLimitedMode()) {
+            LOG.debug("shouldSilence() not silencing in limited mode");
+            return false;
+        }
+
+        switch (numberInfo.rating) {
+            case NEGATIVE:
+                return ratings.contains(Settings.PREF_SILENCE_CALLS_NEGATIVE);
+
+            case NEUTRAL:
+                return ratings.contains(Settings.PREF_SILENCE_CALLS_NEUTRAL);
+
+            case POSITIVE:
+                return false;
+
+            default:
+                return ratings.contains(Settings.PREF_SILENCE_CALLS_UNKNOWN);
+        }
     }
 
     public void blockedCall(NumberInfo numberInfo) {

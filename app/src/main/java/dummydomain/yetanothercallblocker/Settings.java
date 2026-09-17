@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -20,11 +21,18 @@ import dummydomain.yetanothercallblocker.sia.model.database.DbManager;
 public class Settings extends GenericSettings {
 
     public static final String PREF_INCOMING_CALL_NOTIFICATIONS = "incomingCallNotifications";
+    public static final String PREF_CALLER_ID_DIRECTORY = "callerIdDirectory";
+    public static final String PREF_CALLER_ID_OVERLAY = "callerIdOverlay";
+    public static final String PREF_SILENCE_CALLS = "silenceCalls";
     public static final String PREF_BLOCK_NEGATIVE_SIA_NUMBERS = "blockNegativeSiaNumbers";
     public static final String PREF_BLOCK_HIDDEN_NUMBERS = "blockHiddenNumbers";
+    public static final String PREF_BLOCK_FAILED_VERIFICATION = "blockFailedVerification";
     public static final String PREF_BLOCK_BLACKLISTED = "blockBlacklisted";
     public static final String PREF_BLACKLIST_IS_NOT_EMPTY = "blacklistIsNotEmpty";
     public static final String PREF_USE_CONTACTS = "useContacts";
+    public static final String PREF_WHITELIST = "whitelist";
+    public static final String PREF_CALL_DECISIONS = "callDecisions";
+    public static final String PREF_BLOCKING_PAUSED_UNTIL = "blockingPausedUntil";
     public static final String PREF_UI_MODE = "uiMode";
     public static final String PREF_CALL_LOG_GROUPING = "callLogGrouping";
     public static final String PREF_USE_MONITORING_SERVICE = "useMonitoringService";
@@ -32,23 +40,44 @@ public class Settings extends GenericSettings {
     public static final String PREF_NOTIFICATIONS_UNKNOWN = "showNotificationsForUnknownCallers";
     public static final String PREF_NOTIFICATIONS_BLOCKED = "showNotificationsForBlockedCalls";
     public static final String PREF_BLOCK_IN_LIMITED_MODE = "blockInLimitedMode";
+    public static final String PREF_AUTO_UPDATE_SET_UP = "autoUpdateSetUp";
     public static final String PREF_LAST_UPDATE_TIME = "lastUpdateTime";
     public static final String PREF_LAST_UPDATE_CHECK_TIME = "lastUpdateCheckTime";
     public static final String PREF_DB_FILTERING_ENABLED = "dbFilteringEnabled";
     public static final String PREF_DB_FILTERING_PREFIXES_PREFILLED = "dbFilteringPrefixesPrefilled";
     public static final String PREF_DB_FILTERING_PREFIXES_TO_KEEP = "dbFilteringPrefixesToKeep";
+    public static final String PREF_DB_FILTERING_KEEP_MASTER = "dbFilteringKeepMaster";
+    public static final String PREF_DB_FILTERED = "dbFiltered";
     public static final String PREF_DB_FILTERING_THOROUGH = "dbFilteringThorough";
     public static final String PREF_DB_FILTERING_KEEP_SHORT_NUMBERS = "dbFilteringKeepShortNumbers";
     public static final String PREF_DB_FILTERING_KEEP_SHORT_NUMBERS_MAX_LENGTH = "dbFilteringKeepShortNumbersMaxLength";
     public static final String PREF_COUNTRY_CODE_OVERRIDE = "countryCodeOverride";
     public static final String PREF_COUNTRY_CODE_FOR_REVIEWS_OVERRIDE = "countryCodeForReviewsOverride";
     public static final String PREF_DATABASE_DOWNLOAD_URL = "databaseDownloadUrl";
+    public static final String PREF_USE_PHONE_BLOCK = "usePhoneBlock";
+    public static final String PREF_BLOCK_PHONE_BLOCK = "blockPhoneBlock";
+    public static final String PREF_PHONE_BLOCK_TOKEN = "phoneBlockToken";
+    public static final String PREF_PHONE_BLOCK_URL = "phoneBlockUrl";
+    public static final String PREF_PHONE_BLOCK_LAST_UPDATE_TIME = "phoneBlockLastUpdateTime";
+    public static final String PREF_PHONE_BLOCK_LAST_FULL_UPDATE_TIME = "phoneBlockLastFullUpdateTime";
+    public static final String PREF_PHONE_BLOCK_NEXT_UPDATE_TIME = "phoneBlockNextUpdateTime";
+    public static final String PREF_PHONE_BLOCK_PERSONAL_NEXT_UPDATE_TIME
+            = "phoneBlockPersonalNextUpdateTime";
+    public static final String PREF_PHONE_BLOCK_TOKEN_VALID = "phoneBlockTokenValid";
+    public static final String PREF_PHONE_BLOCK_LAST_TOKEN_CHECK_TIME = "phoneBlockLastTokenCheckTime";
+    public static final String PREF_PHONE_BLOCK_TOKEN_PROBLEM_NOTIFIED
+            = "phoneBlockTokenProblemNotified";
     public static final String PREF_SAVE_CRASHES_TO_EXTERNAL_STORAGE = "saveCrashesToExternalStorage";
     public static final String PREF_SAVE_LOGCAT_ON_CRASH = "saveLogcatOnCrash";
 
     public static final String PREF_CALL_LOG_GROUPING_NONE = "none";
     public static final String PREF_CALL_LOG_GROUPING_CONSECUTIVE = "consecutive";
     public static final String PREF_CALL_LOG_GROUPING_DAY = "day";
+
+    public static final String PREF_SILENCE_CALLS_NEGATIVE = "negative";
+    public static final String PREF_SILENCE_CALLS_NEUTRAL = "neutral";
+    public static final String PREF_SILENCE_CALLS_UNKNOWN = "unknown";
+    public static final String PREF_SILENCE_CALLS_UNVERIFIED = "unverified";
 
     public static final String PREF_BLOCK_IN_LIMITED_MODE_RATING = "rating";
     public static final String PREF_BLOCK_IN_LIMITED_MODE_BLACKLIST = "blacklist";
@@ -118,12 +147,179 @@ public class Settings extends GenericSettings {
         setBoolean(PREF_INCOMING_CALL_NOTIFICATIONS, show);
     }
 
+    /** Whether the caller info is provided to the phone app as a contacts directory. */
+    public boolean getCallerIdDirectory() {
+        return getBoolean(PREF_CALLER_ID_DIRECTORY, true);
+    }
+
+    public void setCallerIdDirectory(boolean enabled) {
+        setBoolean(PREF_CALLER_ID_DIRECTORY, enabled);
+    }
+
+    /** Whether the caller info is drawn over the incoming call screen. */
+    public boolean getCallerIdOverlay() {
+        return getBoolean(PREF_CALLER_ID_OVERLAY, true);
+    }
+
+    public void setCallerIdOverlay(boolean enabled) {
+        setBoolean(PREF_CALLER_ID_OVERLAY, enabled);
+    }
+
+    /** Whether any of the features that display the caller info during a call is enabled. */
+    public boolean getCallerIdEnabled() {
+        return getCallerIdDirectory() || getCallerIdOverlay();
+    }
+
+    /** The ratings the ringer is silenced for. */
+    public Set<String> getSilenceCalls() {
+        return getStringSet(PREF_SILENCE_CALLS, Collections::emptySet);
+    }
+
+    public void setSilenceCalls(Set<String> values) {
+        setStringSet(PREF_SILENCE_CALLS, values);
+    }
+
+    public boolean getSilenceCallsEnabled() {
+        return !getSilenceCalls().isEmpty();
+    }
+
+    /** Whether the PhoneBlock community list is kept on the device and used. */
+    public boolean getUsePhoneBlock() {
+        return getBoolean(PREF_USE_PHONE_BLOCK, true);
+    }
+
+    public void setUsePhoneBlock(boolean use) {
+        setBoolean(PREF_USE_PHONE_BLOCK, use);
+    }
+
+    /** Whether the numbers of that list are blocked rather than only shown. */
+    public boolean getBlockPhoneBlock() {
+        return getBoolean(PREF_BLOCK_PHONE_BLOCK, true);
+    }
+
+    public void setBlockPhoneBlock(boolean block) {
+        setBoolean(PREF_BLOCK_PHONE_BLOCK, block);
+    }
+
+    public String getPhoneBlockToken() {
+        return getString(PREF_PHONE_BLOCK_TOKEN);
+    }
+
+    public String getPhoneBlockUrl() {
+        return getNonEmptyString(PREF_PHONE_BLOCK_URL,
+                dummydomain.yetanothercallblocker.data.PhoneBlockService.DEFAULT_URL);
+    }
+
+    public long getPhoneBlockLastUpdateTime() {
+        return getLong(PREF_PHONE_BLOCK_LAST_UPDATE_TIME, 0);
+    }
+
+    public void setPhoneBlockLastUpdateTime(long time) {
+        setLong(PREF_PHONE_BLOCK_LAST_UPDATE_TIME, time);
+    }
+
+    public long getPhoneBlockLastFullUpdateTime() {
+        return getLong(PREF_PHONE_BLOCK_LAST_FULL_UPDATE_TIME, 0);
+    }
+
+    public void setPhoneBlockLastFullUpdateTime(long time) {
+        setLong(PREF_PHONE_BLOCK_LAST_FULL_UPDATE_TIME, time);
+    }
+
+    public long getPhoneBlockNextUpdateTime() {
+        return getLong(PREF_PHONE_BLOCK_NEXT_UPDATE_TIME, 0);
+    }
+
+    public void setPhoneBlockNextUpdateTime(long time) {
+        setLong(PREF_PHONE_BLOCK_NEXT_UPDATE_TIME, time);
+    }
+
+    /** When the lists of the user's own PhoneBlock account are fetched again. */
+    public long getPhoneBlockPersonalNextUpdateTime() {
+        return getLong(PREF_PHONE_BLOCK_PERSONAL_NEXT_UPDATE_TIME, 0);
+    }
+
+    public void setPhoneBlockPersonalNextUpdateTime(long time) {
+        setLong(PREF_PHONE_BLOCK_PERSONAL_NEXT_UPDATE_TIME, time);
+    }
+
+    /** Whether the API token was accepted the last time it was used. */
+    public boolean getPhoneBlockTokenValid() {
+        return getBoolean(PREF_PHONE_BLOCK_TOKEN_VALID, true);
+    }
+
+    public void setPhoneBlockTokenValid(boolean valid) {
+        setBoolean(PREF_PHONE_BLOCK_TOKEN_VALID, valid);
+    }
+
+    public long getPhoneBlockLastTokenCheckTime() {
+        return getLong(PREF_PHONE_BLOCK_LAST_TOKEN_CHECK_TIME, 0);
+    }
+
+    public void setPhoneBlockLastTokenCheckTime(long time) {
+        setLong(PREF_PHONE_BLOCK_LAST_TOKEN_CHECK_TIME, time);
+    }
+
+    /** Whether the user was told that the token stopped working (so they're told once). */
+    public boolean getPhoneBlockTokenProblemNotified() {
+        return getBoolean(PREF_PHONE_BLOCK_TOKEN_PROBLEM_NOTIFIED, false);
+    }
+
+    public void setPhoneBlockTokenProblemNotified(boolean notified) {
+        setBoolean(PREF_PHONE_BLOCK_TOKEN_PROBLEM_NOTIFIED, notified);
+    }
+
+    /** Forgets what is known about the token, so that the new one is checked again. */
+    public void resetPhoneBlockTokenState() {
+        setPhoneBlockTokenValid(true);
+        setPhoneBlockLastTokenCheckTime(0);
+        setPhoneBlockTokenProblemNotified(false);
+        setPhoneBlockPersonalNextUpdateTime(0); // the lists belong to whoever the token belongs to
+    }
+
+    /**
+     * When the pause on blocking runs out, {@code Long.MAX_VALUE} while it is paused until the
+     * user says otherwise, or 0 when nothing is paused.
+     */
+    public long getBlockingPausedUntil() {
+        return getLong(PREF_BLOCKING_PAUSED_UNTIL, 0);
+    }
+
+    public void setBlockingPausedUntil(long time) {
+        setLong(PREF_BLOCKING_PAUSED_UNTIL, time);
+    }
+
+    /**
+     * Whether blocking and silencing are paused at the moment.
+     *
+     * <p>It is the pause itself that runs out, not a timer that ends it: nothing has to run
+     * while the phone sleeps, and a pause set before a restart is still over when it is over.
+     */
+    public boolean isBlockingPaused() {
+        return getBlockingPausedUntil() > System.currentTimeMillis();
+    }
+
     public boolean getCallBlockingEnabled() {
-        return getBlockNegativeSiaNumbers() || getBlockHiddenNumbers() || getBlacklistEnabled();
+        return getBlockNegativeSiaNumbers() || getBlockHiddenNumbers() || getBlacklistEnabled()
+                || getBlockFailedVerification()
+                || getUsePhoneBlock() && getBlockPhoneBlock();
+    }
+
+    /**
+     * Whether calls the network says carry a forged number are blocked.
+     *
+     * @see dummydomain.yetanothercallblocker.CallScreeningServiceImpl
+     */
+    public boolean getBlockFailedVerification() {
+        return getBoolean(PREF_BLOCK_FAILED_VERIFICATION, true);
+    }
+
+    public void setBlockFailedVerification(boolean block) {
+        setBoolean(PREF_BLOCK_FAILED_VERIFICATION, block);
     }
 
     public boolean getBlockNegativeSiaNumbers() {
-        return getBoolean(PREF_BLOCK_NEGATIVE_SIA_NUMBERS);
+        return getBoolean(PREF_BLOCK_NEGATIVE_SIA_NUMBERS, true);
     }
 
     public void setBlockNegativeSiaNumbers(boolean block) {
@@ -131,7 +327,7 @@ public class Settings extends GenericSettings {
     }
 
     public boolean getBlockHiddenNumbers() {
-        return getBoolean(PREF_BLOCK_HIDDEN_NUMBERS);
+        return getBoolean(PREF_BLOCK_HIDDEN_NUMBERS, true);
     }
 
     public void setBlockHiddenNumbers(boolean block) {
@@ -158,8 +354,26 @@ public class Settings extends GenericSettings {
         setBoolean(PREF_BLACKLIST_IS_NOT_EMPTY, flag);
     }
 
+    /** The numbers that are never blocked, one pattern per line. */
+    public String getWhitelist() {
+        return getString(PREF_WHITELIST, "");
+    }
+
+    public void setWhitelist(String whitelist) {
+        setString(PREF_WHITELIST, whitelist);
+    }
+
+    /** What the app did about the last calls; written by {@code CallDecisionLog}. */
+    public String getCallDecisions() {
+        return getString(PREF_CALL_DECISIONS, "");
+    }
+
+    public void setCallDecisions(String value) {
+        setString(PREF_CALL_DECISIONS, value);
+    }
+
     public boolean getUseContacts() {
-        return getBoolean(PREF_USE_CONTACTS);
+        return getBoolean(PREF_USE_CONTACTS, true);
     }
 
     public void setUseContacts(boolean use) {
@@ -175,7 +389,7 @@ public class Settings extends GenericSettings {
     }
 
     public String getCallLogGrouping() {
-        return getString(PREF_CALL_LOG_GROUPING, PREF_CALL_LOG_GROUPING_CONSECUTIVE);
+        return getString(PREF_CALL_LOG_GROUPING, PREF_CALL_LOG_GROUPING_NONE);
     }
 
     public void setCallLogGrouping(String value) {
@@ -232,6 +446,18 @@ public class Settings extends GenericSettings {
         setStringSet(PREF_BLOCK_IN_LIMITED_MODE, value);
     }
 
+    /**
+     * Whether the automatic updates were ever set up. They are on to begin with, but turning
+     * them off has to stick, so this says the difference between "not set up yet" and "not wanted".
+     */
+    public boolean getAutoUpdateSetUp() {
+        return getBoolean(PREF_AUTO_UPDATE_SET_UP);
+    }
+
+    public void setAutoUpdateSetUp(boolean setUp) {
+        setBoolean(PREF_AUTO_UPDATE_SET_UP, setUp);
+    }
+
     public long getLastUpdateTime() {
         return getLong(PREF_LAST_UPDATE_TIME, 0);
     }
@@ -270,6 +496,24 @@ public class Settings extends GenericSettings {
 
     public void setDbFilteringPrefixesToKeep(String prefixes) {
         setString(PREF_DB_FILTERING_PREFIXES_TO_KEEP, prefixes);
+    }
+
+    /** Whether a copy of the unfiltered database is kept when the database is filtered. */
+    public boolean getDbFilteringKeepMaster() {
+        return getBoolean(PREF_DB_FILTERING_KEEP_MASTER, true);
+    }
+
+    public void setDbFilteringKeepMaster(boolean keep) {
+        setBoolean(PREF_DB_FILTERING_KEEP_MASTER, keep);
+    }
+
+    /** Whether the database in use has been filtered. */
+    public boolean isDbFiltered() {
+        return getBoolean(PREF_DB_FILTERED);
+    }
+
+    public void setDbFiltered(boolean filtered) {
+        setBoolean(PREF_DB_FILTERED, filtered);
     }
 
     public boolean isDbFilteringThorough() {

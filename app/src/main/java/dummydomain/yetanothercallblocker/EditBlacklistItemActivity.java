@@ -99,6 +99,8 @@ public class EditBlacklistItemActivity extends AppCompatActivity {
                 }
         );
 
+        PatternKeys.setUp(findViewById(R.id.patternKeys), patternEditText);
+
         long itemIdFromParams = getIntent().getLongExtra(PARAM_ITEM_ID, -1);
         if (itemIdFromParams != -1) {
             blacklistItem = blacklistDao.findById(itemIdFromParams);

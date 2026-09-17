@@ -6,6 +6,7 @@ import android.text.TextUtils;
 
 import androidx.core.util.Supplier;
 
+import java.util.Map;
 import java.util.Set;
 
 public class GenericSettings {
@@ -40,6 +41,14 @@ public class GenericSettings {
 
     public void setInt(String key, int value) {
         pref.edit().putInt(key, value).apply();
+    }
+
+    public float getFloat(String key, float defValue) {
+        return pref.getFloat(key, defValue);
+    }
+
+    public void setFloat(String key, float value) {
+        pref.edit().putFloat(key, value).apply();
     }
 
     public long getLong(String key, long defValue) {
@@ -79,6 +88,11 @@ public class GenericSettings {
 
     public void setStringSet(String key, Set<String> value) {
         pref.edit().putStringSet(key, value).apply();
+    }
+
+    /** Every setting that has been set, for carrying them somewhere else. */
+    public Map<String, ?> getAll() {
+        return pref.getAll();
     }
 
     public boolean isSet(String key) {

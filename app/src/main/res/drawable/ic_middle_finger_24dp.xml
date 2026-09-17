@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24.0"
+    android:viewportHeight="24.0">
+    <!--
+      What the user thinks of the caller: a fist with the middle finger up.
+
+      The fingers are drawn as separate shapes with a gap between them, so that the folded ones
+      still read as fingers once the whole icon is tinted a single colour.
+    -->
+    <!-- the little finger -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M5.00,15.70V11.20A1.30,1.30 0 0 1 7.60,11.20V15.70A1.30,1.30 0 0 1 5.00,15.70Z" />
+    <!-- the ring finger -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M8.40,15.60V9.80A1.40,1.40 0 0 1 11.20,9.80V15.60A1.40,1.40 0 0 1 8.40,15.60Z" />
+    <!-- the one that says it -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12.00,15.25V2.55A1.75,1.75 0 0 1 15.50,2.55V15.25A1.75,1.75 0 0 1 12.00,15.25Z" />
+    <!-- the index finger -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M16.30,15.65V10.05A1.35,1.35 0 0 1 19.00,10.05V15.65A1.35,1.35 0 0 1 16.30,15.65Z" />
+    <!-- the fist -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M4.70,14.80A2.20,2.20 0 0 1 6.90,12.60H16.80A2.20,2.20 0 0 1 19.00,14.80V16.35A7.15,7.15 0 0 1 11.85,23.50H11.85A7.15,7.15 0 0 1 4.70,16.35Z" />
+</vector>

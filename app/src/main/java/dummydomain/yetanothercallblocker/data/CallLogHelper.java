@@ -19,6 +19,12 @@ public class CallLogHelper {
             CallLog.Calls.DATE, CallLog.Calls.DURATION
     };
 
+    /** Says whether a number was withheld, which is more reliable than guessing from the number. */
+    private static final String[] QUERY_PROJECTION_WITH_PRESENTATION = new String[]{
+            CallLog.Calls._ID, CallLog.Calls.TYPE, CallLog.Calls.NUMBER,
+            CallLog.Calls.DATE, CallLog.Calls.DURATION, CallLog.Calls.NUMBER_PRESENTATION
+    };
+
     public static List<CallLogItem> loadCalls(Context context, Long anchorId, boolean before,
                                               int limit) {
         if (!PermissionHelper.hasCallLogPermission(context)) {
@@ -57,14 +63,18 @@ public class CallLogHelper {
 
         List<CallLogItem> items = new ArrayList<>(limit);
 
+        String[] projection = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
+                ? QUERY_PROJECTION_WITH_PRESENTATION : QUERY_PROJECTION;
+
         try (Cursor cursor = context.getContentResolver()
-                .query(uri, QUERY_PROJECTION, selection, selectionArgs, sortOrder)) {
+                .query(uri, projection, selection, selectionArgs, sortOrder)) {
             if (cursor != null) {
                 int idIndex = cursor.getColumnIndexOrThrow(CallLog.Calls._ID);
                 int typeIndex = cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE);
                 int numberIndex = cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER);
                 int dateIndex = cursor.getColumnIndexOrThrow(CallLog.Calls.DATE);
                 int durationIndex = cursor.getColumnIndexOrThrow(CallLog.Calls.DURATION);
+                int presentationIndex = cursor.getColumnIndex(CallLog.Calls.NUMBER_PRESENTATION);
 
                 while (cursor.moveToNext()) {
                     long id = cursor.getLong(idIndex);
@@ -73,8 +83,20 @@ public class CallLogHelper {
                     long callDate = cursor.getLong(dateIndex);
                     long callDuration = cursor.getLong(durationIndex);
 
+                    CallLogItem.Presentation presentation = presentationIndex != -1
+                            ? CallLogItem.Presentation.fromProviderValue(
+                                    cursor.getInt(presentationIndex))
+                            : CallLogItem.Presentation.ALLOWED;
+
+                    // a number the app can't do anything with is the same as none at all,
+                    // and it makes the calls of one kind group together
+                    if (!presentation.hasNumber() || NumberUtils.isHiddenNumber(number)) {
+                        if (presentation.hasNumber()) presentation = CallLogItem.Presentation.UNKNOWN;
+                        number = null;
+                    }
+
                     items.add(new CallLogItem(id, CallLogItem.Type.fromProviderType(callType),
-                            number, callDate, callDuration));
+                            number, presentation, callDate, callDuration));
                 }
             }
         }

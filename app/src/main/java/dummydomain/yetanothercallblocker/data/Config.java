@@ -95,6 +95,9 @@ public class Config {
             return new OkHttpClient();
         };
 
+        YacbHolder.setStorage(storage);
+        YacbHolder.setSiaSettings(siaSettings);
+
         CommunityDatabase communityDatabase = new CommunityDatabase(
                 storage, AbstractDatabase.Source.ANY, SIA_PATH_PREFIX,
                 SIA_SECONDARY_PATH_PREFIX, siaSettings);
@@ -143,10 +146,30 @@ public class Config {
             }
         };
 
+        PhoneBlockList phoneBlockList = new PhoneBlockList(storage::getDataDirPath);
+        YacbHolder.setPhoneBlockList(phoneBlockList);
+
+        PhoneBlockPersonalLists phoneBlockPersonalLists
+                = new PhoneBlockPersonalLists(storage::getDataDirPath);
+        YacbHolder.setPhoneBlockPersonalLists(phoneBlockPersonalLists);
+
         NumberInfoService numberInfoService = new NumberInfoService(
                 settings, NumberUtils::isHiddenNumber, NumberUtils::normalizeNumber,
                 communityDatabase, featuredDatabase, contactsProvider, blacklistService);
+        numberInfoService.setPhoneBlockList(phoneBlockList);
+        numberInfoService.setPhoneBlockPersonalLists(phoneBlockPersonalLists);
+        numberInfoService.setWhitelist(new Whitelist(settings));
+
+        // each list takes a number off the other when it is put on as itself
+        WhitelistService whitelistService = new WhitelistService(settings, blacklistService);
+        blacklistService.setWhitelistService(whitelistService);
+        YacbHolder.setWhitelistService(whitelistService);
         YacbHolder.setNumberInfoService(numberInfoService);
+
+        YacbHolder.setNumberInfoCache(new NumberInfoCache());
+
+        // the call log shows what the app did about a call, which only the app knows
+        YacbHolder.setCallDecisionLog(new CallDecisionLog(settings));
 
         NotificationService notificationService = new NotificationService(context);
         YacbHolder.setNotificationService(notificationService);

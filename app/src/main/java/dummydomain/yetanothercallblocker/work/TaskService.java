@@ -15,10 +15,18 @@ import org.slf4j.LoggerFactory;
 
 import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.NotificationHelper;
+import dummydomain.yetanothercallblocker.PhoneBlockHelper;
 import dummydomain.yetanothercallblocker.R;
+import dummydomain.yetanothercallblocker.data.DbFilteringService;
+import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.event.DbFilterRevertedEvent;
+import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
+import dummydomain.yetanothercallblocker.event.DbFilteringInProgressEvent;
+import dummydomain.yetanothercallblocker.event.DbFilteringProgressEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
+import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
 
 import static dummydomain.yetanothercallblocker.EventUtils.postEvent;
 import static dummydomain.yetanothercallblocker.EventUtils.postStickyEvent;
@@ -29,13 +37,21 @@ public class TaskService extends IntentService {
     public static final String TASK_DOWNLOAD_MAIN_DB = "download_main_db";
     public static final String TASK_UPDATE_SECONDARY_DB = "update_secondary_db";
     public static final String TASK_FILTER_DB = "filter_db";
+    public static final String TASK_REVERT_DB_FILTER = "revert_db_filter";
+    public static final String TASK_UPDATE_PHONE_BLOCK = "update_phone_block";
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskService.class);
 
     public static void start(Context context, String task) {
         Intent intent = new Intent(context, TaskService.class);
         intent.setAction(task);
-        ContextCompat.startForegroundService(context, intent);
+
+        try {
+            ContextCompat.startForegroundService(context, intent);
+        } catch (Exception e) {
+            // an app targeting Android 12+ can't start a foreground service from the background
+            LOG.warn("start() couldn't start the task service", e);
+        }
     }
 
     public TaskService() {
@@ -67,6 +83,16 @@ public class TaskService extends IntentService {
                         filterDb();
                         break;
 
+                    case TASK_UPDATE_PHONE_BLOCK:
+                        updateNotification(getString(R.string.phone_block_updating));
+                        updatePhoneBlock();
+                        break;
+
+                    case TASK_REVERT_DB_FILTER:
+                        updateNotification(getString(R.string.db_filtering_reverting));
+                        revertDbFilter();
+                        break;
+
                     default:
                         LOG.warn("Unknown action: " + action);
                         break;
@@ -95,6 +121,10 @@ public class TaskService extends IntentService {
             YacbHolder.getCommunityDatabase().reload();
             YacbHolder.getFeaturedDatabase().reload();
             YacbHolder.getSiaMetadata().reload();
+
+            // the downloaded database is unfiltered, so the filter has to be applied again
+            updateNotification(getString(R.string.filtering_db));
+            new DbFilteringService(App.getSettings()).updateFilter(true);
         } catch (Exception e) {
             LOG.warn("downloadMainDb()", e);
         } finally {
@@ -109,7 +139,37 @@ public class TaskService extends IntentService {
     }
 
     private void filterDb() {
-        YacbHolder.getDbManager().filterDb();
+        // the automatic filtering after an update reports nothing: this is the one the user started
+        DbFilteringInProgressEvent sticky = new DbFilteringInProgressEvent();
+
+        postStickyEvent(sticky);
+        try {
+            DbFilteringService.Result result = new DbFilteringService(App.getSettings())
+                    .filter((current, total) ->
+                            postEvent(new DbFilteringProgressEvent(current, total)));
+
+            postEvent(new DbFilteringFinishedEvent(result));
+        } finally {
+            removeStickyEvent(sticky);
+        }
+    }
+
+    private void updatePhoneBlock() {
+        PhoneBlockService service = new PhoneBlockService(App.getSettings(),
+                YacbHolder.getPhoneBlockList(), YacbHolder.getPhoneBlockPersonalLists());
+
+        PhoneBlockService.Result result = service.update(true);
+        service.updatePersonalLists(true);
+
+        // the update may have run into a token that isn't accepted any more
+        PhoneBlockHelper.checkTokenIfDue(getApplicationContext(), App.getSettings());
+
+        postEvent(new PhoneBlockUpdateFinishedEvent(result));
+    }
+
+    private void revertDbFilter() {
+        postEvent(new DbFilterRevertedEvent(
+                new DbFilteringService(App.getSettings()).revertToMaster()));
     }
 
 }

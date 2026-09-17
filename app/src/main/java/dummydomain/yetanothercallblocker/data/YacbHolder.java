@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import dummydomain.yetanothercallblocker.NotificationService;
 import dummydomain.yetanothercallblocker.PhoneStateHandler;
 import dummydomain.yetanothercallblocker.data.db.BlacklistDao;
+import dummydomain.yetanothercallblocker.sia.Storage;
 import dummydomain.yetanothercallblocker.sia.model.CommunityReviewsLoader;
 import dummydomain.yetanothercallblocker.sia.model.SiaMetadata;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
@@ -14,6 +15,8 @@ import dummydomain.yetanothercallblocker.sia.network.WebService;
 
 public class YacbHolder {
 
+    private static Storage storage;
+    private static dummydomain.yetanothercallblocker.sia.Settings siaSettings;
     private static WebService webService;
     private static DbManager dbManager;
     private static SiaMetadata siaMetadata;
@@ -23,14 +26,28 @@ public class YacbHolder {
 
     private static BlacklistDao blacklistDao;
     private static BlacklistService blacklistService;
+    private static WhitelistService whitelistService;
+
+    private static CallDecisionLog callDecisionLog;
 
     private static NumberInfoService numberInfoService;
+    private static NumberInfoCache numberInfoCache;
+    private static PhoneBlockList phoneBlockList;
+    private static PhoneBlockPersonalLists phoneBlockPersonalLists;
 
     @SuppressLint("StaticFieldLeak")
     private static NotificationService notificationService;
 
     @SuppressLint("StaticFieldLeak")
     private static PhoneStateHandler phoneStateHandler;
+
+    static void setStorage(Storage storage) {
+        YacbHolder.storage = storage;
+    }
+
+    static void setSiaSettings(dummydomain.yetanothercallblocker.sia.Settings siaSettings) {
+        YacbHolder.siaSettings = siaSettings;
+    }
 
     static void setWebService(WebService webService) {
         YacbHolder.webService = webService;
@@ -60,6 +77,18 @@ public class YacbHolder {
         YacbHolder.blacklistDao = blacklistDao;
     }
 
+    static void setWhitelistService(WhitelistService whitelistService) {
+        YacbHolder.whitelistService = whitelistService;
+    }
+
+    static void setCallDecisionLog(CallDecisionLog callDecisionLog) {
+        YacbHolder.callDecisionLog = callDecisionLog;
+    }
+
+    public static CallDecisionLog getCallDecisionLog() {
+        return callDecisionLog;
+    }
+
     static void setBlacklistService(BlacklistService blacklistService) {
         YacbHolder.blacklistService = blacklistService;
     }
@@ -68,12 +97,34 @@ public class YacbHolder {
         YacbHolder.numberInfoService = numberInfoService;
     }
 
+    static void setPhoneBlockList(PhoneBlockList phoneBlockList) {
+        YacbHolder.phoneBlockList = phoneBlockList;
+    }
+
+    static void setPhoneBlockPersonalLists(PhoneBlockPersonalLists phoneBlockPersonalLists) {
+        YacbHolder.phoneBlockPersonalLists = phoneBlockPersonalLists;
+    }
+
+    static void setNumberInfoCache(NumberInfoCache numberInfoCache) {
+        YacbHolder.numberInfoCache = numberInfoCache;
+    }
+
     static void setNotificationService(NotificationService notificationService) {
         YacbHolder.notificationService = notificationService;
     }
 
     static void setPhoneStateHandler(PhoneStateHandler phoneStateHandler) {
         YacbHolder.phoneStateHandler = phoneStateHandler;
+    }
+
+    /** The storage the databases live in. */
+    public static Storage getStorage() {
+        return storage;
+    }
+
+    /** The settings of the SIA library (the database versions). */
+    public static dummydomain.yetanothercallblocker.sia.Settings getSiaSettings() {
+        return siaSettings;
     }
 
     public static WebService getWebService() {
@@ -104,12 +155,31 @@ public class YacbHolder {
         return blacklistDao;
     }
 
+    /** The whitelist and the changes to it. */
+    public static WhitelistService getWhitelistService() {
+        return whitelistService;
+    }
+
     public static BlacklistService getBlacklistService() {
         return blacklistService;
     }
 
     public static NumberInfoService getNumberInfoService() {
         return numberInfoService;
+    }
+
+    /** The PhoneBlock community list kept on the device. */
+    public static PhoneBlockList getPhoneBlockList() {
+        return phoneBlockList;
+    }
+
+    /** The lists of the user's own PhoneBlock account. */
+    public static PhoneBlockPersonalLists getPhoneBlockPersonalLists() {
+        return phoneBlockPersonalLists;
+    }
+
+    public static NumberInfoCache getNumberInfoCache() {
+        return numberInfoCache;
     }
 
     public static NotificationService getNotificationService() {

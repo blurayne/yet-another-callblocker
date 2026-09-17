@@ -22,6 +22,19 @@
         <item>day</item>
     </string-array>
 
+    <string-array name="silence_calls_entries">
+        <item>@string/silence_calls_negative</item>
+        <item>@string/silence_calls_neutral</item>
+        <item>@string/silence_calls_unknown</item>
+        <item>@string/silence_calls_unverified</item>
+    </string-array>
+    <string-array name="silence_calls_values">
+        <item>negative</item>
+        <item>neutral</item>
+        <item>unknown</item>
+        <item>unverified</item>
+    </string-array>
+
     <string-array name="block_in_limited_mode_entries">
         <item>@string/block_in_limited_mode_rating</item>
         <item>@string/block_in_limited_mode_blacklist</item>
@@ -32,5 +45,13 @@
     </string-array>
     <string-array name="block_in_limited_mode_default_values">
         <item>rating</item>
+    </string-array>
+    <string-array name="pause_blocking_entries">
+        <item>@string/pause_blocking_15</item>
+        <item>@string/pause_blocking_30</item>
+        <item>@string/pause_blocking_60</item>
+        <item>@string/pause_blocking_120</item>
+        <item>@string/pause_blocking_480</item>
+        <item>@string/pause_blocking_indefinitely</item>
     </string-array>
 </resources>

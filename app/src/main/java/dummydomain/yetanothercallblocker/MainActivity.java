@@ -42,7 +42,6 @@ import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
 import dummydomain.yetanothercallblocker.event.WhitelistChangedEvent;
 import dummydomain.yetanothercallblocker.work.TaskService;
-import dummydomain.yetanothercallblocker.work.UpdateScheduler;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -50,8 +49,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String STATE_CALL_LOG_LAYOUT_MANAGER = "call_log_layout_manager";
 
     private final Settings settings = App.getSettings();
-
-    private final UpdateScheduler updateScheduler = UpdateScheduler.get(App.getInstance());
 
     private CallLogItemRecyclerViewAdapter callLogAdapter;
     private RecyclerView recyclerView;
@@ -120,23 +117,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_main, menu);
         return true;
-    }
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        menu.findItem(R.id.menu_show_notifications).setChecked(
-                settings.getIncomingCallNotifications());
-
-        menu.findItem(R.id.menu_block_calls).setChecked(
-                settings.getBlockNegativeSiaNumbers());
-
-        menu.findItem(R.id.menu_auto_updates).setChecked(
-                updateScheduler.isAutoUpdateScheduled());
-
-        menu.findItem(R.id.menu_use_contacts).setChecked(
-                settings.getUseContacts());
-
-        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -288,27 +268,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void onLookupNumberClicked(MenuItem item) {
         startActivity(new Intent(this, LookupNumberActivity.class));
-    }
-
-    public void onShowNotificationsChanged(MenuItem item) {
-        settings.setIncomingCallNotifications(!item.isChecked());
-        checkPermissions();
-    }
-
-    public void onBlockCallsChanged(MenuItem item) {
-        settings.setBlockNegativeSiaNumbers(!item.isChecked());
-        checkPermissions();
-    }
-
-    public void onAutoUpdatesChanged(MenuItem item) {
-        if (!item.isChecked()) updateScheduler.scheduleAutoUpdates();
-        else updateScheduler.cancelAutoUpdateWorker();
-    }
-
-    public void onUseContactsChanged(MenuItem item) {
-        settings.setUseContacts(!item.isChecked());
-        checkPermissions();
-        reloadCallLog();
     }
 
     public void onOpenBlacklist(MenuItem item) {

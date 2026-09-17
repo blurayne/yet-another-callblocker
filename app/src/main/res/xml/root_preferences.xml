@@ -97,11 +97,6 @@
             app:key="blockBlacklisted"
             app:summary="@string/block_blacklisted_summary"
             app:title="@string/block_blacklisted" />
-        <Preference
-            app:key="whitelistScreen"
-            app:persistent="false"
-            app:summary="@string/whitelist_summary"
-            app:title="@string/whitelist" />
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="blockFailedVerification"

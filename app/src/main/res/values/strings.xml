@@ -211,6 +211,10 @@
 
     <string name="settings_screen_advanced">Advanced settings</string>
     <string name="settings_category_database">Database</string>
+    <string name="settings_category_limited_mode">Before the phone is unlocked</string>
+    <string name="limited_mode_info">What Direct Boot mode is</string>
+    <string name="limited_mode_info_summary">After a restart the phone stays encrypted until you unlock it for the first time. Android calls that Direct Boot, and most apps cannot run at all until then. This one can: its lists and its settings are kept where they can be read before unlocking, so calls are screened even right after a restart.</string>
+    <string name="limited_mode_info_option">What it cannot read in that time are your contacts - they stay locked away until the phone is unlocked, so a call from a contact looks like a call from a stranger. The setting below decides which kinds of blocking are allowed until then: a kind you switch off here lets those calls through until you unlock the phone.</string>
     <string name="block_in_limited_mode">Block in Direct Boot mode</string>
     <string name="block_in_limited_mode_summary">Allowed kinds of blocking in Direct Boot mode (Contacts can\'t be reliably used as a whitelist in this mode)</string>
     <string name="block_in_limited_mode_rating">By rating</string>

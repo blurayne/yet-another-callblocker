@@ -320,6 +320,10 @@
     <string name="show_notifications_for_blocked_calls_summary">Eine Benachrichtigung anzeigen, wenn ein Anruf blockiert wurde</string>
     <string name="blocked_call_notifications_disable_message">Wenn Anrufe ohne Benachrichtigung blockiert werden, können Sie unbemerkt einen Anruf verpassen</string>
     <string name="blocked_call_notifications_disable_confirmation">Trotzdem ausschalten</string>
+    <string name="settings_category_limited_mode">Vor dem Entsperren</string>
+    <string name="limited_mode_info">Was der Direct-Boot-Modus ist</string>
+    <string name="limited_mode_info_summary">Nach einem Neustart bleibt das Telefon verschlüsselt, bis Sie es zum ersten Mal entsperren. Android nennt das Direct Boot; die meisten Apps laufen in dieser Zeit gar nicht. Diese schon: Ihre Listen und Ihre Einstellungen liegen dort, wo sie schon vor dem Entsperren lesbar sind, sodass Anrufe auch direkt nach einem Neustart geprüft werden.</string>
+    <string name="limited_mode_info_option">Nicht lesbar sind in dieser Zeit Ihre Kontakte - sie bleiben gesperrt, bis das Telefon entsperrt wird, und ein Anruf aus den Kontakten sieht deshalb aus wie ein Anruf einer fremden Nummer. Die Einstellung darunter legt fest, welche Arten der Blockierung bis dahin erlaubt sind: Was Sie hier ausschalten, wird bis zum Entsperren durchgestellt.</string>
     <string name="block_in_limited_mode">Im Direct-Boot-Modus blockieren</string>
     <string name="block_in_limited_mode_summary">Erlaubte Arten der Blockierung im Direct-Boot-Modus (die Kontakte sind in diesem Modus nicht zuverlässig lesbar und schützen deshalb nicht vor einer Blockierung)</string>
     <string name="block_in_limited_mode_rating">Nach Bewertung</string>

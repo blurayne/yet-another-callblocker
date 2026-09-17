@@ -10,30 +10,6 @@
         app:showAsAction="collapseActionView|always" />
 
     <item
-        android:id="@+id/menu_show_notifications"
-        android:checkable="true"
-        android:onClick="onShowNotificationsChanged"
-        android:title="@string/incoming_call_notifications" />
-
-    <item
-        android:id="@+id/menu_block_calls"
-        android:checkable="true"
-        android:onClick="onBlockCallsChanged"
-        android:title="@string/block_negative_sia_short" />
-
-    <item
-        android:id="@+id/menu_auto_updates"
-        android:checkable="true"
-        android:onClick="onAutoUpdatesChanged"
-        android:title="@string/auto_updates" />
-
-    <item
-        android:id="@+id/menu_use_contacts"
-        android:checkable="true"
-        android:onClick="onUseContactsChanged"
-        android:title="@string/use_contacts" />
-
-    <item
         android:onClick="onOpenBlacklist"
         android:title="@string/open_blacklist_activity" />
 

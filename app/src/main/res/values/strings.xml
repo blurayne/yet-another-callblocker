@@ -89,6 +89,20 @@
 
     <string name="open_settings_activity">Settings</string>
     <string name="title_settings_activity">Settings</string>
+    <!-- the sections of the settings screen -->
+    <string name="settings_category_blocking">Blocking</string>
+    <string name="settings_category_caller_id_notifications">Caller ID and notifications</string>
+    <string name="settings_category_number_sources">Where the numbers come from</string>
+    <string name="settings_category_appearance">Appearance</string>
+    <string name="settings_screen_advanced_summary">Country codes, what happens before the phone is unlocked, debugging</string>
+    <string name="community_database">Community database</string>
+    <string name="blocking_stats">Last 30 days: %1$d blocked, %2$d silenced of %3$d calls</string>
+    <string name="blocking_stats_none">No calls seen yet</string>
+    <string name="blacklist_count_with_rules">%1$d entries, %2$d of them rules</string>
+    <plurals name="blacklist_count">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
     <string name="settings_category_main">Main</string>
     <string name="db_filtering_keep_master">Keep the unfiltered database</string>
     <string name="db_filtering_keep_master_summary">Keep a copy of the unfiltered database, so that it can be restored and so that filtering always starts from it instead of narrowing down an already filtered database. The copy needs about as much space as the database itself</string>
@@ -275,6 +289,21 @@
     </plurals>
     <string name="selected_value_nothing">&lt;nothing&gt;</string>
 
+    <!-- pausing what the app does about calls -->
+    <string name="pause_blocking">Pause blocking…</string>
+    <string name="resume_blocking">Resume blocking</string>
+    <string name="resume_blocking_until">Resume blocking (paused until %s)</string>
+    <string name="blocking_paused_until">Blocking is paused until %s</string>
+    <string name="blocking_paused_indefinitely">Blocking is paused until you switch it back on</string>
+    <string name="blocking_resumed">Blocking is on again</string>
+    <string name="blocking_on">Blocking is on</string>
+    <string name="blocking_off">Nothing is switched on to block</string>
+    <string name="pause_blocking_15">15 minutes</string>
+    <string name="pause_blocking_30">30 minutes</string>
+    <string name="pause_blocking_60">1 hour</string>
+    <string name="pause_blocking_120">2 hours</string>
+    <string name="pause_blocking_480">8 hours</string>
+    <string name="pause_blocking_indefinitely">Until I switch it back on</string>
     <string name="open_blacklist_activity">Blacklist</string>
     <string name="title_blacklist_activity">Blacklist</string>
     <plurals name="blacklist_item_stats">

@@ -93,7 +93,7 @@ public class PhoneStateHandler {
 
         if (ignore) return;
 
-        boolean blockingEnabled = settings.getCallBlockingEnabled();
+        boolean blockingEnabled = settings.getCallBlockingEnabled() && !settings.isBlockingPaused();
         boolean showNotifications = settings.getIncomingCallNotifications();
         boolean callerIdEnabled = settings.getCallerIdEnabled();
 

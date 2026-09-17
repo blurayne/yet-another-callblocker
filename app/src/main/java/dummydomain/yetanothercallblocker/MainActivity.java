@@ -270,6 +270,19 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, LookupNumberActivity.class));
     }
 
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // the row both starts and ends a pause, so it says which of the two it would do
+        menu.findItem(R.id.menu_pause_blocking).setTitle(
+                BlockingPauseHelper.getActionTitle(this));
+
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    public void onPauseBlockingClicked(MenuItem item) {
+        BlockingPauseHelper.show(this, this::invalidateOptionsMenu);
+    }
+
     public void onOpenBlacklist(MenuItem item) {
         startActivity(BlacklistActivity.getIntent(this));
     }

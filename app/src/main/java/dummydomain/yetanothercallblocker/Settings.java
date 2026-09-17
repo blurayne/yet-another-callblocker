@@ -32,6 +32,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_USE_CONTACTS = "useContacts";
     public static final String PREF_WHITELIST = "whitelist";
     public static final String PREF_CALL_DECISIONS = "callDecisions";
+    public static final String PREF_BLOCKING_PAUSED_UNTIL = "blockingPausedUntil";
     public static final String PREF_UI_MODE = "uiMode";
     public static final String PREF_CALL_LOG_GROUPING = "callLogGrouping";
     public static final String PREF_USE_MONITORING_SERVICE = "useMonitoringService";
@@ -274,6 +275,28 @@ public class Settings extends GenericSettings {
         setPhoneBlockLastTokenCheckTime(0);
         setPhoneBlockTokenProblemNotified(false);
         setPhoneBlockPersonalNextUpdateTime(0); // the lists belong to whoever the token belongs to
+    }
+
+    /**
+     * When the pause on blocking runs out, {@code Long.MAX_VALUE} while it is paused until the
+     * user says otherwise, or 0 when nothing is paused.
+     */
+    public long getBlockingPausedUntil() {
+        return getLong(PREF_BLOCKING_PAUSED_UNTIL, 0);
+    }
+
+    public void setBlockingPausedUntil(long time) {
+        setLong(PREF_BLOCKING_PAUSED_UNTIL, time);
+    }
+
+    /**
+     * Whether blocking and silencing are paused at the moment.
+     *
+     * <p>It is the pause itself that runs out, not a timer that ends it: nothing has to run
+     * while the phone sleeps, and a pause set before a restart is still over when it is over.
+     */
+    public boolean isBlockingPaused() {
+        return getBlockingPausedUntil() > System.currentTimeMillis();
     }
 
     public boolean getCallBlockingEnabled() {

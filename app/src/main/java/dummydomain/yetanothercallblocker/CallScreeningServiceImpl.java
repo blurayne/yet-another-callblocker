@@ -45,10 +45,14 @@ public class CallScreeningServiceImpl extends CallScreeningService {
         boolean silencingEnabled = false;
 
         try {
-            blockingEnabled = App.getSettings().getCallBlockingEnabled();
+            // a pause stops the app from doing anything about a call; it still says who calls
+            boolean paused = App.getSettings().isBlockingPaused();
+
+            blockingEnabled = !paused && App.getSettings().getCallBlockingEnabled();
             callerIdEnabled = App.getSettings().getCallerIdEnabled();
             // silencing the ringer is only possible on Android 10+
-            silencingEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+            silencingEnabled = !paused
+                    && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
                     && App.getSettings().getSilenceCallsEnabled();
 
             boolean ignore = false;

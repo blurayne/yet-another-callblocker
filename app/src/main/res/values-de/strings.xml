@@ -30,6 +30,21 @@
 
     <!-- Hauptbildschirm und Menü -->
     <string name="open_settings_activity">Einstellungen</string>
+    <!-- das Blockieren vorübergehend aussetzen -->
+    <string name="pause_blocking">Blockieren pausieren…</string>
+    <string name="resume_blocking">Blockieren fortsetzen</string>
+    <string name="resume_blocking_until">Blockieren fortsetzen (pausiert bis %s)</string>
+    <string name="blocking_paused_until">Blockieren ist pausiert bis %s</string>
+    <string name="blocking_paused_indefinitely">Blockieren ist pausiert, bis Sie es wieder einschalten</string>
+    <string name="blocking_resumed">Blockieren ist wieder aktiv</string>
+    <string name="blocking_on">Blockieren ist aktiv</string>
+    <string name="blocking_off">Es ist nichts zum Blockieren eingeschaltet</string>
+    <string name="pause_blocking_15">15 Minuten</string>
+    <string name="pause_blocking_30">30 Minuten</string>
+    <string name="pause_blocking_60">1 Stunde</string>
+    <string name="pause_blocking_120">2 Stunden</string>
+    <string name="pause_blocking_480">8 Stunden</string>
+    <string name="pause_blocking_indefinitely">Bis ich es wieder einschalte</string>
     <string name="open_blacklist_activity">Schwarze Liste</string>
     <string name="open_whitelist_activity">Weiße Liste</string>
     <string name="open_about_activity">Über</string>
@@ -205,6 +220,20 @@
 
     <!-- Einstellungen -->
     <string name="title_settings_activity">Einstellungen</string>
+    <!-- die Abschnitte der Einstellungen -->
+    <string name="settings_category_blocking">Blockieren</string>
+    <string name="settings_category_caller_id_notifications">Anruferanzeige und Benachrichtigungen</string>
+    <string name="settings_category_number_sources">Woher die Nummern kommen</string>
+    <string name="settings_category_appearance">Darstellung</string>
+    <string name="settings_screen_advanced_summary">Ländervorwahlen, Verhalten vor dem Entsperren, Fehlerbehebung</string>
+    <string name="community_database">Community-Datenbank</string>
+    <string name="blocking_stats">Letzte 30 Tage: %1$d blockiert, %2$d stumm gestellt von %3$d Anrufen</string>
+    <string name="blocking_stats_none">Bisher keine Anrufe gesehen</string>
+    <string name="blacklist_count_with_rules">%1$d Einträge, davon %2$d Regeln</string>
+    <plurals name="blacklist_count">
+        <item quantity="one">%d Eintrag</item>
+        <item quantity="other">%d Einträge</item>
+    </plurals>
     <string name="settings_category_main">Allgemein</string>
     <string name="incoming_call_notifications">Benachrichtigung bei eingehenden Anrufen</string>
     <string name="incoming_call_notifications_summary">Zeigt bei eingehenden Anrufen eine Benachrichtigung mit dem Wichtigsten zur Nummer (Bewertung, Anzahl der Bewertungen, Kategorie)</string>

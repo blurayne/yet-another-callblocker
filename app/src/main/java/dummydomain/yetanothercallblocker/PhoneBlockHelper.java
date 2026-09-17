@@ -3,6 +3,7 @@ package dummydomain.yetanothercallblocker;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.text.format.DateUtils;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dummydomain.yetanothercallblocker.data.PhoneBlockList;
+import dummydomain.yetanothercallblocker.data.PhoneBlockPersonalLists;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 
@@ -225,6 +227,30 @@ public class PhoneBlockHelper {
     }
 
     private PhoneBlockHelper() {
+    }
+
+    /** How big the community list is and when it was last fetched, for the screens to show. */
+    public static String getListStatus(Context context) {
+        PhoneBlockList list = YacbHolder.getPhoneBlockList();
+        long lastUpdate = App.getSettings().getPhoneBlockLastUpdateTime();
+
+        String status;
+        if (list == null || list.isEmpty() || lastUpdate <= 0) {
+            status = context.getString(R.string.phone_block_status_empty);
+        } else {
+            status = context.getString(R.string.phone_block_status, list.getSize(),
+                    DateUtils.getRelativeTimeSpanString(lastUpdate, System.currentTimeMillis(),
+                            DateUtils.MINUTE_IN_MILLIS));
+        }
+
+        // the account's own lists say more about whether the token works than anything else
+        PhoneBlockPersonalLists personalLists = YacbHolder.getPhoneBlockPersonalLists();
+        if (personalLists != null && !personalLists.isEmpty()) {
+            status += "\n" + context.getString(R.string.phone_block_personal_status,
+                    personalLists.getBlockedCount(), personalLists.getAllowedCount());
+        }
+
+        return status;
     }
 
 }

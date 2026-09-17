@@ -142,6 +142,31 @@ public class BlacklistService {
         return null;
     }
 
+    /** How many entries the blacklist has, and how many of them are rules rather than numbers. */
+    public static class Counts {
+        public final int total;
+        public final int rules;
+
+        Counts(int total, int rules) {
+            this.total = total;
+            this.rules = rules;
+        }
+    }
+
+    /** What the blacklist holds, for the screens that say so. */
+    public Counts getCounts() {
+        List<BlacklistItem> items = getValidItems();
+
+        if (items == null) return new Counts((int) blacklistDao.countValid(), -1); // too many
+
+        int rules = 0;
+        for (BlacklistItem item : items) {
+            if (!BlacklistUtils.isLiteralPattern(item.getPattern())) rules++;
+        }
+
+        return new Counts(items.size(), rules);
+    }
+
     /** The valid entries, kept until the list changes, or null if there are too many of them. */
     private List<BlacklistItem> getValidItems() {
         List<BlacklistItem> items = validItems;

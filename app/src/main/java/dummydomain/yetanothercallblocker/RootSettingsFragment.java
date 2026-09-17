@@ -1,14 +1,10 @@
 package dummydomain.yetanothercallblocker;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.format.DateUtils;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,23 +12,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
 
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-
-import dummydomain.yetanothercallblocker.data.PhoneBlockList;
-import dummydomain.yetanothercallblocker.data.PhoneBlockPersonalLists;
-import dummydomain.yetanothercallblocker.data.PhoneBlockService;
+import dummydomain.yetanothercallblocker.data.BlacklistService;
+import dummydomain.yetanothercallblocker.data.CallDecisionLog;
+import dummydomain.yetanothercallblocker.data.Whitelist;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
-import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
-import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
-import dummydomain.yetanothercallblocker.utils.FileUtils;
+import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.utils.PackageManagerUtils;
-import dummydomain.yetanothercallblocker.work.TaskService;
 import dummydomain.yetanothercallblocker.work.UpdateScheduler;
 
 public class RootSettingsFragment extends BaseSettingsFragment {
@@ -41,15 +26,15 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_USE_CALL_SCREENING_SERVICE = "useCallScreeningService";
     private static final String PREF_AUTO_UPDATE_ENABLED = "autoUpdateEnabled";
     private static final String PREF_NOTIFICATION_CHANNEL_SETTINGS = "notificationChannelSettings";
-    private static final String PREF_EXPORT_LOGCAT = "exportLogcat";
-    private static final String PREF_PHONE_BLOCK_INFO = "phoneBlockInfo";
-    private static final String PREF_PHONE_BLOCK_UPDATE = "phoneBlockUpdate";
-    private static final String PREF_PHONE_BLOCK_CHECK_TOKEN = "phoneBlockCheckToken";
-    private static final String PREF_CATEGORY_NOTIFICATIONS = "categoryNotifications";
-    private static final String PREF_CATEGORY_NOTIFICATIONS_LEGACY = "categoryNotificationsLegacy";
+    private static final String PREF_BLOCKING_STATUS = "blockingStatus";
+    private static final String PREF_BLACKLIST_SCREEN = "blacklistScreen";
+    private static final String PREF_WHITELIST_SCREEN = "whitelistScreen";
+    private static final String PREF_DB_MANAGEMENT = "dbManagement";
+    private static final String PREF_PHONE_BLOCK_SCREEN = "phoneBlockScreen";
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
 
-    private static final Logger LOG = LoggerFactory.getLogger(RootSettingsFragment.class);
+    /** How far back the row about blocking looks when it says what blocking has done. */
+    private static final long STATS_PERIOD = 30 * DateUtils.DAY_IN_MILLIS;
 
     private static final String STATE_REQUEST_TOKEN = "STATE_REQUEST_TOKEN";
     private static final String STATE_OVERLAY_REQUESTED = "STATE_OVERLAY_REQUESTED";
@@ -108,8 +93,6 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     public void onStart() {
         super.onStart();
 
-        EventUtils.register(this);
-
         // may be changed externally
         updateCallScreeningPreference();
 
@@ -120,14 +103,10 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         // the permission may be granted (or revoked) in the system settings
         updateCallerIdOverlayPreference();
 
-        updatePhoneBlockPreference();
-    }
-
-    @Override
-    public void onStop() {
-        EventUtils.unregister(this);
-
-        super.onStop();
+        // all of these change on the screens this one leads to
+        updateBlockingStatusPreference();
+        updateListPreferences();
+        updateSourcePreferences();
     }
 
     @Override
@@ -150,53 +129,19 @@ public class RootSettingsFragment extends BaseSettingsFragment {
             return true;
         });
 
-        requirePreference(PREF_EXPORT_LOGCAT)
-                .setOnPreferenceClickListener(preference -> {
-                    exportLogcat();
-                    return true;
-                });
-
-        requirePreference(PREF_PHONE_BLOCK_INFO).setOnPreferenceClickListener(pref -> {
-            String tokenPageUrl = PhoneBlockHelper.getTokenPageUrl();
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity())
-                    .setTitle(R.string.settings_category_phone_block)
-                    .setMessage(pref.getSummary())
-                    .setNegativeButton(R.string.back, null);
-
-            // the token is on a page of the account, which is easier opened than typed
-            if (tokenPageUrl != null) {
-                builder.setPositiveButton(R.string.phone_block_get_token, (d, w) ->
-                        IntentHelper.startActivity(requireContext(),
-                                IntentHelper.getWebIntent(tokenPageUrl)));
-            }
-
-            builder.show();
+        // the row says what tapping it does - start a pause, or end the one that is running
+        requirePreference(PREF_BLOCKING_STATUS).setOnPreferenceClickListener(preference -> {
+            BlockingPauseHelper.show(requireActivity(), this::updateBlockingStatusPreference);
             return true;
         });
 
-        requirePreference(PREF_PHONE_BLOCK_UPDATE).setOnPreferenceClickListener(preference -> {
-            TaskService.start(requireContext(), TaskService.TASK_UPDATE_PHONE_BLOCK);
+        requirePreference(PREF_BLACKLIST_SCREEN).setOnPreferenceClickListener(preference -> {
+            startActivity(BlacklistActivity.getIntent(requireContext()));
             return true;
         });
 
-        requirePreference(PREF_PHONE_BLOCK_CHECK_TOKEN).setOnPreferenceClickListener(preference -> {
-            checkPhoneBlockToken();
-            return true;
-        });
-
-        setPrefChangeListener(Settings.PREF_PHONE_BLOCK_TOKEN, (preference, newValue) -> {
-            // whatever was known about the old token doesn't apply to this one
-            App.getSettings().resetPhoneBlockTokenState();
-            NotificationHelper.hidePhoneBlockTokenNotification(requireContext());
-            return true;
-        });
-
-        setPrefChangeListener(Settings.PREF_USE_PHONE_BLOCK, (preference, newValue) -> {
-            if (Boolean.TRUE.equals(newValue)) {
-                // there is nothing to use until the list has been fetched
-                TaskService.start(requireContext(), TaskService.TASK_UPDATE_PHONE_BLOCK);
-            }
+        requirePreference(PREF_WHITELIST_SCREEN).setOnPreferenceClickListener(preference -> {
+            startActivity(WhitelistActivity.getIntent(requireContext()));
             return true;
         });
 
@@ -314,9 +259,12 @@ public class RootSettingsFragment extends BaseSettingsFragment {
                         return true;
                     });
 
-            requirePreference(PREF_CATEGORY_NOTIFICATIONS_LEGACY).setVisible(false);
+            // the system settings hold these since Android 8
+            requirePreference(Settings.PREF_NOTIFICATIONS_KNOWN).setVisible(false);
+            requirePreference(Settings.PREF_NOTIFICATIONS_UNKNOWN).setVisible(false);
+            requirePreference(PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT).setVisible(false);
         } else {
-            requirePreference(PREF_CATEGORY_NOTIFICATIONS).setVisible(false);
+            requirePreference(PREF_NOTIFICATION_CHANNEL_SETTINGS).setVisible(false);
 
             SwitchPreferenceCompat blockedCallNotificationsPref =
                     requirePreference(PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT);
@@ -340,20 +288,78 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         }
     }
 
-private void exportLogcat() {
-        Activity activity = requireActivity();
+    /** The row about blocking: what tapping it does, how things stand, and what it has done. */
+    private void updateBlockingStatusPreference() {
+        Context context = requireContext();
 
-        String path = null;
-        try {
-            path = DebuggingUtils.saveLogcatInCache(activity);
-            DebuggingUtils.appendDeviceInfo(path);
-        } catch (IOException | InterruptedException e) {
-            LOG.warn("exportLogcat()", e);
+        Preference preference = requirePreference(PREF_BLOCKING_STATUS);
+        preference.setTitle(BlockingPauseHelper.getActionTitle(context));
+        preference.setSummary(BlockingPauseHelper.getStatus(context)
+                + "\n" + getBlockingStats(context));
+    }
+
+    /** What the app did about the calls it saw lately, or that it has seen none. */
+    private String getBlockingStats(Context context) {
+        CallDecisionLog decisionLog = YacbHolder.getCallDecisionLog();
+
+        CallDecisionLog.Stats stats = decisionLog != null
+                ? decisionLog.getStats(System.currentTimeMillis() - STATS_PERIOD) : null;
+
+        if (stats == null || stats.getTotal() == 0) {
+            return context.getString(R.string.blocking_stats_none);
         }
 
-        if (path != null) {
-            FileUtils.shareFile(activity, new File(path));
+        return context.getString(R.string.blocking_stats,
+                stats.blocked, stats.silenced, stats.getTotal());
+    }
+
+    /** Says what the two lists hold, so that neither has to be opened to find out. */
+    private void updateListPreferences() {
+        BlacklistService blacklistService = YacbHolder.getBlacklistService();
+        if (blacklistService != null) {
+            BlacklistService.Counts counts = blacklistService.getCounts();
+
+            requirePreference(PREF_BLACKLIST_SCREEN).setSummary(counts.rules > 0
+                    ? getString(R.string.blacklist_count_with_rules, counts.total, counts.rules)
+                    : getResources().getQuantityString(
+                            R.plurals.blacklist_count, counts.total, counts.total));
         }
+
+        int whitelistCount = Whitelist.parse(App.getSettings().getWhitelist()).size();
+
+        requirePreference(PREF_WHITELIST_SCREEN).setSummary(whitelistCount > 0
+                ? getResources().getQuantityString(
+                        R.plurals.whitelist_count, whitelistCount, whitelistCount)
+                : getString(R.string.whitelist_summary));
+    }
+
+    /** Says how fresh each source of numbers is, and whether PhoneBlock has anything to block. */
+    private void updateSourcePreferences() {
+        requirePreference(PREF_DB_MANAGEMENT).setSummary(getCommunityDbStatus());
+
+        requirePreference(PREF_PHONE_BLOCK_SCREEN)
+                .setSummary(PhoneBlockHelper.getListStatus(requireContext()));
+
+        // the list can only block while it is kept at all, which is a question of its own screen
+        requirePreference(Settings.PREF_BLOCK_PHONE_BLOCK)
+                .setEnabled(App.getSettings().getUsePhoneBlock());
+    }
+
+    /** Which version of the community database is in use, and when it was last checked. */
+    private String getCommunityDbStatus() {
+        CommunityDatabase communityDatabase = YacbHolder.getCommunityDatabase();
+
+        String version = communityDatabase != null && communityDatabase.isOperational()
+                ? String.valueOf(communityDatabase.getEffectiveDbVersion())
+                : getString(R.string.db_version_not_available);
+
+        long lastCheck = App.getSettings().getLastUpdateCheckTime();
+        String lastCheckValue = lastCheck != 0
+                ? DateUtils.getRelativeTimeSpanString(lastCheck).toString()
+                : getString(R.string.db_last_update_check_never);
+
+        return getString(R.string.db_version, version)
+                + "\n" + getString(R.string.db_last_update_check, lastCheckValue);
     }
 
     private void updateCallScreeningPreference() {
@@ -361,92 +367,6 @@ private void exportLogcat() {
 
         this.<SwitchPreferenceCompat>requirePreference(PREF_USE_CALL_SCREENING_SERVICE)
                 .setChecked(PermissionHelper.isCallScreeningHeld(requireContext()));
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
-    public void onPhoneBlockUpdateFinished(PhoneBlockUpdateFinishedEvent event) {
-        updatePhoneBlockPreference();
-
-        int size = event.result.size;
-
-        String message;
-        switch (event.result.status) {
-            case UPDATED:
-                message = getString(R.string.phone_block_update_result, size);
-                break;
-
-            case NOT_DUE:
-                message = getString(R.string.phone_block_update_not_due, size);
-                break;
-
-            case NOT_CONFIGURED:
-                return; // the list is turned off, there is nothing to say
-
-            default:
-                message = getString(R.string.phone_block_update_failed);
-                break;
-        }
-
-        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
-    }
-
-    /** Asks PhoneBlock whether the token works and says what it answered. */
-    private void checkPhoneBlockToken() {
-        Context context = requireContext().getApplicationContext();
-        Settings settings = App.getSettings();
-
-        Toast.makeText(context, R.string.phone_block_checking_token, Toast.LENGTH_SHORT).show();
-
-        @SuppressLint("StaticFieldLeak") // the application context outlives the task
-        AsyncTask<Void, Void, PhoneBlockService.TokenStatus> task
-                = new AsyncTask<Void, Void, PhoneBlockService.TokenStatus>() {
-            @Override
-            protected PhoneBlockService.TokenStatus doInBackground(Void... voids) {
-                return new PhoneBlockService(settings, YacbHolder.getPhoneBlockList(),
-                        YacbHolder.getPhoneBlockPersonalLists()).checkToken();
-            }
-
-            @Override
-            protected void onPostExecute(PhoneBlockService.TokenStatus status) {
-                PhoneBlockHelper.handleTokenStatus(context, settings, status);
-
-                int message;
-                switch (status) {
-                    case OK: message = R.string.phone_block_token_ok; break;
-                    case NO_TOKEN: message = R.string.phone_block_token_missing; break;
-                    case INVALID: message = R.string.phone_block_token_invalid_text; break;
-                    default: message = R.string.phone_block_check_token_failed; break;
-                }
-
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-            }
-        };
-
-        task.execute();
-    }
-
-    /** Says how big the list is and when it was last fetched. */
-    private void updatePhoneBlockPreference() {
-        PhoneBlockList list = YacbHolder.getPhoneBlockList();
-        long lastUpdate = App.getSettings().getPhoneBlockLastUpdateTime();
-
-        String summary;
-        if (list == null || list.isEmpty() || lastUpdate <= 0) {
-            summary = getString(R.string.phone_block_status_empty);
-        } else {
-            summary = getString(R.string.phone_block_status, list.getSize(),
-                    DateUtils.getRelativeTimeSpanString(lastUpdate, System.currentTimeMillis(),
-                            DateUtils.MINUTE_IN_MILLIS));
-        }
-
-        // the account's own lists say more about whether the token works than anything else
-        PhoneBlockPersonalLists personalLists = YacbHolder.getPhoneBlockPersonalLists();
-        if (personalLists != null && !personalLists.isEmpty()) {
-            summary += "\n" + getString(R.string.phone_block_personal_status,
-                    personalLists.getBlockedCount(), personalLists.getAllowedCount());
-        }
-
-        requirePreference(PREF_PHONE_BLOCK_UPDATE).setSummary(summary);
     }
 
     private void updateCallerIdOverlayPreference() {

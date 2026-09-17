@@ -48,6 +48,17 @@ public class CallDecisionLog {
         }
     }
 
+    /** How many calls the app saw, and what it did about them. */
+    public static class Stats {
+        public int allowed;
+        public int silenced;
+        public int blocked;
+
+        public int getTotal() {
+            return allowed + silenced + blocked;
+        }
+    }
+
     private static final int MAX_ENTRIES = 200;
 
     /**
@@ -118,6 +129,28 @@ public class CallDecisionLog {
         }
 
         return entries;
+    }
+
+    /**
+     * What the app did about the calls it saw since a point in time.
+     *
+     * <p>It only knows about the calls it still has a record of, so the count says "at least
+     * this many" for anyone who gets more than {@value #MAX_ENTRIES} calls in the period.
+     */
+    public synchronized Stats getStats(long since) {
+        Stats stats = new Stats();
+
+        for (Entry entry : getEntries()) {
+            if (entry.time < since) continue;
+
+            switch (entry.decision) {
+                case BLOCKED: stats.blocked++; break;
+                case SILENCED: stats.silenced++; break;
+                default: stats.allowed++; break;
+            }
+        }
+
+        return stats;
     }
 
     /**

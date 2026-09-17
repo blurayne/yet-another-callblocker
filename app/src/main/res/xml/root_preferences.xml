@@ -1,22 +1,131 @@
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     app:title="@string/title_settings_activity">
 
-    <PreferenceCategory app:title="@string/settings_category_main">
+    <!-- what is blocked, and the two lists that say which numbers are -->
+    <PreferenceCategory app:title="@string/settings_category_blocking">
+        <Preference
+            app:key="blockingStatus"
+            app:persistent="false"
+            app:title="@string/blocking_on" />
+        <Preference
+            app:key="blacklistScreen"
+            app:persistent="false"
+            app:title="@string/open_blacklist_activity" />
+        <Preference
+            app:key="whitelistScreen"
+            app:persistent="false"
+            app:summary="@string/whitelist_summary"
+            app:title="@string/whitelist" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="blockNegativeSiaNumbers"
+            app:summary="@string/block_negative_sia_numbers_summary"
+            app:title="@string/block_negative_sia" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="blockPhoneBlock"
+            app:summary="@string/block_phone_block_summary"
+            app:title="@string/block_phone_block" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="blockHiddenNumbers"
+            app:summary="@string/block_hidden_number_summary"
+            app:title="@string/block_hidden_number" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="blockBlacklisted"
+            app:summary="@string/block_blacklisted_summary"
+            app:title="@string/block_blacklisted" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="blockFailedVerification"
+            app:summary="@string/block_failed_verification_summary"
+            app:title="@string/block_failed_verification" />
+        <MultiSelectListPreference
+            app:entries="@array/silence_calls_entries"
+            app:entryValues="@array/silence_calls_values"
+            app:key="silenceCalls"
+            app:summary="@string/silence_calls_summary"
+            app:title="@string/silence_calls" />
+        <SwitchPreferenceCompat
+            app:key="useCallScreeningService"
+            app:persistent="false"
+            app:summary="@string/use_call_screening_service_summary"
+            app:title="@string/use_call_screening_service" />
+    </PreferenceCategory>
+
+    <!-- what the user gets to see and hear about a call -->
+    <PreferenceCategory app:title="@string/settings_category_caller_id_notifications">
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="incomingCallNotifications"
             app:summary="@string/incoming_call_notifications_summary"
             app:title="@string/incoming_call_notifications" />
+        <Preference
+            app:key="notificationChannelSettings"
+            app:persistent="false"
+            app:title="@string/notification_settings" />
+        <SwitchPreferenceCompat
+            app:key="showNotificationsForKnownCallers"
+            app:summary="@string/show_notifications_for_known_callers_summary"
+            app:title="@string/show_notifications_for_known_callers" />
+        <SwitchPreferenceCompat
+            app:key="showNotificationsForUnknownCallers"
+            app:summary="@string/show_notifications_for_unknown_callers_summary"
+            app:title="@string/show_notifications_for_unknown_callers" />
+        <SwitchPreferenceCompat
+            app:key="showNotificationsForBlockedCallsNonPersistent"
+            app:persistent="false"
+            app:summary="@string/show_notifications_for_blocked_calls_summary"
+            app:title="@string/show_notifications_for_blocked_calls" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="callerIdDirectory"
+            app:summary="@string/caller_id_directory_summary"
+            app:title="@string/caller_id_directory" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="callerIdOverlay"
+            app:summary="@string/caller_id_overlay_summary"
+            app:title="@string/caller_id_overlay" />
+        <SwitchPreferenceCompat
+            app:key="useMonitoringService"
+            app:summary="@string/use_monitoring_service_summary"
+            app:title="@string/use_monitoring_service" />
+    </PreferenceCategory>
+
+    <!-- where what the app knows about a number comes from -->
+    <PreferenceCategory app:title="@string/settings_category_number_sources">
+        <Preference
+            app:key="dbManagement"
+            app:persistent="false"
+            app:title="@string/community_database">
+            <intent
+                android:targetClass="dummydomain.yetanothercallblocker.DbManagementActivity"
+                android:targetPackage="@string/app_id" />
+        </Preference>
         <SwitchPreferenceCompat
             app:key="autoUpdateEnabled"
             app:persistent="false"
             app:summary="@string/auto_updates_summary"
             app:title="@string/auto_updates" />
+        <Preference
+            app:fragment="dummydomain.yetanothercallblocker.DbFilteringSettingsFragment"
+            app:key="dbFiltering"
+            app:title="@string/settings_screen_db_filtering" />
+        <Preference
+            app:fragment="dummydomain.yetanothercallblocker.PhoneBlockSettingsFragment"
+            app:key="phoneBlockScreen"
+            app:title="@string/settings_category_phone_block" />
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="useContacts"
             app:summary="@string/use_contacts_summary"
             app:title="@string/use_contacts" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/settings_category_appearance">
         <dummydomain.yetanothercallblocker.preference.IntListPreference
             app:defaultValue="-1"
             app:entries="@array/ui_mode_entries"
@@ -33,142 +142,11 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/settings_category_phone_block">
-        <Preference
-            app:key="phoneBlockInfo"
-            app:persistent="false"
-            app:summary="@string/phone_block_info_summary"
-            app:title="@string/phone_block_info" />
-        <SwitchPreferenceCompat
-            app:defaultValue="true"
-            app:key="usePhoneBlock"
-            app:summary="@string/use_phone_block_summary"
-            app:title="@string/use_phone_block" />
-        <SwitchPreferenceCompat
-            app:defaultValue="true"
-            app:dependency="usePhoneBlock"
-            app:key="blockPhoneBlock"
-            app:summary="@string/block_phone_block_summary"
-            app:title="@string/block_phone_block" />
-        <EditTextPreference
-            app:dependency="usePhoneBlock"
-            app:key="phoneBlockToken"
-            app:summary="@string/phone_block_token_summary"
-            app:title="@string/phone_block_token" />
-        <Preference
-            app:dependency="usePhoneBlock"
-            app:key="phoneBlockCheckToken"
-            app:persistent="false"
-            app:summary="@string/phone_block_check_token_summary"
-            app:title="@string/phone_block_check_token" />
-        <Preference
-            app:dependency="usePhoneBlock"
-            app:key="phoneBlockUpdate"
-            app:persistent="false"
-            app:title="@string/phone_block_update" />
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/settings_category_caller_id">
-        <SwitchPreferenceCompat
-            app:defaultValue="true"
-            app:key="callerIdDirectory"
-            app:summary="@string/caller_id_directory_summary"
-            app:title="@string/caller_id_directory" />
-        <SwitchPreferenceCompat
-            app:defaultValue="true"
-            app:key="callerIdOverlay"
-            app:summary="@string/caller_id_overlay_summary"
-            app:title="@string/caller_id_overlay" />
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/settings_category_call_blocking">
-        <SwitchPreferenceCompat
-            app:defaultValue="true"
-            app:key="blockNegativeSiaNumbers"
-            app:summary="@string/block_negative_sia_numbers_summary"
-            app:title="@string/block_negative_sia" />
-        <SwitchPreferenceCompat
-            app:defaultValue="true"
-            app:key="blockHiddenNumbers"
-            app:summary="@string/block_hidden_number_summary"
-            app:title="@string/block_hidden_number" />
-        <SwitchPreferenceCompat
-            app:defaultValue="true"
-            app:key="blockBlacklisted"
-            app:summary="@string/block_blacklisted_summary"
-            app:title="@string/block_blacklisted" />
-        <SwitchPreferenceCompat
-            app:defaultValue="true"
-            app:key="blockFailedVerification"
-            app:summary="@string/block_failed_verification_summary"
-            app:title="@string/block_failed_verification" />
-        <SwitchPreferenceCompat
-            app:key="useCallScreeningService"
-            app:persistent="false"
-            app:summary="@string/use_call_screening_service_summary"
-            app:title="@string/use_call_screening_service" />
-        <MultiSelectListPreference
-            app:entries="@array/silence_calls_entries"
-            app:entryValues="@array/silence_calls_values"
-            app:key="silenceCalls"
-            app:summary="@string/silence_calls_summary"
-            app:title="@string/silence_calls" />
-    </PreferenceCategory>
-
-    <SwitchPreferenceCompat
-        app:key="useMonitoringService"
-        app:summary="@string/use_monitoring_service_summary"
-        app:title="@string/use_monitoring_service" />
-
-    <PreferenceCategory
-        app:key="categoryNotifications"
-        app:title="@string/notification_settings">
-        <Preference
-            app:key="notificationChannelSettings"
-            app:persistent="false"
-            app:title="@string/notification_settings" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        app:key="categoryNotificationsLegacy"
-        app:title="@string/notification_settings">
-        <SwitchPreferenceCompat
-            app:key="showNotificationsForKnownCallers"
-            app:summary="@string/show_notifications_for_known_callers_summary"
-            app:title="@string/show_notifications_for_known_callers" />
-        <SwitchPreferenceCompat
-            app:key="showNotificationsForUnknownCallers"
-            app:summary="@string/show_notifications_for_unknown_callers_summary"
-            app:title="@string/show_notifications_for_unknown_callers" />
-        <SwitchPreferenceCompat
-            app:key="showNotificationsForBlockedCallsNonPersistent"
-            app:persistent="false"
-            app:summary="@string/show_notifications_for_blocked_calls_summary"
-            app:title="@string/show_notifications_for_blocked_calls" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        app:key="categoryDebugging"
-        app:title="@string/settings_category_debugging">
-        <Preference
-            app:key="exportLogcat"
-            app:persistent="false"
-            app:summary="@string/export_logcat_summary"
-            app:title="@string/export_logcat" />
-        <SwitchPreferenceCompat
-            app:key="saveCrashesToExternalStorage"
-            app:summary="@string/save_crashes_to_external_storage_summary"
-            app:title="@string/save_crashes_to_external_storage" />
-        <SwitchPreferenceCompat
-            app:key="saveLogcatOnCrash"
-            app:summary="@string/save_logcat_on_crash_summary"
-            app:title="@string/save_logcat_on_crash" />
-    </PreferenceCategory>
-
     <PreferenceCategory app:title="@string/settings_screen_advanced">
         <Preference
             app:fragment="dummydomain.yetanothercallblocker.AdvancedSettingsFragment"
             app:key="screenAdvanced"
+            app:summary="@string/settings_screen_advanced_summary"
             app:title="@string/settings_screen_advanced" />
     </PreferenceCategory>
 

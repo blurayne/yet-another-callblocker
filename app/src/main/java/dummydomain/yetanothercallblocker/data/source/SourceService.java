@@ -31,14 +31,9 @@ public class SourceService {
 
     /** The sources, in the order the user put them in. */
     public List<NumberSource> getSources() {
-        List<NumberSource> sources = parse(settings.getNumberSources());
+        if (!settings.getSourcesMigrated()) migrate();
 
-        if (sources.isEmpty()) {
-            sources = getDefaults();
-            save(sources);
-        }
-
-        return sources;
+        return parse(settings.getNumberSources());
     }
 
     /** The sources that are asked for numbers, in order. */
@@ -207,29 +202,41 @@ public class SourceService {
     }
 
     /**
-     * The sources an app that never had any starts with: the two it has always used, with
-     * whatever addresses the user had set for them.
+     * Turns what an older version kept into the list this one has - once.
+     *
+     * <p>An update finds the address of the database and the PhoneBlock account where they
+     * have always been, and makes a source of each: the same two places the app fetched from
+     * before, with the addresses the user had chosen and PhoneBlock switched on or off the
+     * way they left it. Its token doesn't have to be carried anywhere - a PhoneBlock source
+     * reads it where the account screen keeps it, so it is the same secret, not a copy.
+     *
+     * <p>It happens once and is written down as having happened, so that a user who deletes
+     * every source gets an empty list rather than these two back.
      */
-    private List<NumberSource> getDefaults() {
-        List<NumberSource> sources = new ArrayList<>();
+    private void migrate() {
+        List<NumberSource> sources = parse(settings.getNumberSources());
 
-        NumberSource database = new NumberSource();
-        database.setType(NumberSource.Type.DATABASE);
-        database.setUrl(settings.getDatabaseDownloadUrl());
-        database.setUpdates(NumberSource.Updates.DAILY);
-        sources.add(database);
+        if (sources.isEmpty()) {
+            NumberSource database = new NumberSource();
+            database.setType(NumberSource.Type.DATABASE);
+            database.setUrl(settings.getDatabaseDownloadUrl());
+            database.setUpdates(NumberSource.Updates.DAILY);
+            sources.add(database);
 
-        NumberSource phoneBlock = new NumberSource();
-        phoneBlock.setType(NumberSource.Type.PHONE_BLOCK);
-        phoneBlock.setUrl(settings.getPhoneBlockUrl());
-        phoneBlock.setAuth(NumberSource.Auth.BEARER);
-        phoneBlock.setUpdates(NumberSource.Updates.DAILY);
-        phoneBlock.setEnabled(settings.getUsePhoneBlock());
-        sources.add(phoneBlock);
+            NumberSource phoneBlock = new NumberSource();
+            phoneBlock.setType(NumberSource.Type.PHONE_BLOCK);
+            phoneBlock.setUrl(settings.getPhoneBlockUrl());
+            phoneBlock.setAuth(NumberSource.Auth.BEARER);
+            phoneBlock.setUpdates(NumberSource.Updates.DAILY);
+            phoneBlock.setEnabled(settings.getUsePhoneBlock());
+            sources.add(phoneBlock);
 
-        LOG.info("getDefaults() starting with the database and PhoneBlock");
+            save(sources);
 
-        return sources;
+            LOG.info("migrate() made sources of the database and the PhoneBlock account");
+        }
+
+        settings.setSourcesMigrated(true);
     }
 
 }

@@ -35,6 +35,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_BLOCKING_PAUSED_UNTIL = "blockingPausedUntil";
     public static final String PREF_NUMBER_SOURCES = "numberSources";
     public static final String PREF_SOURCE_SECRETS = "sourceSecrets";
+    public static final String PREF_SOURCES_MIGRATED = "sourcesMigrated";
     public static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
     public static final String PREF_AUTO_BACKUP = "autoBackup";
     public static final String PREF_LAST_BACKUP_TIME = "lastBackupTime";
@@ -386,6 +387,15 @@ public class Settings extends GenericSettings {
 
     public void setSourceSecrets(String secrets) {
         setString(PREF_SOURCE_SECRETS, secrets);
+    }
+
+    /** Whether what older versions kept has been turned into the list of sources. */
+    public boolean getSourcesMigrated() {
+        return getBoolean(PREF_SOURCES_MIGRATED, false);
+    }
+
+    public void setSourcesMigrated(boolean migrated) {
+        setBoolean(PREF_SOURCES_MIGRATED, migrated);
     }
 
     /** Where the backup is kept: a directory the user picked, as a document tree. */

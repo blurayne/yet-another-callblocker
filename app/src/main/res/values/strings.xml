@@ -90,18 +90,30 @@
     <string name="open_settings_activity">Settings</string>
     <string name="title_settings_activity">Settings</string>
     <!-- the sections of the settings screen -->
-    <!-- carrying the settings and the lists to another phone -->
+    <!-- the backup: one file, in a directory the user picks -->
     <string name="settings_category_backup">Backup</string>
-    <string name="backup_export">Export settings and lists</string>
-    <string name="backup_export_summary">Settings, blacklist and whitelist as a JSON file</string>
-    <string name="backup_export_message">The file holds your settings and both lists - your own numbers, in other words - so keep it somewhere you would keep those.\n\nThe PhoneBlock token is not in it: it is the password to your account rather than a setting. Enter it again on the other phone; the page it comes from is named in the PhoneBlock settings.</string>
-    <string name="backup_export_confirmation">Export</string>
-    <string name="backup_import">Import settings and lists</string>
-    <string name="backup_import_summary">Read a file written by this app</string>
-    <string name="backup_import_message">The settings in the file replace the ones on this phone. Entries are added to the two lists; entries already there are left as they are, and nothing is deleted.\n\nThe PhoneBlock token is never part of such a file, so it stays as it is here.</string>
-    <string name="backup_import_confirmation">Choose a file</string>
-    <string name="backup_import_result">%1$d settings, %2$d blacklist entries and %3$d whitelist entries read</string>
-    <string name="backup_import_failed">That file is not a backup of this app</string>
+    <string name="backup_directory">Backup directory</string>
+    <string name="backup_directory_none">Not chosen yet</string>
+    <string name="backup_directory_failed">That directory can\'t be used</string>
+    <string name="backup_directory_unsupported">Choosing a directory needs Android 5 or newer. Back up to a file instead.</string>
+    <string name="auto_backup">Back up by itself</string>
+    <string name="auto_backup_summary">Writes the backup once a day, and only when something changed. There is one file and no older versions: keep copies by syncing the directory somewhere.</string>
+    <string name="backup_now">Back up now</string>
+    <string name="backup_now_summary">Settings, blacklist and whitelist as a JSON file</string>
+    <string name="backup_last">Last backup: %s</string>
+    <string name="backup_message">The file holds your settings and both lists - your own numbers, in other words - so keep it somewhere you would keep those.\n\nThe PhoneBlock token is not in it: it is the password to your account rather than a setting. Enter it again on the other phone; the page it comes from is named in the PhoneBlock settings.</string>
+    <string name="backup_now_confirmation">Back up</string>
+    <string name="backup_done">Backup written</string>
+    <string name="backup_failed">The backup could not be written</string>
+    <string name="backup_restore">Restore</string>
+    <string name="backup_restore_summary">Read the backup from a directory</string>
+    <string name="backup_restore_message">Point at the directory the backup is in. Entries are added to the two lists; entries already there are left as they are, and nothing is deleted.\n\nThe PhoneBlock token is never part of a backup, so it stays as it is here.</string>
+    <string name="backup_restore_confirmation">Choose a directory</string>
+    <string name="backup_restore_what">Restore the settings as well, or only the blacklist and the whitelist?</string>
+    <string name="backup_restore_everything">Settings and lists</string>
+    <string name="backup_restore_lists_only">Lists only</string>
+    <string name="backup_restore_result">%1$d settings, %2$d blacklist entries and %3$d whitelist entries read</string>
+    <string name="backup_restore_failed">No backup of this app in there</string>
     <string name="settings_category_blocking">Blocking</string>
     <string name="settings_category_caller_id_notifications">Caller ID and notifications</string>
     <string name="settings_category_number_sources">Where the numbers come from</string>

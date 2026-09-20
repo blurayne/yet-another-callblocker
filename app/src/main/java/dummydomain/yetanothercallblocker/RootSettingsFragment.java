@@ -1,12 +1,15 @@
 package dummydomain.yetanothercallblocker;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.widget.Toast;
 
@@ -26,9 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 import dummydomain.yetanothercallblocker.data.BackupService;
 import dummydomain.yetanothercallblocker.data.BlacklistService;
@@ -38,6 +38,7 @@ import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.utils.FileUtils;
 import dummydomain.yetanothercallblocker.utils.PackageManagerUtils;
+import dummydomain.yetanothercallblocker.work.BackupScheduler;
 import dummydomain.yetanothercallblocker.work.UpdateScheduler;
 
 public class RootSettingsFragment extends BaseSettingsFragment {
@@ -54,10 +55,14 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_DB_MANAGEMENT = "dbManagement";
     private static final String PREF_PHONE_BLOCK_SCREEN = "phoneBlockScreen";
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
-    private static final String PREF_BACKUP_EXPORT = "backupExport";
-    private static final String PREF_BACKUP_IMPORT = "backupImport";
+    private static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
+    private static final String PREF_BACKUP_NOW = "backupNow";
+    private static final String PREF_BACKUP_RESTORE = "backupRestore";
 
-    private static final int REQUEST_CODE_IMPORT_BACKUP = 131; // 128-130 are taken by the permission helpers
+    // 128-130 are taken by the permission helpers
+    private static final int REQUEST_CODE_RESTORE_FILE = 131;
+    private static final int REQUEST_CODE_BACKUP_DIRECTORY = 132;
+    private static final int REQUEST_CODE_RESTORE_DIRECTORY = 133;
 
     /** How far back the row about blocking looks when it says what blocking has done. */
     private static final long STATS_PERIOD = 30 * DateUtils.DAY_IN_MILLIS;
@@ -68,6 +73,7 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private final UpdateScheduler updateScheduler = UpdateScheduler.get(App.getInstance());
 
     private PermissionHelper.RequestToken requestToken;
+    private boolean enableAutoBackupAfterPicking;
     private boolean overlayPermissionRequested;
 
     @Override
@@ -93,9 +99,20 @@ public class RootSettingsFragment extends BaseSettingsFragment {
             return;
         }
 
-        if (requestCode == REQUEST_CODE_IMPORT_BACKUP && resultCode == Activity.RESULT_OK
-                && data != null && data.getData() != null) {
-            readBackup(data.getData());
+        if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) return;
+
+        switch (requestCode) {
+            case REQUEST_CODE_RESTORE_FILE:
+                askWhatToRestore(this::restoreFromFile, data.getData());
+                break;
+
+            case REQUEST_CODE_BACKUP_DIRECTORY:
+                keepBackupDirectory(data.getData());
+                break;
+
+            case REQUEST_CODE_RESTORE_DIRECTORY:
+                askWhatToRestore(this::restoreFromDirectory, data.getData());
+                break;
         }
     }
 
@@ -139,6 +156,12 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         updateBlockingStatusPreference();
         updateListPreferences();
         updateSourcePreferences();
+        updateBackupPreferences();
+
+        // a reinstall loses the scheduled work; visiting the screen puts it back
+        if (App.getSettings().getAutoBackup()) {
+            BackupScheduler.get(requireContext()).schedule();
+        }
     }
 
     @Override
@@ -167,23 +190,52 @@ public class RootSettingsFragment extends BaseSettingsFragment {
             return true;
         });
 
-        // the file holds the user's own numbers, and the token is not in it: both are said
-        // before anything is written or read
-        requirePreference(PREF_BACKUP_EXPORT).setOnPreferenceClickListener(preference -> {
+        /*
+         * The backup goes into a directory the user picks, under one name, overwritten every
+         * time: there are no generations to choose from, and keeping copies of yesterday is
+         * the job of whatever syncs that directory.
+         */
+        requirePreference(PREF_BACKUP_DIRECTORY).setOnPreferenceClickListener(preference -> {
+            pickBackupDirectory();
+            return true;
+        });
+
+        setPrefChangeListener(Settings.PREF_AUTO_BACKUP, (preference, newValue) -> {
+            boolean enabled = Boolean.TRUE.equals(newValue);
+
+            if (enabled && BackupHelper.getDirectory() == null) {
+                // there is nowhere to write to yet; the switch follows once there is
+                enableAutoBackupAfterPicking = true;
+                pickBackupDirectory();
+                return false;
+            }
+
+            setAutoBackup(enabled);
+            return true;
+        });
+
+        // without document trees there is no directory to keep, so there is nothing to show
+        if (!BackupHelper.canUseDirectory()) {
+            requirePreference(PREF_BACKUP_DIRECTORY).setVisible(false);
+            requirePreference(Settings.PREF_AUTO_BACKUP).setVisible(false);
+        }
+
+        requirePreference(PREF_BACKUP_NOW).setOnPreferenceClickListener(preference -> {
             new AlertDialog.Builder(requireActivity())
-                    .setTitle(R.string.backup_export)
-                    .setMessage(R.string.backup_export_message)
-                    .setPositiveButton(R.string.backup_export_confirmation, (d, w) -> writeBackup())
+                    .setTitle(R.string.backup_now)
+                    .setMessage(R.string.backup_message)
+                    .setPositiveButton(R.string.backup_now_confirmation, (d, w) -> backupNow())
                     .setNegativeButton(R.string.back, null)
                     .show();
             return true;
         });
 
-        requirePreference(PREF_BACKUP_IMPORT).setOnPreferenceClickListener(preference -> {
+        requirePreference(PREF_BACKUP_RESTORE).setOnPreferenceClickListener(preference -> {
             new AlertDialog.Builder(requireActivity())
-                    .setTitle(R.string.backup_import)
-                    .setMessage(R.string.backup_import_message)
-                    .setPositiveButton(R.string.backup_import_confirmation, (d, w) -> pickBackup())
+                    .setTitle(R.string.backup_restore)
+                    .setMessage(R.string.backup_restore_message)
+                    .setPositiveButton(R.string.backup_restore_confirmation,
+                            (d, w) -> pickBackupToRestore())
                     .setNegativeButton(R.string.back, null)
                     .show();
             return true;
@@ -342,9 +394,108 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         }
     }
 
-    /** Writes the settings and both lists to a file and hands it to whatever can keep it. */
-    private void writeBackup() {
-        File file = new File(requireContext().getCacheDir(), getBackupFileName());
+    /** Lets the user say where the backup goes, or where it is to be read from. */
+    private void pickBackupDirectory() {
+        startPicker(BackupHelper.getPickDirectoryIntent(), REQUEST_CODE_BACKUP_DIRECTORY);
+    }
+
+    private void pickBackupToRestore() {
+        if (BackupHelper.canUseDirectory()) {
+            startPicker(BackupHelper.getPickDirectoryIntent(), REQUEST_CODE_RESTORE_DIRECTORY);
+            return;
+        }
+
+        // without document trees there is no picking a directory, so a file it is
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*"); // a file manager may not know what a .json file is
+
+        startPicker(intent, REQUEST_CODE_RESTORE_FILE);
+    }
+
+    private void startPicker(Intent intent, int requestCode) {
+        if (!BackupHelper.canUseDirectory() && requestCode != REQUEST_CODE_RESTORE_FILE) {
+            Toast.makeText(requireContext(), R.string.backup_directory_unsupported,
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        try {
+            startActivityForResult(intent, requestCode);
+        } catch (ActivityNotFoundException e) {
+            LOG.warn("startPicker()", e);
+
+            Toast.makeText(requireContext(), R.string.error, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /** Remembers the directory that was picked, and turns the automatic backup on if it waited. */
+    private void keepBackupDirectory(Uri treeUri) {
+        if (!BackupHelper.keepDirectory(requireContext(), treeUri)) {
+            enableAutoBackupAfterPicking = false;
+
+            Toast.makeText(requireContext(), R.string.backup_directory_failed,
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (enableAutoBackupAfterPicking) {
+            enableAutoBackupAfterPicking = false;
+
+            App.getSettings().setAutoBackup(true);
+            this.<SwitchPreferenceCompat>requirePreference(Settings.PREF_AUTO_BACKUP)
+                    .setChecked(true);
+
+            setAutoBackup(true);
+        }
+
+        updateBackupPreferences();
+
+        backupNow(); // so that the directory holds a backup right away
+    }
+
+    private void setAutoBackup(boolean enabled) {
+        BackupScheduler scheduler = BackupScheduler.get(requireContext());
+
+        if (enabled) {
+            scheduler.schedule();
+        } else {
+            scheduler.cancel();
+        }
+    }
+
+    /** Writes the backup now: into the directory, or into a file to hand on where there is none. */
+    private void backupNow() {
+        if (BackupHelper.getDirectory() == null) {
+            shareBackup();
+            return;
+        }
+
+        Context context = requireContext().getApplicationContext();
+
+        @SuppressLint("StaticFieldLeak") // the application context outlives the task
+        AsyncTask<Void, Void, Boolean> task = new AsyncTask<Void, Void, Boolean>() {
+            @Override
+            protected Boolean doInBackground(Void... voids) {
+                return BackupHelper.backup(context);
+            }
+
+            @Override
+            protected void onPostExecute(Boolean done) {
+                Toast.makeText(context, Boolean.TRUE.equals(done)
+                                ? R.string.backup_done : R.string.backup_failed,
+                        Toast.LENGTH_LONG).show();
+
+                if (isAdded()) updateBackupPreferences();
+            }
+        };
+
+        task.execute();
+    }
+
+    /** The way out when no directory was picked: a file, handed to whatever can keep it. */
+    private void shareBackup() {
+        File file = new File(requireContext().getCacheDir(), BackupHelper.FILE_NAME);
 
         try {
             String backup = new BackupService()
@@ -355,7 +506,7 @@ public class RootSettingsFragment extends BaseSettingsFragment {
                 writer.write(backup);
             }
         } catch (IOException | JSONException e) {
-            LOG.warn("writeBackup()", e);
+            LOG.warn("shareBackup()", e);
 
             Toast.makeText(requireContext(), R.string.error, Toast.LENGTH_SHORT).show();
             return;
@@ -364,48 +515,54 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         FileUtils.shareFile(requireActivity(), file);
     }
 
-    private static String getBackupFileName() {
-        return "YetAnotherCallBlocker_backup_"
-                + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.ROOT).format(new Date())
-                + ".json";
+    /**
+     * Asks whether the settings in the backup are wanted, or only the two lists, and restores
+     * what the answer says.
+     */
+    private void askWhatToRestore(Restorer restorer, Uri uri) {
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.backup_restore)
+                .setMessage(R.string.backup_restore_what)
+                .setPositiveButton(R.string.backup_restore_everything,
+                        (d, w) -> handleRestored(restorer.restore(uri, true)))
+                .setNeutralButton(R.string.backup_restore_lists_only,
+                        (d, w) -> handleRestored(restorer.restore(uri, false)))
+                .setNegativeButton(R.string.back, null)
+                .show();
     }
 
-    private void pickBackup() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*"); // a file manager may not know what a .json file is
-
-        try {
-            startActivityForResult(intent, REQUEST_CODE_IMPORT_BACKUP);
-        } catch (ActivityNotFoundException e) {
-            LOG.warn("pickBackup()", e);
-
-            Toast.makeText(requireContext(), R.string.error, Toast.LENGTH_SHORT).show();
-        }
+    /** Reads the backup out of a directory, or out of the one file that was picked. */
+    private interface Restorer {
+        BackupService.Result restore(Uri uri, boolean withSettings);
     }
 
-    /** Puts back what is in the file, and says what came out of it. */
-    private void readBackup(Uri uri) {
-        BackupService.Result result = null;
+    private BackupService.Result restoreFromDirectory(Uri treeUri, boolean withSettings) {
+        return BackupHelper.restore(requireContext(), treeUri, withSettings);
+    }
 
+    private BackupService.Result restoreFromFile(Uri uri, boolean withSettings) {
         try (InputStream inputStream = requireContext().getContentResolver()
                 .openInputStream(uri)) {
-            if (inputStream != null) {
-                result = new BackupService().read(inputStream, App.getSettings(),
-                        YacbHolder.getBlacklistDao(), YacbHolder.getBlacklistService(),
-                        YacbHolder.getWhitelistService());
-            }
-        } catch (IOException e) {
-            LOG.warn("readBackup()", e);
-        }
+            if (inputStream == null) return null;
 
+            return new BackupService().read(inputStream, App.getSettings(),
+                    YacbHolder.getBlacklistDao(), YacbHolder.getBlacklistService(),
+                    YacbHolder.getWhitelistService(), withSettings);
+        } catch (IOException e) {
+            LOG.warn("restoreFromFile()", e);
+            return null;
+        }
+    }
+
+    /** Says what came out of the backup, and puts what was read into effect. */
+    private void handleRestored(BackupService.Result result) {
         if (result == null || !result.ok) {
-            Toast.makeText(requireContext(), R.string.backup_import_failed,
+            Toast.makeText(requireContext(), R.string.backup_restore_failed,
                     Toast.LENGTH_LONG).show();
             return;
         }
 
-        Toast.makeText(requireContext(), getString(R.string.backup_import_result,
+        Toast.makeText(requireContext(), getString(R.string.backup_restore_result,
                 result.settings, result.blacklistItems, result.whitelistItems),
                 Toast.LENGTH_LONG).show();
 
@@ -413,6 +570,21 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
         // the screen shows the values that were just replaced
         requireActivity().recreate();
+    }
+
+    /** Says where the backup goes and when it was last written. */
+    private void updateBackupPreferences() {
+        Context context = requireContext();
+
+        String directory = BackupHelper.getDirectoryName(context);
+        requirePreference(PREF_BACKUP_DIRECTORY).setSummary(!TextUtils.isEmpty(directory)
+                ? directory : getString(R.string.backup_directory_none));
+
+        long lastBackup = App.getSettings().getLastBackupTime();
+        requirePreference(PREF_BACKUP_NOW).setSummary(lastBackup != 0
+                ? getString(R.string.backup_last, DateUtils.getRelativeTimeSpanString(lastBackup,
+                        System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS))
+                : getString(R.string.backup_now_summary));
     }
 
     /**

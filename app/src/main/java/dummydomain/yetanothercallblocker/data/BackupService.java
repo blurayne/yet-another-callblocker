@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.db.BlacklistDao;
@@ -116,10 +117,35 @@ public class BackupService {
         return backup.toString(2);
     }
 
+    /**
+     * Whether two backups hold the same thing - the time they were written aside.
+     *
+     * <p>The automatic backup runs on a schedule and would otherwise touch the file every
+     * time, which is a change to whatever syncs the directory.
+     */
+    public boolean sameContent(String one, String other) {
+        if (TextUtils.isEmpty(one) || TextUtils.isEmpty(other)) return false;
+
+        try {
+            JSONObject a = new JSONObject(one);
+            JSONObject b = new JSONObject(other);
+
+            for (String key : new String[]{KEY_FORMAT, KEY_VERSION, KEY_SETTINGS,
+                    KEY_BLACKLIST, KEY_WHITELIST}) {
+                if (!String.valueOf(a.opt(key)).equals(String.valueOf(b.opt(key)))) return false;
+            }
+        } catch (JSONException e) {
+            return false;
+        }
+
+        return true;
+    }
+
     private JSONObject writeSettings(Settings settings) throws JSONException {
         JSONObject json = new JSONObject();
 
-        for (Map.Entry<String, ?> entry : settings.getAll().entrySet()) {
+        // in the order of their names, so that a file only changes when its content does
+        for (Map.Entry<String, ?> entry : new TreeMap<String, Object>(settings.getAll()).entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
 
@@ -201,10 +227,12 @@ public class BackupService {
      * Reads a backup and puts what is in it back: the settings replace the ones on this phone,
      * the list entries are added to the lists, and an entry that is already there is left alone.
      *
+     * @param withSettings whether the settings are put back as well, or only the two lists
      * @return what was read, or a result that is not ok when the file isn't a backup
      */
     public Result read(InputStream inputStream, Settings settings, BlacklistDao blacklistDao,
-                       BlacklistService blacklistService, WhitelistService whitelistService) {
+                       BlacklistService blacklistService, WhitelistService whitelistService,
+                       boolean withSettings) {
         Result result = new Result();
 
         JSONObject backup;
@@ -226,7 +254,8 @@ public class BackupService {
             return result;
         }
 
-        result.settings = readSettings(backup.optJSONObject(KEY_SETTINGS), settings);
+        result.settings = withSettings
+                ? readSettings(backup.optJSONObject(KEY_SETTINGS), settings) : 0;
         result.blacklistItems = readBlacklist(backup.optJSONArray(KEY_BLACKLIST),
                 blacklistDao, blacklistService);
         result.whitelistItems = readWhitelist(backup.optJSONArray(KEY_WHITELIST),

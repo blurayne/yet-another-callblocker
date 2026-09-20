@@ -33,6 +33,9 @@ public class Settings extends GenericSettings {
     public static final String PREF_WHITELIST = "whitelist";
     public static final String PREF_CALL_DECISIONS = "callDecisions";
     public static final String PREF_BLOCKING_PAUSED_UNTIL = "blockingPausedUntil";
+    public static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
+    public static final String PREF_AUTO_BACKUP = "autoBackup";
+    public static final String PREF_LAST_BACKUP_TIME = "lastBackupTime";
     public static final String PREF_UI_MODE = "uiMode";
     public static final String PREF_CALL_LOG_GROUPING = "callLogGrouping";
     public static final String PREF_USE_MONITORING_SERVICE = "useMonitoringService";
@@ -352,6 +355,32 @@ public class Settings extends GenericSettings {
 
     public void setBlacklistIsNotEmpty(boolean flag) {
         setBoolean(PREF_BLACKLIST_IS_NOT_EMPTY, flag);
+    }
+
+    /** Where the backup is kept: a directory the user picked, as a document tree. */
+    public String getBackupDirectory() {
+        return getString(PREF_BACKUP_DIRECTORY);
+    }
+
+    public void setBackupDirectory(String uri) {
+        setString(PREF_BACKUP_DIRECTORY, uri);
+    }
+
+    /** Whether the app writes the backup by itself. Off until the user says otherwise. */
+    public boolean getAutoBackup() {
+        return getBoolean(PREF_AUTO_BACKUP, false);
+    }
+
+    public void setAutoBackup(boolean enabled) {
+        setBoolean(PREF_AUTO_BACKUP, enabled);
+    }
+
+    public long getLastBackupTime() {
+        return getLong(PREF_LAST_BACKUP_TIME, 0);
+    }
+
+    public void setLastBackupTime(long time) {
+        setLong(PREF_LAST_BACKUP_TIME, time);
     }
 
     /** The numbers that are never blocked, one pattern per line. */

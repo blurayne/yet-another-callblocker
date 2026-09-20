@@ -142,18 +142,28 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
-    <!-- the settings and both lists in one file -->
+    <!-- the settings and both lists in one file, in a directory the user picks -->
     <PreferenceCategory app:title="@string/settings_category_backup">
         <Preference
-            app:key="backupExport"
+            app:key="backupDirectory"
             app:persistent="false"
-            app:summary="@string/backup_export_summary"
-            app:title="@string/backup_export" />
+            app:summary="@string/backup_directory_none"
+            app:title="@string/backup_directory" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="autoBackup"
+            app:summary="@string/auto_backup_summary"
+            app:title="@string/auto_backup" />
         <Preference
-            app:key="backupImport"
+            app:key="backupNow"
             app:persistent="false"
-            app:summary="@string/backup_import_summary"
-            app:title="@string/backup_import" />
+            app:summary="@string/backup_now_summary"
+            app:title="@string/backup_now" />
+        <Preference
+            app:key="backupRestore"
+            app:persistent="false"
+            app:summary="@string/backup_restore_summary"
+            app:title="@string/backup_restore" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/settings_screen_advanced">

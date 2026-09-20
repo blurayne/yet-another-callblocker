@@ -41,6 +41,10 @@ public class ProviderService {
             = "https://www.cleverdialer.de/telefonnummer/" + Provider.PLACEHOLDER_NATIONAL;
 
     private static final String DASOERTLICHE_URL
+            = "https://mobil.dasoertliche.de/Themen?was=" + Provider.PLACEHOLDER_NATIONAL + "&wo=";
+
+    /** An address that was handed out before and turned out to be the wrong one. */
+    private static final String DASOERTLICHE_OLD_URL
             = "https://www.dasoertliche.de/?form_name=search_inv&ph="
             + Provider.PLACEHOLDER_NATIONAL;
 
@@ -50,28 +54,35 @@ public class ProviderService {
      * <p>A version is what keeps a later one from bringing back what the user has thrown
      * away: everything up to the version that was last put in is left alone, and only what
      * came after it is added.
+     *
+     * <p>An address the app got wrong is the one thing it corrects in a row that is already
+     * there - and only while that row still holds the address it was given, never one that
+     * was typed over it.
      */
     private static final Defaults[] DEFAULTS = {
             new Defaults(Provider.ID_PHONE_BLOCK, null, 1),
             new Defaults(Provider.ID_TELLOWS, TELLOWS_URL, 1),
             new Defaults(Provider.ID_WEB_SEARCH, WEB_SEARCH_URL, 1),
             new Defaults(Provider.ID_CLEVER_DIALER, CLEVER_DIALER_URL, 2),
-            new Defaults(Provider.ID_DASOERTLICHE, DASOERTLICHE_URL, 2),
+            new Defaults(Provider.ID_DASOERTLICHE, DASOERTLICHE_URL, 2, DASOERTLICHE_OLD_URL),
     };
 
     /** The highest version in {@link #DEFAULTS}. */
-    private static final int SEED_VERSION = 2;
+    private static final int SEED_VERSION = 3;
 
     private static class Defaults {
 
         final String id;
         final String url;
         final int version;
+        /** Addresses this one has replaced, which are put right where they are still stored. */
+        final String[] outdatedUrls;
 
-        Defaults(String id, String url, int version) {
+        Defaults(String id, String url, int version, String... outdatedUrls) {
             this.id = id;
             this.url = url;
             this.version = version;
+            this.outdatedUrls = outdatedUrls;
         }
 
     }
@@ -267,31 +278,47 @@ public class ProviderService {
         // the version that only knew whether it had happened at all offered the first three
         if (seeded == 0 && settings.getProvidersSeeded()) seeded = 1;
 
-        boolean added = false;
+        boolean changed = false;
 
         for (Defaults defaults : DEFAULTS) {
-            if (defaults.version <= seeded) continue; // offered once already
-
-            boolean present = false;
+            Provider present = null;
             for (Provider provider : providers) {
                 if (provider.getId().equals(defaults.id)) {
-                    present = true;
+                    present = provider;
                     break;
                 }
             }
 
-            if (present) continue;
+            if (present == null) {
+                if (defaults.version <= seeded) continue; // offered once already
 
-            providers.add(builtIn(defaults.id, defaults.url));
-            added = true;
+                providers.add(builtIn(defaults.id, defaults.url));
+                changed = true;
 
-            LOG.info("seed() added {}", defaults.id);
+                LOG.info("seed() added {}", defaults.id);
+            } else if (isOutdated(defaults, present.getUrl())) {
+                present.setUrl(defaults.url);
+                changed = true;
+
+                LOG.info("seed() put the address of {} right", defaults.id);
+            }
         }
 
-        if (added) save(providers);
+        if (changed) save(providers);
 
         settings.setProvidersSeeded(true);
         settings.setProvidersSeededVersion(SEED_VERSION);
+    }
+
+    /** Whether the row still holds an address the app handed out and has since corrected. */
+    private static boolean isOutdated(Defaults defaults, String url) {
+        if (TextUtils.isEmpty(url)) return false;
+
+        for (String outdated : defaults.outdatedUrls) {
+            if (url.equals(outdated)) return true;
+        }
+
+        return false;
     }
 
     private static Provider builtIn(String id, String url) {

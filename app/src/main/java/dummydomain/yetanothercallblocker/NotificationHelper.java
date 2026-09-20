@@ -33,6 +33,9 @@ public class NotificationHelper {
     public static final int NOTIFICATION_ID_TASKS = 4;
     private static final int NOTIFICATION_ID_PHONE_BLOCK_TOKEN = 5;
 
+    /** Stays behind when the building is over, because nothing else would say that it is. */
+    private static final int NOTIFICATION_ID_DB_BUILD_FINISHED = 6;
+
     private static final String CHANNEL_GROUP_ID_INCOMING_CALLS = "incoming_calls";
     private static final String CHANNEL_GROUP_ID_BLOCKED_CALLS = "blocked_calls";
     private static final String CHANNEL_GROUP_ID_SERVICES = "services";
@@ -146,6 +149,18 @@ public class NotificationHelper {
     }
 
     public static Notification createServiceNotification(Context context, String title) {
+        return createServiceNotification(context, title, -1, -1);
+    }
+
+    /**
+     * The notification a background task runs under.
+     *
+     * <p>With a total it carries a bar: building the database walks tens of thousands of
+     * files and takes minutes, and a bar that fills is the difference between waiting and
+     * wondering whether anything is happening at all.
+     */
+    public static Notification createServiceNotification(Context context, String title,
+                                                         int current, int total) {
         initNotificationChannels(context);
 
         if (title == null) title = context.getString(R.string.notification_background_operation);
@@ -153,10 +168,40 @@ public class NotificationHelper {
         PendingIntent contentIntent = pendingActivity(context,
                 new Intent(context, MainActivity.class));
 
-        return new NotificationCompat.Builder(context, CHANNEL_ID_TASKS)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context,
+                CHANNEL_ID_TASKS)
                 .setSmallIcon(R.drawable.ic_file_download_24dp)
                 .setContentIntent(contentIntent)
-                .setContentTitle(title).build();
+                .setOngoing(true)
+                .setContentTitle(title);
+
+        if (total > 0) builder.setProgress(total, Math.max(0, current), false);
+
+        return builder.build();
+    }
+
+    /**
+     * Says that the database is built, and stays until it is looked at.
+     *
+     * <p>The one the service runs under disappears with the service, so the end of a job the
+     * user started by hand would otherwise be the moment a notification silently vanishes.
+     */
+    public static void showDbBuildFinished(Context context, String title, String text) {
+        initNotificationChannels(context);
+
+        PendingIntent contentIntent = pendingActivity(context,
+                new Intent(context, SettingsActivity.class));
+
+        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_TASKS)
+                .setSmallIcon(R.drawable.ic_check_24dp)
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .build();
+
+        notify(context, NOTIFICATION_ID_DB_BUILD_FINISHED, notification);
     }
 
     private static NotificationWithInfo createIncomingCallNotification(

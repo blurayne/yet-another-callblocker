@@ -26,6 +26,20 @@ public class NumberSource {
         CARDDAV
     }
 
+    /**
+     * What a database source carries.
+     *
+     * <p>The whole database is one thing and changes to it are another: the first is fetched
+     * once and is worth fetching again only now and then, the second is only ever the
+     * difference and is asked for as often as the user wants to hear about new numbers.
+     */
+    public enum Role {
+        /** The database itself, an archive of everything the source knows. */
+        BASE,
+        /** Numbers to add to what is already there, and numbers to take out again. */
+        UPDATES
+    }
+
     /** How the app says who it is. */
     public enum Auth {
         NONE, BEARER, BASIC
@@ -54,8 +68,12 @@ public class NumberSource {
     private static final String KEY_USERNAME = "username";
     private static final String KEY_UPDATES = "updates";
     private static final String KEY_ENABLED = "enabled";
+    private static final String KEY_ROLE = "role";
     private static final String KEY_LAST_UPDATE = "lastUpdate";
+    private static final String KEY_LAST_CHECK = "lastCheck";
     private static final String KEY_LAST_RESULT = "lastResult";
+    private static final String KEY_VERSION = "version";
+    private static final String KEY_ENTRIES = "entries";
 
     /** Stays the same for the life of the source: its files and its password hang off it. */
     private final String id;
@@ -66,10 +84,18 @@ public class NumberSource {
     private Auth auth = Auth.NONE;
     private String username;
     private Updates updates = Updates.DAILY;
+    private Role role = Role.BASE;
     private boolean enabled = true;
 
     private long lastUpdate;
+    private long lastCheck;
     private String lastResult;
+
+    /** What the source said its data was, the last time it handed any over. */
+    private int version;
+
+    /** How many numbers of the built database came from here. */
+    private long entries;
 
     public NumberSource() {
         this(UUID.randomUUID().toString());
@@ -131,6 +157,15 @@ public class NumberSource {
         this.updates = updates != null ? updates : Updates.MANUAL;
     }
 
+    /** Whether this source carries the database itself or changes to it. */
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role != null ? role : Role.BASE;
+    }
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -156,9 +191,44 @@ public class NumberSource {
         this.lastResult = lastResult;
     }
 
-    /** Whether the source is due to be asked again. */
+    /** When the source was last asked, whether or not it had anything to say. */
+    public long getLastCheck() {
+        return lastCheck;
+    }
+
+    public void setLastCheck(long lastCheck) {
+        this.lastCheck = lastCheck;
+    }
+
+    /** The version of what it last handed over, as the data itself says. */
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    /** How much of the built database came from here. */
+    public long getEntries() {
+        return entries;
+    }
+
+    public void setEntries(long entries) {
+        this.entries = entries;
+    }
+
+    /**
+     * Whether the source is due to be asked again.
+     *
+     * <p>A database that carries the whole thing is fetched once and then only on the
+     * schedule the user chose - tens of megabytes are not something to ask for daily by
+     * accident. Changes to it are asked for whenever the schedule says.
+     */
     public boolean isDue(long now) {
         if (!enabled) return false;
+
+        if (role == Role.BASE && lastUpdate <= 0) return true; // there is nothing yet
 
         long interval = updates.getInterval();
         if (interval == 0) return false; // only when the user says so
@@ -185,9 +255,13 @@ public class NumberSource {
         json.put(KEY_AUTH, auth.name());
         json.put(KEY_USERNAME, username);
         json.put(KEY_UPDATES, updates.name());
+        json.put(KEY_ROLE, role.name());
         json.put(KEY_ENABLED, enabled);
         json.put(KEY_LAST_UPDATE, lastUpdate);
+        json.put(KEY_LAST_CHECK, lastCheck);
         json.put(KEY_LAST_RESULT, lastResult);
+        json.put(KEY_VERSION, version);
+        json.put(KEY_ENTRIES, entries);
 
         return json;
     }
@@ -201,9 +275,13 @@ public class NumberSource {
         source.auth = parse(Auth.class, json.optString(KEY_AUTH), Auth.NONE);
         source.username = json.optString(KEY_USERNAME, null);
         source.updates = parse(Updates.class, json.optString(KEY_UPDATES), Updates.DAILY);
+        source.role = parse(Role.class, json.optString(KEY_ROLE), Role.BASE);
         source.enabled = json.optBoolean(KEY_ENABLED, true);
         source.lastUpdate = json.optLong(KEY_LAST_UPDATE);
+        source.lastCheck = json.optLong(KEY_LAST_CHECK);
         source.lastResult = json.optString(KEY_LAST_RESULT, null);
+        source.version = json.optInt(KEY_VERSION);
+        source.entries = json.optLong(KEY_ENTRIES);
 
         return source;
     }

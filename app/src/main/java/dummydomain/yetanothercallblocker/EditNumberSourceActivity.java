@@ -21,6 +21,7 @@ import androidx.appcompat.widget.SwitchCompat;
 
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -57,7 +58,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
     private NumberSource source;
 
     private TextInputLayout nameTextField, urlTextField, usernameTextField, secretTextField;
-    private Spinner typeSpinner, authSpinner, updatesSpinner;
+    private Spinner typeSpinner, roleSpinner, authSpinner, updatesSpinner;
     private SwitchCompat enabledSwitch;
 
     @Override
@@ -73,12 +74,14 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         usernameTextField = findViewById(R.id.usernameTextField);
         secretTextField = findViewById(R.id.secretTextField);
         typeSpinner = findViewById(R.id.typeSpinner);
+        roleSpinner = findViewById(R.id.roleSpinner);
         authSpinner = findViewById(R.id.authSpinner);
         updatesSpinner = findViewById(R.id.updatesSpinner);
         enabledSwitch = findViewById(R.id.enabledSwitch);
 
         setUpSpinner(typeSpinner, NumberSource.Type.values(),
                 type -> getString(NumberSourcesActivity.getTypeName(type)));
+        setUpSpinner(roleSpinner, NumberSource.Role.values(), this::getRoleName);
         setUpSpinner(authSpinner, NumberSource.Auth.values(), this::getAuthName);
         setUpSpinner(updatesSpinner, NumberSource.Updates.values(),
                 updates -> getString(NumberSourcesActivity.getUpdatesName(updates)));
@@ -107,6 +110,16 @@ public class EditNumberSourceActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) fill();
 
+        typeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateRoleFields();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
         authSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -118,6 +131,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         });
 
         updateAuthFields();
+        updateRoleFields();
         updateStatus();
     }
 
@@ -188,6 +202,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         target.setAuth(selected(authSpinner, NumberSource.Auth.values()));
         target.setUsername(getString(usernameTextField));
         target.setUpdates(selected(updatesSpinner, NumberSource.Updates.values()));
+        target.setRole(selected(roleSpinner, NumberSource.Role.values()));
         target.setEnabled(enabledSwitch.isChecked());
 
         return true;
@@ -215,10 +230,25 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         }
 
         select(typeSpinner, NumberSource.Type.values(), source.getType());
+        select(roleSpinner, NumberSource.Role.values(), source.getRole());
         select(authSpinner, NumberSource.Auth.values(), source.getAuth());
         select(updatesSpinner, NumberSource.Updates.values(), source.getUpdates());
 
         enabledSwitch.setChecked(source.isEnabled());
+    }
+
+    /** Whether a source carries the database or changes to it is only a database's question. */
+    private void updateRoleFields() {
+        boolean database = selected(typeSpinner, NumberSource.Type.values())
+                == NumberSource.Type.DATABASE;
+
+        findViewById(R.id.roleLabel).setVisibility(database ? View.VISIBLE : View.GONE);
+        roleSpinner.setVisibility(database ? View.VISIBLE : View.GONE);
+    }
+
+    private String getRoleName(NumberSource.Role role) {
+        return getString(role == NumberSource.Role.UPDATES
+                ? R.string.source_role_updates : R.string.source_role_base);
     }
 
     /** Only the fields the chosen way of logging in needs are shown. */
@@ -233,18 +263,43 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         findViewById(R.id.secretNotice).setVisibility(needsSecret ? View.VISIBLE : View.GONE);
     }
 
+    /**
+     * What is known about this source: its version, its share of the database, and when it
+     * was last asked. It used to be said about the database as a whole, which is no longer a
+     * thing that exists - every number in it came from one of these.
+     */
     private void updateStatus() {
         TextView status = findViewById(R.id.status);
 
-        if (!TextUtils.isEmpty(source.getLastResult())) {
-            status.setText(source.getLastResult());
-        } else if (source.getLastUpdate() > 0) {
-            status.setText(getString(R.string.source_last_update,
-                    DateUtils.getRelativeTimeSpanString(source.getLastUpdate(),
-                            System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)));
-        } else {
-            status.setText(R.string.source_never_fetched);
+        List<String> lines = new ArrayList<>(4);
+
+        if (source.getVersion() > 0) {
+            lines.add(getString(R.string.source_version, source.getVersion()));
         }
+
+        if (source.getEntries() > 0) {
+            lines.add(getString(R.string.db_filtering_status_numbers,
+                    NumberFormat.getInstance().format(source.getEntries())));
+        }
+
+        if (source.getLastUpdate() > 0) {
+            lines.add(getString(R.string.source_last_update, relative(source.getLastUpdate())));
+        } else {
+            lines.add(getString(R.string.source_never_fetched));
+        }
+
+        if (source.getLastCheck() > 0 && source.getLastCheck() != source.getLastUpdate()) {
+            lines.add(getString(R.string.source_last_check, relative(source.getLastCheck())));
+        }
+
+        if (!TextUtils.isEmpty(source.getLastResult())) lines.add(source.getLastResult());
+
+        status.setText(TextUtils.join("\n", lines));
+    }
+
+    private CharSequence relative(long time) {
+        return DateUtils.getRelativeTimeSpanString(time, System.currentTimeMillis(),
+                DateUtils.MINUTE_IN_MILLIS);
     }
 
     private String getAuthName(NumberSource.Auth auth) {

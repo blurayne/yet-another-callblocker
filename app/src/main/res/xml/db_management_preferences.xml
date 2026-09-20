@@ -61,12 +61,6 @@
             app:summary="@string/db_management_delete_summary"
             app:title="@string/db_management_delete" />
 
-        <Preference
-            app:key="dbTechnical"
-            app:persistent="false"
-            app:summary="@string/db_management_technical_summary"
-            app:title="@string/db_management_technical" />
-
     </PreferenceCategory>
 
 </PreferenceScreen>

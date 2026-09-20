@@ -13,11 +13,14 @@ import androidx.core.content.ContextCompat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.NumberFormat;
+
 import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.NotificationHelper;
 import dummydomain.yetanothercallblocker.PhoneBlockHelper;
 import dummydomain.yetanothercallblocker.R;
 import dummydomain.yetanothercallblocker.data.DbCompileService;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
@@ -109,8 +112,15 @@ public class TaskService extends IntentService {
     }
 
     private void updateNotification(String title) {
+        updateNotification(title, -1, -1);
+    }
+
+    /** The same notification, with a bar when there is something to count. */
+    private void updateNotification(String title, int current, int total) {
         NotificationHelper.notify(getApplicationContext(),
-                NotificationHelper.NOTIFICATION_ID_TASKS, createNotification(title));
+                NotificationHelper.NOTIFICATION_ID_TASKS,
+                NotificationHelper.createServiceNotification(
+                        getApplicationContext(), title, current, total));
     }
 
     /** Builds the database from the sources: the first one, then every layer on top. */
@@ -122,7 +132,8 @@ public class TaskService extends IntentService {
         postStickyEvent(sticky);
         try {
             result = new DbCompileService(this, App.getSettings()).compile((current, total) ->
-                    updateNotification(getString(R.string.compiling_db, current, total)));
+                    updateNotification(getString(R.string.compiling_db, current, total),
+                            current, total));
 
             // what was just fetched is unfiltered, so the filter has to be applied again
             updateNotification(getString(R.string.filtering_db));
@@ -133,8 +144,42 @@ public class TaskService extends IntentService {
             removeStickyEvent(sticky);
         }
 
+        showBuildFinished(result);
+
         postEvent(new MainDbDownloadFinishedEvent(
                 result != null && result.status == DbCompileService.Status.NO_SOURCES));
+    }
+
+    /**
+     * Says how the build went, and leaves it said.
+     *
+     * <p>The notification the service runs under goes away with the service, so the end of
+     * something that takes minutes would otherwise be a notification quietly disappearing.
+     */
+    private void showBuildFinished(DbCompileService.Result result) {
+        String title;
+        String text;
+
+        if (result == null || result.status == DbCompileService.Status.FAILED) {
+            title = getString(R.string.db_build_failed);
+            text = getString(R.string.db_build_failed_text);
+        } else if (result.status == DbCompileService.Status.NO_SOURCES) {
+            title = getString(R.string.db_build_failed);
+            text = getString(R.string.sources_none_enabled);
+        } else if (result.status == DbCompileService.Status.NO_BASE) {
+            title = getString(R.string.db_build_failed);
+            text = getString(R.string.db_build_no_base_text);
+        } else {
+            long numbers = new NumbersCompiler(this).getCount();
+
+            title = getString(R.string.db_build_done);
+            text = numbers >= 0
+                    ? getString(R.string.db_build_done_text,
+                            NumberFormat.getInstance().format(numbers), result.sources)
+                    : getString(R.string.db_build_done_text_plain, result.sources);
+        }
+
+        NotificationHelper.showDbBuildFinished(getApplicationContext(), title, text);
     }
 
     private void updateSecondaryDb() {

@@ -109,7 +109,7 @@
     <string name="provider_token_notice">Kept on this phone; a backup holds it only if you asked for that.</string>
     <string name="provider_enabled">Offer this in the call info</string>
     <string name="provider_lookup">Look up on %s</string>
-    <string name="provider_web_search">Web search</string>
+    <string name="provider_web_search">Google</string>
     <string name="provider_phone_block_address">the page of your PhoneBlock account</string>
     <string name="provider_phone_block_notice">This is the PhoneBlock account: the same token reports numbers and fetches your personal lists. Leave the address empty to use the account\'s own page.</string>
     <string name="provider_delete_message">Remove this provider? It only disappears from the call info; nothing else changes.</string>
@@ -145,6 +145,11 @@
     <string name="source_enabled">Use this source</string>
     <string name="source_off">off</string>
     <string name="source_last_update">last: %s</string>
+    <string name="source_last_check">last checked: %s</string>
+    <string name="source_version">version %d</string>
+    <string name="source_role">What this source carries</string>
+    <string name="source_role_base">The database itself</string>
+    <string name="source_role_updates">Changes to it</string>
     <string name="source_never_fetched">never fetched</string>
     <string name="source_delete">Delete</string>
     <string name="source_delete_message">Remove this source? The numbers it brought are dropped with it; nothing you wrote yourself is touched.</string>
@@ -383,6 +388,12 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_filtering_filter_db_summary">Apply the filter to the database now. It starts from the unfiltered database, fetching it from the sources again if no copy is kept</string>
     <string name="filtering_db">Filtering DB…</string>
     <string name="compiling_db">Building the database (%1$d/%2$d)\u2026</string>
+    <string name="db_build_done">Database built</string>
+    <string name="db_build_done_text">%1$s numbers from %2$d sources</string>
+    <string name="db_build_done_text_plain">Built from %d sources</string>
+    <string name="db_build_failed">The database wasn\'t built</string>
+    <string name="db_build_failed_text">Something went wrong on the way. The sources say what, each in its own row.</string>
+    <string name="db_build_no_base_text">The source that carries the database couldn\'t be fetched.</string>
     <string name="source_result_database">the database</string>
     <string name="source_result_numbers">%d numbers</string>
     <string name="source_result_no_address">no address</string>
@@ -500,7 +511,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_management_status">What is in it</string>
     <string name="db_management_status_empty">Nothing built yet</string>
     <string name="db_management_status_built">built %s</string>
-    <string name="db_management_sources">Where it comes from</string>
+    <string name="db_management_sources">Sources</string>
     <string name="db_management_sources_summary">The database is built from the sources, in the order they are in</string>
     <string name="db_management_category_keeping_it_current">Keeping it current</string>
     <string name="db_management_build">Build it again</string>
@@ -519,8 +530,6 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_management_delete_summary">Throw it away entirely; it can be built from the sources again</string>
     <string name="db_management_delete_message">The database is thrown away, the downloaded files with it. Your lists and settings are untouched, and the sources can build it again.</string>
     <string name="db_management_delete_done">The database was deleted.</string>
-    <string name="db_management_technical">Technical details</string>
-    <string name="db_management_technical_summary">Versions, sizes and times, for when something doesn\'t add up</string>
     <string name="db_management_export_db">Export DB</string>
     <string name="db_management_import_db">Import DB</string>
     <string name="db_management_exporting">Exporting the database\u2026</string>

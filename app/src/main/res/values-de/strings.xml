@@ -78,6 +78,12 @@
     <string name="secondary_db_updating">Datenbank wird aktualisiert …</string>
     <string name="filtering_db">Datenbank wird gefiltert …</string>
     <string name="compiling_db">Datenbank wird gebaut (%1$d/%2$d)\u2026</string>
+    <string name="db_build_done">Datenbank gebaut</string>
+    <string name="db_build_done_text">%1$s Nummern aus %2$d Quellen</string>
+    <string name="db_build_done_text_plain">Aus %d Quellen gebaut</string>
+    <string name="db_build_failed">Die Datenbank wurde nicht gebaut</string>
+    <string name="db_build_failed_text">Unterwegs ist etwas schiefgegangen. Was, steht bei den Quellen, jeweils in ihrer Zeile.</string>
+    <string name="db_build_no_base_text">Die Quelle, welche die Datenbank selbst trägt, war nicht abrufbar.</string>
     <string name="source_result_database">die Datenbank</string>
     <string name="source_result_numbers">%d Nummern</string>
     <string name="source_result_no_address">keine Adresse</string>
@@ -245,7 +251,7 @@
     <string name="provider_token_notice">Bleibt auf diesem Telefon; in einer Sicherung steht er nur, wenn Sie das so eingestellt haben.</string>
     <string name="provider_enabled">In der Anrufinfo anbieten</string>
     <string name="provider_lookup">Nachschlagen bei %s</string>
-    <string name="provider_web_search">Websuche</string>
+    <string name="provider_web_search">Google</string>
     <string name="provider_phone_block_address">die Seite Ihres PhoneBlock-Kontos</string>
     <string name="provider_phone_block_notice">Das ist das PhoneBlock-Konto: Mit demselben Token werden Nummern gemeldet und Ihre persönlichen Listen geholt. Lassen Sie die Adresse leer, dann wird die Seite des Kontos verwendet.</string>
     <string name="provider_delete_message">Diesen Anbieter entfernen? Er verschwindet nur aus der Anrufinfo, sonst ändert sich nichts.</string>
@@ -281,6 +287,11 @@
     <string name="source_enabled">Diese Quelle verwenden</string>
     <string name="source_off">aus</string>
     <string name="source_last_update">zuletzt: %s</string>
+    <string name="source_last_check">zuletzt geprüft: %s</string>
+    <string name="source_version">Version %d</string>
+    <string name="source_role">Was die Quelle liefert</string>
+    <string name="source_role_base">Die Datenbank selbst</string>
+    <string name="source_role_updates">Änderungen daran</string>
     <string name="source_never_fetched">noch nie geholt</string>
     <string name="source_delete">Löschen</string>
     <string name="source_delete_message">Diese Quelle entfernen? Die Nummern, die sie mitgebracht hat, verschwinden mit ihr; selbst Eingetragenes bleibt unberührt.</string>
@@ -527,7 +538,7 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_management_status">Was drinsteht</string>
     <string name="db_management_status_empty">Noch nichts gebaut</string>
     <string name="db_management_status_built">gebaut %s</string>
-    <string name="db_management_sources">Woher sie kommt</string>
+    <string name="db_management_sources">Quellen</string>
     <string name="db_management_sources_summary">Die Datenbank wird aus den Quellen gebaut, in deren Reihenfolge</string>
     <string name="db_management_category_keeping_it_current">Aktuell halten</string>
     <string name="db_management_build">Neu bauen</string>
@@ -546,8 +557,6 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_management_delete_summary">Ganz wegwerfen; aus den Quellen lässt sie sich neu bauen</string>
     <string name="db_management_delete_message">Die Datenbank wird weggeworfen, die heruntergeladenen Dateien mit ihr. Ihre Listen und Einstellungen bleiben unberührt, und die Quellen können sie neu bauen.</string>
     <string name="db_management_delete_done">Die Datenbank wurde gelöscht.</string>
-    <string name="db_management_technical">Technische Angaben</string>
-    <string name="db_management_technical_summary">Versionen, Größen und Zeiten, falls etwas nicht zusammenpasst</string>
     <string name="db_management_export_db">Datenbank exportieren</string>
     <string name="db_management_import_db">Datenbank importieren</string>
     <string name="db_management_exporting">Datenbank wird exportiert …</string>

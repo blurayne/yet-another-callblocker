@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import dummydomain.yetanothercallblocker.data.DbImporterExporter;
@@ -33,9 +32,9 @@ import dummydomain.yetanothercallblocker.data.SiaConstants;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
+import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
-import dummydomain.yetanothercallblocker.sia.model.SiaMetadata;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabase;
 import dummydomain.yetanothercallblocker.utils.FileUtils;
@@ -61,12 +60,9 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_IMPORT = "dbImport";
     private static final String PREF_RESET_UPDATES = "dbResetUpdates";
     private static final String PREF_DELETE = "dbDelete";
-    private static final String PREF_TECHNICAL = "dbTechnical";
 
     // 128-133 are taken by the permission helpers and the backup
     private static final int REQUEST_CODE_IMPORT_DB = 140;
-
-    private AsyncTask<Void, Void, String> technicalTask;
 
     @Override
     protected String getScreenKey() {
@@ -126,11 +122,6 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
                     this::deleteDb);
             return true;
         });
-
-        requirePreference(PREF_TECHNICAL).setOnPreferenceClickListener(preference -> {
-            showTechnical();
-            return true;
-        });
     }
 
     @Override
@@ -145,8 +136,6 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     @Override
     public void onStop() {
         EventUtils.unregister(this);
-
-        cancelTechnicalTask();
 
         super.onStop();
     }
@@ -192,32 +181,48 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
 
         requirePreference(PREF_STATUS).setSummary(TextUtils.join(" · ", parts));
 
-        updateSources(compiler);
+        updateSources();
     }
 
-    /** How much of the database each source is answerable for. */
-    private void updateSources(NumbersCompiler compiler) {
-        List<NumbersCompiler.SourceCount> counts = compiler.getSourceCounts();
+    /**
+     * Who contributed what, and when they last did.
+     *
+     * <p>Read from the sources themselves rather than from the table: each of them keeps what
+     * the last build found out about it, so this is the same answer without a query.
+     */
+    private void updateSources() {
+        SourceService sourceService = YacbHolder.getSourceService();
 
-        if (counts.isEmpty()) {
-            requirePreference(PREF_SOURCES).setSummary(R.string.db_management_sources_summary);
-            return;
+        List<NumberSource> sources = sourceService != null
+                ? sourceService.getSources() : new ArrayList<>();
+
+        List<String> lines = new ArrayList<>(sources.size());
+
+        for (NumberSource source : sources) {
+            if (!source.isEnabled()) continue;
+
+            StringBuilder line = new StringBuilder(!TextUtils.isEmpty(source.getName())
+                    ? source.getName()
+                    : getString(NumberSourcesActivity.getTypeName(source.getType())));
+
+            if (source.getEntries() > 0) {
+                line.append(": ").append(NumberFormat.getInstance().format(source.getEntries()));
+            }
+
+            if (source.getLastUpdate() > 0) {
+                line.append(" \u00b7 ").append(DateUtils.getRelativeTimeSpanString(
+                        source.getLastUpdate(), System.currentTimeMillis(),
+                        DateUtils.MINUTE_IN_MILLIS));
+            } else {
+                line.append(" \u00b7 ").append(getString(R.string.source_never_fetched));
+            }
+
+            lines.add(line.toString());
         }
 
-        List<String> parts = new ArrayList<>(counts.size());
-
-        for (NumbersCompiler.SourceCount source : counts) {
-            NumberSource.Type[] types = NumberSource.Type.values();
-            NumberSource.Type type = source.type >= 0 && source.type < types.length
-                    ? types[source.type] : types[0];
-
-            String name = !TextUtils.isEmpty(source.name)
-                    ? source.name : getString(NumberSourcesActivity.getTypeName(type));
-
-            parts.add(name + ": " + NumberFormat.getInstance().format(source.count));
-        }
-
-        requirePreference(PREF_SOURCES).setSummary(TextUtils.join("\n", parts));
+        requirePreference(PREF_SOURCES).setSummary(lines.isEmpty()
+                ? getString(R.string.db_management_sources_summary)
+                : TextUtils.join("\n", lines));
     }
 
     private void confirm(int title, int message, Runnable action) {
@@ -385,80 +390,6 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         YacbHolder.getSiaMetadata().reload();
 
         return true;
-    }
-
-    /** The numbers behind the numbers, for when something doesn't add up. */
-    private void showTechnical() {
-        cancelTechnicalTask();
-
-        @SuppressLint("StaticFieldLeak")
-        AsyncTask<Void, Void, String> task = technicalTask = new AsyncTask<Void, Void, String>() {
-            @Override
-            protected String doInBackground(Void... voids) {
-                return collectTechnical();
-            }
-
-            @Override
-            protected void onPostExecute(String info) {
-                technicalTask = null;
-
-                if (!isAdded()) return;
-
-                new AlertDialog.Builder(requireActivity())
-                        .setTitle(R.string.db_management_technical)
-                        .setMessage(info)
-                        .setPositiveButton(android.R.string.ok, null)
-                        .show();
-            }
-        };
-
-        task.execute();
-    }
-
-    private String collectTechnical() {
-        StringBuilder sb = new StringBuilder();
-
-        SiaMetadata siaMetadata = YacbHolder.getSiaMetadata();
-        CommunityDatabase communityDatabase = YacbHolder.getCommunityDatabase();
-        FeaturedDatabase featuredDatabase = YacbHolder.getFeaturedDatabase();
-        NumbersCompiler compiler = new NumbersCompiler(requireContext());
-
-        sb.append("Numbers table: ").append(compiler.getCount()).append(" rows, ")
-                .append(compiler.getSize()).append(" bytes");
-        if (compiler.hasShadowCopy()) {
-            sb.append(" (+ ").append(compiler.getShadowSize()).append(" bytes unfiltered)");
-        }
-        sb.append('\n');
-        sb.append("Filtered: ").append(compiler.isFiltered()).append('\n');
-        sb.append("Built: ").append(dateOrNever(compiler.getCompiledTime())).append("\n\n");
-
-        sb.append("Community DB operational: ").append(communityDatabase.isOperational())
-                .append('\n');
-        sb.append("Base version: ").append(communityDatabase.getBaseDbVersion())
-                .append(" (SIA: ").append(siaMetadata.getSiaAppVersion()).append(")\n");
-        sb.append("Effective version: ").append(communityDatabase.getEffectiveDbVersion())
-                .append('\n');
-        sb.append("Last update: ").append(dateOrNever(App.getSettings().getLastUpdateTime()))
-                .append('\n');
-        sb.append("Last update check: ")
-                .append(dateOrNever(App.getSettings().getLastUpdateCheckTime())).append("\n\n");
-
-        sb.append("Featured DB operational: ").append(featuredDatabase.isOperational())
-                .append('\n');
-        sb.append("Featured DB version: ").append(featuredDatabase.getBaseDbVersion());
-
-        return sb.toString();
-    }
-
-    private static String dateOrNever(long time) {
-        return time > 0 ? new Date(time).toString() : "never";
-    }
-
-    private void cancelTechnicalTask() {
-        if (technicalTask != null) {
-            technicalTask.cancel(true);
-            technicalTask = null;
-        }
     }
 
     private File getDbDir(String pathPrefix) {

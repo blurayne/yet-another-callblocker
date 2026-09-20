@@ -60,12 +60,14 @@ public class NumbersCompiler {
     /** One source, and how much of the table came from it. */
     public static class SourceCount {
 
+        public final String uuid;
         public final String name;
         public final int type;
         public final int layer;
         public final long count;
 
-        SourceCount(String name, int type, int layer, long count) {
+        SourceCount(String uuid, String name, int type, int layer, long count) {
+            this.uuid = uuid;
             this.name = name;
             this.type = type;
             this.layer = layer;
@@ -368,10 +370,10 @@ public class NumbersCompiler {
         NumbersDb helper = new NumbersDb(context);
 
         try (Cursor cursor = helper.getReadableDatabase().rawQuery(
-                "SELECT name, type, layer, count FROM sources ORDER BY layer", null)) {
+                "SELECT uuid, name, type, layer, count FROM sources ORDER BY layer", null)) {
             while (cursor.moveToNext()) {
-                counts.add(new SourceCount(cursor.getString(0), cursor.getInt(1),
-                        cursor.getInt(2), cursor.getLong(3)));
+                counts.add(new SourceCount(cursor.getString(0), cursor.getString(1),
+                        cursor.getInt(2), cursor.getInt(3), cursor.getLong(4)));
             }
         } catch (Exception e) {
             LOG.warn("getSourceCounts()", e);

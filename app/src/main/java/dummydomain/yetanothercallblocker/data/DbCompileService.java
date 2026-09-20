@@ -24,9 +24,9 @@ import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceHttp;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
+import dummydomain.yetanothercallblocker.data.numbers.SliceReader;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
-import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseDataSlice;
 import dummydomain.yetanothercallblocker.sia.model.database.NumberFilter;
 import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
 import dummydomain.yetanothercallblocker.utils.DeferredInit;
@@ -132,16 +132,46 @@ public class DbCompileService {
         int total = sources.size();
         int failed = 0;
 
+        /*
+         * The source that carries the database itself: the first one marked as such, or, when
+         * none is, the first of them - which is what every list looked like before there was
+         * a mark to set.
+         */
         NumberSource base = sources.get(0);
+        for (NumberSource source : sources) {
+            if (source.getRole() == NumberSource.Role.BASE) {
+                base = source;
+                break;
+            }
+        }
 
         if (listener != null) listener.onProgress(1, total);
 
-        if (!downloadBase(base)) {
-            LOG.warn("compile() the database itself couldn't be fetched");
-            return new Result(Status.NO_BASE, 0, 1);
+        /*
+         * Tens of megabytes are not fetched again because someone pressed a button: the
+         * database is downloaded when there is none, and after that only when its own
+         * schedule says so. What changes in between is what the other sources carry.
+         */
+        if (needsDownload(base)) {
+            if (!downloadBase(base)) {
+                LOG.warn("compile() the database itself couldn't be fetched");
+                return new Result(Status.NO_BASE, 0, 1);
+            }
+        } else {
+            LOG.debug("compile() the database is there and not due");
+
+            base.setLastCheck(System.currentTimeMillis());
+            if (sourceService != null) sourceService.save(base);
         }
 
         reloadDatabases(); // the layers go on top of what was just downloaded
+
+        // the base goes into the table first, whatever place it has in the list
+        List<NumberSource> ordered = new ArrayList<>(sources.size());
+        ordered.add(base);
+        for (NumberSource source : sources) {
+            if (!source.getId().equals(base.getId())) ordered.add(source);
+        }
 
         /*
          * A compile is the whole database, not an addition to the last one: what an earlier
@@ -151,17 +181,17 @@ public class DbCompileService {
          */
         YacbHolder.getCommunityDatabase().resetSecondaryDatabase();
 
-        for (int i = 1; i < total; i++) {
+        for (int i = 1; i < ordered.size(); i++) {
             if (listener != null) listener.onProgress(i + 1, total);
 
-            if (!downloadLayer(sources.get(i))) failed++;
+            if (!downloadLayer(ordered.get(i))) failed++;
         }
 
-        dropLayersOfGoneSources(sources);
+        dropLayersOfGoneSources(ordered);
 
-        if (!applyLayers(sources)) return new Result(Status.FAILED, total - failed, failed);
+        if (!applyLayers(ordered)) return new Result(Status.FAILED, total - failed, failed);
 
-        buildNumbersTable(sources, listener);
+        buildNumbersTable(ordered, listener);
 
         LOG.info("compile() built the database from {} of {} sources", total - failed, total);
 
@@ -188,6 +218,14 @@ public class DbCompileService {
                 : new ArrayList<>();
     }
 
+    /** Whether the database has to be fetched: there is none, or its schedule says so. */
+    private boolean needsDownload(NumberSource source) {
+        File info = new File(new File(YacbHolder.getStorage().getDataDirPath(),
+                SiaConstants.SIA_PATH_PREFIX), "data_slice_info.dat");
+
+        return !info.exists() || source.isDue(System.currentTimeMillis());
+    }
+
     /** Downloads the database itself, which is what the rest is layered onto. */
     private boolean downloadBase(NumberSource source) {
         LOG.debug("downloadBase() {}", source.getUrl());
@@ -196,6 +234,8 @@ public class DbCompileService {
             note(source, context.getString(R.string.source_result_no_address));
             return false;
         }
+
+        source.setLastCheck(System.currentTimeMillis());
 
         boolean downloaded = false;
         try {
@@ -224,6 +264,8 @@ public class DbCompileService {
             return false;
         }
 
+        source.setLastCheck(System.currentTimeMillis());
+
         File file = getLayerFile(source);
         File tempFile = new File(file.getPath() + ".part");
 
@@ -233,11 +275,13 @@ public class DbCompileService {
                 return false;
             }
 
-            int items = countItems(tempFile);
-            if (items < 0) {
+            long[] read = readSlice(tempFile);
+            if (read == null) {
                 note(source, context.getString(R.string.source_result_not_a_database));
                 return false;
             }
+
+            source.setVersion((int) read[1]);
 
             if (file.exists() && !file.delete()) {
                 LOG.warn("downloadLayer() couldn't replace {}", file);
@@ -249,7 +293,7 @@ public class DbCompileService {
                 return false;
             }
 
-            note(source, context.getString(R.string.source_result_numbers, items));
+            note(source, context.getString(R.string.source_result_numbers, (int) read[0]));
 
             return true;
         } finally {
@@ -369,17 +413,32 @@ public class DbCompileService {
         }
     }
 
-    /** How many numbers a fetched file holds, or -1 when it isn't a database file at all. */
-    private static int countItems(File file) {
-        CommunityDatabaseDataSlice slice = new CommunityDatabaseDataSlice();
+    /**
+     * Looks at what was fetched: how many numbers it holds and what version it says it is.
+     *
+     * @return {@code {numbers, version}}, or null when the file isn't a database file at all
+     */
+    private static long[] readSlice(File file) {
+        long[] count = {0};
 
         try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
-            slice.loadFromStream(inputStream);
+            int version = SliceReader.read(inputStream, new SliceReader.Visitor() {
+                @Override
+                public void onNumber(long number, int positive, int negative,
+                                     int neutral, int category) {
+                    count[0]++;
+                }
 
-            return slice.getNumberOfItems();
+                @Override
+                public void onDeleted(long number) {
+                    count[0]++;
+                }
+            });
+
+            return new long[]{count[0], version};
         } catch (Exception e) {
-            LOG.warn("countItems() couldn't read {}", file, e);
-            return -1;
+            LOG.warn("readSlice() couldn't read {}", file, e);
+            return null;
         }
     }
 
@@ -409,6 +468,8 @@ public class DbCompileService {
             return;
         }
 
+        noteSourceMeta(compiler, sources);
+
         compiler.makeShadowCopy();
 
         if (settings.isDbFilteringEnabled()) {
@@ -418,6 +479,30 @@ public class DbCompileService {
 
             // the copy is what the filtering can be taken back to; not everyone wants to pay
             if (!settings.getDbFilteringKeepMaster()) compiler.dropShadowCopy();
+        }
+    }
+
+    /**
+     * Keeps with each source what the build found out about it: how much of the database
+     * came from there, and - for the one that carries the database - which version it is.
+     */
+    private void noteSourceMeta(NumbersCompiler compiler, List<NumberSource> sources) {
+        if (sourceService == null) return;
+
+        int version = YacbHolder.getCommunityDatabase().getEffectiveDbVersion();
+
+        for (NumbersCompiler.SourceCount count : compiler.getSourceCounts()) {
+            for (NumberSource source : sources) {
+                if (!source.getId().equals(count.uuid)) continue;
+
+                source.setEntries(count.count);
+
+                // the database's version is the library's; a layer said its own when it arrived
+                if (count.layer == 0) source.setVersion(version);
+
+                sourceService.save(source);
+                break;
+            }
         }
     }
 

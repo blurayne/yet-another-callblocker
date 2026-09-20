@@ -231,10 +231,12 @@
     <!-- die Abschnitte der Einstellungen -->
     <!-- die Sicherung: eine Datei in einem Verzeichnis, das der Nutzer wählt -->
     <!-- woher die Nummern kommen: eine Liste von Quellen -->
-    <string name="title_sources_activity">Datenquellen</string>
+    <string name="title_sources_activity">Quellen</string>
     <string name="title_add_source_activity">Quelle hinzufügen</string>
     <string name="title_edit_source_activity">Quelle bearbeiten</string>
     <string name="sources_summary">Woher die Nummern geholt werden</string>
+    <string name="sources_enabled_count">%1$d von %2$d eingeschaltet</string>
+    <string name="db_management_category_space">Platz sparen</string>
     <string name="title_providers_activity">Anbieter</string>
     <string name="title_add_provider_activity">Anbieter hinzufügen</string>
     <string name="title_edit_provider_activity">Anbieter bearbeiten</string>
@@ -547,7 +549,7 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_filtering_result_no_database">Es gibt keine Datenbank zum Filtern, und sie konnte nicht heruntergeladen werden.</string>
 
     <!-- Datenbank verwalten -->
-    <string name="db_management">Datenbank verwalten</string>
+    <string name="db_management">Datenbank</string>
     <string name="db_management_status">Was drinsteht</string>
     <string name="db_management_status_empty">Noch nichts gebaut</string>
     <string name="db_management_status_built">gebaut %s</string>

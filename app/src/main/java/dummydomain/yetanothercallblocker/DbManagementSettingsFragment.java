@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
+import androidx.preference.SwitchPreferenceCompat;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -33,12 +34,14 @@ import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
+import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabase;
 import dummydomain.yetanothercallblocker.utils.FileUtils;
 import dummydomain.yetanothercallblocker.work.TaskService;
+import dummydomain.yetanothercallblocker.work.UpdateScheduler;
 
 /**
  * The database the sources are built into: what is in it, and the few things one can do to it.
@@ -56,6 +59,8 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_SOURCES = "dbSources";
     private static final String PREF_BUILD = "dbBuild";
     private static final String PREF_UPDATE = "dbUpdate";
+    private static final String PREF_AUTO_UPDATE = "autoUpdateEnabled";
+    private static final String PREF_FILTERING = "dbFiltering";
     private static final String PREF_EXPORT = "dbExport";
     private static final String PREF_IMPORT = "dbImport";
     private static final String PREF_RESET_UPDATES = "dbResetUpdates";
@@ -74,8 +79,25 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         return R.xml.db_management_preferences;
     }
 
+    private final UpdateScheduler updateScheduler = UpdateScheduler.get(App.getInstance());
+
     @Override
     protected void initScreen() {
+        /*
+         * Whether the database keeps itself current is a question about the database, so it
+         * is asked here rather than in a list of unrelated switches one screen up.
+         */
+        SwitchPreferenceCompat autoUpdate = requirePreference(PREF_AUTO_UPDATE);
+        autoUpdate.setChecked(updateScheduler.isAutoUpdateScheduled());
+        autoUpdate.setOnPreferenceChangeListener((preference, newValue) -> {
+            if (Boolean.TRUE.equals(newValue)) {
+                updateScheduler.scheduleAutoUpdates();
+            } else {
+                updateScheduler.cancelAutoUpdateWorker();
+            }
+            return true;
+        });
+
         requirePreference(PREF_SOURCES).setOnPreferenceClickListener(preference -> {
             startActivity(NumberSourcesActivity.getIntent(requireContext()));
             return true;
@@ -161,27 +183,37 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
 
         List<String> parts = new ArrayList<>(3);
 
-        if (count >= 0) {
+        if (count > 0) {
             parts.add(getString(R.string.db_filtering_status_numbers,
                     NumberFormat.getInstance().format(count)));
+
+            // the file exists either way; its size only says something once it holds numbers
+            long size = compiler.getSize() + compiler.getShadowSize();
+            if (size > 0) parts.add(Formatter.formatShortFileSize(requireContext(), size));
+
+            if (compiled > 0) {
+                parts.add(getString(R.string.db_management_status_built,
+                        DateUtils.getRelativeTimeSpanString(compiled, System.currentTimeMillis(),
+                                DateUtils.MINUTE_IN_MILLIS)));
+            }
         } else {
             parts.add(getString(R.string.db_management_status_empty));
-        }
-
-        long size = compiler.getSize() + compiler.getShadowSize();
-        if (size > 0) {
-            parts.add(Formatter.formatShortFileSize(requireContext(), size));
-        }
-
-        if (compiled > 0) {
-            parts.add(getString(R.string.db_management_status_built,
-                    DateUtils.getRelativeTimeSpanString(compiled, System.currentTimeMillis(),
-                            DateUtils.MINUTE_IN_MILLIS)));
         }
 
         requirePreference(PREF_STATUS).setSummary(TextUtils.join(" · ", parts));
 
         updateSources();
+        updateFiltering(compiler);
+    }
+
+    /** What the filter is doing right now, said where the filter lives. */
+    private void updateFiltering(NumbersCompiler compiler) {
+        List<String> prefixes = DbFilteringUtils.getPrefixesToKeep(App.getSettings());
+
+        requirePreference(PREF_FILTERING).setSummary(compiler.isFiltered() && !prefixes.isEmpty()
+                ? getString(R.string.db_filtering_status_filtered,
+                        DbFilteringUtils.formatPrefixes(prefixes))
+                : getString(R.string.db_filtering_status_not_filtered));
     }
 
     /**

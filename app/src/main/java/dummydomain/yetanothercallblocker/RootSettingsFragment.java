@@ -30,9 +30,12 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.text.NumberFormat;
+import java.util.List;
 
 import dummydomain.yetanothercallblocker.data.BackupService;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
+import dummydomain.yetanothercallblocker.data.source.NumberSource;
+import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.data.BlacklistService;
 import dummydomain.yetanothercallblocker.data.CallDecisionLog;
 import dummydomain.yetanothercallblocker.data.Whitelist;
@@ -41,7 +44,6 @@ import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.utils.FileUtils;
 import dummydomain.yetanothercallblocker.utils.PackageManagerUtils;
 import dummydomain.yetanothercallblocker.work.BackupScheduler;
-import dummydomain.yetanothercallblocker.work.UpdateScheduler;
 
 public class RootSettingsFragment extends BaseSettingsFragment {
 
@@ -49,7 +51,6 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
     private static final String PREF_SCREEN_ROOT = null;
     private static final String PREF_USE_CALL_SCREENING_SERVICE = "useCallScreeningService";
-    private static final String PREF_AUTO_UPDATE_ENABLED = "autoUpdateEnabled";
     private static final String PREF_NOTIFICATION_CHANNEL_SETTINGS = "notificationChannelSettings";
     private static final String PREF_BLOCKING_STATUS = "blockingStatus";
     private static final String PREF_BLACKLIST_SCREEN = "blacklistScreen";
@@ -73,7 +74,6 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String STATE_REQUEST_TOKEN = "STATE_REQUEST_TOKEN";
     private static final String STATE_OVERLAY_REQUESTED = "STATE_OVERLAY_REQUESTED";
 
-    private final UpdateScheduler updateScheduler = UpdateScheduler.get(App.getInstance());
 
     private PermissionHelper.RequestToken requestToken;
     private boolean enableAutoBackupAfterPicking;
@@ -339,18 +339,6 @@ public class RootSettingsFragment extends BaseSettingsFragment {
                 CallMonitoringService.stop(context);
             }
 
-            return true;
-        });
-
-        SwitchPreferenceCompat nonPersistentAutoUpdatePref =
-                requirePreference(PREF_AUTO_UPDATE_ENABLED);
-        nonPersistentAutoUpdatePref.setChecked(updateScheduler.isAutoUpdateScheduled());
-        nonPersistentAutoUpdatePref.setOnPreferenceChangeListener((preference, newValue) -> {
-            if (Boolean.TRUE.equals(newValue)) {
-                updateScheduler.scheduleAutoUpdates();
-            } else {
-                updateScheduler.cancelAutoUpdateWorker();
-            }
             return true;
         });
 
@@ -670,37 +658,48 @@ public class RootSettingsFragment extends BaseSettingsFragment {
                 : getString(R.string.whitelist_summary));
     }
 
-    /** Says how fresh the community database is, and whether PhoneBlock has anything to block. */
+    /** What the three rows about numbers hold, said in one line each. */
     private void updateSourcePreferences() {
-        requirePreference(PREF_DB_MANAGEMENT).setSummary(getCommunityDbStatus());
+        requirePreference(PREF_DB_MANAGEMENT).setSummary(getDatabaseStatus());
+        requirePreference(PREF_NUMBER_SOURCES).setSummary(getSourcesStatus());
 
         // the list can only block while it is fetched at all, which the sources decide
         requirePreference(Settings.PREF_BLOCK_PHONE_BLOCK)
                 .setEnabled(App.getSettings().getUsePhoneBlock());
     }
 
-    /** Which version of the community database is in use, and when it was last checked. */
-    private String getCommunityDbStatus() {
-        CommunityDatabase communityDatabase = YacbHolder.getCommunityDatabase();
+    /** How many numbers the built database holds, and when it was built. */
+    private String getDatabaseStatus() {
+        NumbersCompiler compiler = new NumbersCompiler(requireContext());
 
-        // what is in the database says more at a glance than what version it is
-        long count = new NumbersCompiler(requireContext()).getCount();
-        String numbers = count >= 0
-                ? getString(R.string.db_filtering_status_numbers,
-                        NumberFormat.getInstance().format(count)) + "\n"
-                : "";
+        long count = compiler.getCount();
+        if (count <= 0) return getString(R.string.db_management_status_empty);
 
-        String version = communityDatabase != null && communityDatabase.isOperational()
-                ? String.valueOf(communityDatabase.getEffectiveDbVersion())
-                : getString(R.string.db_version_not_available);
+        String numbers = getString(R.string.db_filtering_status_numbers,
+                NumberFormat.getInstance().format(count));
 
-        long lastCheck = App.getSettings().getLastUpdateCheckTime();
-        String lastCheckValue = lastCheck != 0
-                ? DateUtils.getRelativeTimeSpanString(lastCheck).toString()
-                : getString(R.string.db_last_update_check_never);
+        long compiled = compiler.getCompiledTime();
+        if (compiled <= 0) return numbers;
 
-        return numbers + getString(R.string.db_version, version)
-                + "\n" + getString(R.string.db_last_update_check, lastCheckValue);
+        return numbers + " \u00b7 " + getString(R.string.db_management_status_built,
+                DateUtils.getRelativeTimeSpanString(compiled, System.currentTimeMillis(),
+                        DateUtils.MINUTE_IN_MILLIS));
+    }
+
+    /** How many of the sources are switched on, which is what the database is built from. */
+    private String getSourcesStatus() {
+        SourceService sourceService = YacbHolder.getSourceService();
+        if (sourceService == null) return getString(R.string.sources_summary);
+
+        List<NumberSource> sources = sourceService.getSources();
+        if (sources.isEmpty()) return getString(R.string.sources_summary);
+
+        int enabled = 0;
+        for (NumberSource source : sources) {
+            if (source.isEnabled()) enabled++;
+        }
+
+        return getString(R.string.sources_enabled_count, enabled, sources.size());
     }
 
     private void updateCallScreeningPreference() {

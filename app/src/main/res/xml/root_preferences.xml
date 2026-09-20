@@ -98,24 +98,15 @@
     <!-- where what the app knows about a number comes from -->
     <PreferenceCategory app:title="@string/settings_category_number_sources">
         <Preference
-            app:fragment="dummydomain.yetanothercallblocker.DbManagementSettingsFragment"
-            app:key="dbManagement"
-            app:persistent="false"
-            app:title="@string/db_management" />
-        <SwitchPreferenceCompat
-            app:key="autoUpdateEnabled"
-            app:persistent="false"
-            app:summary="@string/auto_updates_summary"
-            app:title="@string/auto_updates" />
-        <Preference
-            app:fragment="dummydomain.yetanothercallblocker.DbFilteringSettingsFragment"
-            app:key="dbFiltering"
-            app:title="@string/settings_screen_db_filtering" />
-        <Preference
             app:key="numberSources"
             app:persistent="false"
             app:summary="@string/sources_summary"
             app:title="@string/title_sources_activity" />
+        <Preference
+            app:fragment="dummydomain.yetanothercallblocker.DbManagementSettingsFragment"
+            app:key="dbManagement"
+            app:persistent="false"
+            app:title="@string/db_management" />
         <Preference
             app:key="providersScreen"
             app:persistent="false"

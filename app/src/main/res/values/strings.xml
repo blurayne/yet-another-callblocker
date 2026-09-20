@@ -89,10 +89,12 @@
     <!-- the sections of the settings screen -->
     <!-- the backup: one file, in a directory the user picks -->
     <!-- where the numbers come from: a list of sources the user keeps -->
-    <string name="title_sources_activity">Number sources</string>
+    <string name="title_sources_activity">Sources</string>
     <string name="title_add_source_activity">Add a source</string>
     <string name="title_edit_source_activity">Edit the source</string>
     <string name="sources_summary">Where the numbers are fetched from</string>
+    <string name="sources_enabled_count">%1$d of %2$d switched on</string>
+    <string name="db_management_category_space">Saving space</string>
     <string name="title_providers_activity">Providers</string>
     <string name="title_add_provider_activity">Add a provider</string>
     <string name="title_edit_provider_activity">Edit the provider</string>
@@ -520,7 +522,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="add_to_blacklist">Add to blacklist</string>
     <string name="edit_blacklist_entry">Edit blacklist entry</string>
 
-    <string name="db_management">Manage the database</string>
+    <string name="db_management">Database</string>
     <string name="db_management_status">What is in it</string>
     <string name="db_management_status_empty">Nothing built yet</string>
     <string name="db_management_status_built">built %s</string>

@@ -17,17 +17,32 @@
 
     <PreferenceCategory app:title="@string/db_management_category_keeping_it_current">
 
-        <Preference
-            app:key="dbBuild"
+        <SwitchPreferenceCompat
+            app:key="autoUpdateEnabled"
             app:persistent="false"
-            app:summary="@string/db_management_build_summary"
-            app:title="@string/db_management_build" />
+            app:summary="@string/auto_updates_summary"
+            app:title="@string/auto_updates" />
 
         <Preference
             app:key="dbUpdate"
             app:persistent="false"
             app:summary="@string/db_management_update_summary"
             app:title="@string/db_management_update" />
+
+        <Preference
+            app:key="dbBuild"
+            app:persistent="false"
+            app:summary="@string/db_management_build_summary"
+            app:title="@string/db_management_build" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/db_management_category_space">
+
+        <Preference
+            app:fragment="dummydomain.yetanothercallblocker.DbFilteringSettingsFragment"
+            app:key="dbFiltering"
+            app:title="@string/settings_screen_db_filtering" />
 
     </PreferenceCategory>
 

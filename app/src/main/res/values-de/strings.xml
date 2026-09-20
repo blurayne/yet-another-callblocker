@@ -289,9 +289,9 @@
     <string name="source_last_update">zuletzt: %s</string>
     <string name="source_last_check">zuletzt geprüft: %s</string>
     <string name="source_version">Version %d</string>
-    <string name="source_role">Was die Quelle liefert</string>
-    <string name="source_role_base">Die Datenbank selbst</string>
-    <string name="source_role_updates">Änderungen daran</string>
+    <string name="source_carries">Was die Quelle liefert</string>
+    <string name="source_carries_base">Die Datenbank selbst</string>
+    <string name="source_carries_updates">Änderungen daran</string>
     <string name="source_never_fetched">noch nie geholt</string>
     <string name="source_delete">Löschen</string>
     <string name="source_delete_message">Diese Quelle entfernen? Die Nummern, die sie mitgebracht hat, verschwinden mit ihr; selbst Eingetragenes bleibt unberührt.</string>

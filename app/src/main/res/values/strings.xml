@@ -147,9 +147,9 @@
     <string name="source_last_update">last: %s</string>
     <string name="source_last_check">last checked: %s</string>
     <string name="source_version">version %d</string>
-    <string name="source_role">What this source carries</string>
-    <string name="source_role_base">The database itself</string>
-    <string name="source_role_updates">Changes to it</string>
+    <string name="source_carries">What this source carries</string>
+    <string name="source_carries_base">The database itself</string>
+    <string name="source_carries_updates">Changes to it</string>
     <string name="source_never_fetched">never fetched</string>
     <string name="source_delete">Delete</string>
     <string name="source_delete_message">Remove this source? The numbers it brought are dropped with it; nothing you wrote yourself is touched.</string>

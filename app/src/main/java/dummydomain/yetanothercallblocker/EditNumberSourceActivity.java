@@ -248,7 +248,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
 
     private String getRoleName(NumberSource.Role role) {
         return getString(role == NumberSource.Role.UPDATES
-                ? R.string.source_role_updates : R.string.source_role_base);
+                ? R.string.source_carries_updates : R.string.source_carries_base);
     }
 
     /** Only the fields the chosen way of logging in needs are shown. */

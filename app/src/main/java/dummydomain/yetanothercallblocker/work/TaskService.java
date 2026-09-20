@@ -117,9 +117,11 @@ public class TaskService extends IntentService {
     private void downloadMainDb() {
         MainDbDownloadingEvent sticky = new MainDbDownloadingEvent();
 
+        DbCompileService.Result result = null;
+
         postStickyEvent(sticky);
         try {
-            new DbCompileService(this, App.getSettings()).compile((current, total) ->
+            result = new DbCompileService(this, App.getSettings()).compile((current, total) ->
                     updateNotification(getString(R.string.compiling_db, current, total)));
 
             // what was just fetched is unfiltered, so the filter has to be applied again
@@ -131,7 +133,8 @@ public class TaskService extends IntentService {
             removeStickyEvent(sticky);
         }
 
-        postEvent(new MainDbDownloadFinishedEvent());
+        postEvent(new MainDbDownloadFinishedEvent(
+                result != null && result.status == DbCompileService.Status.NO_SOURCES));
     }
 
     private void updateSecondaryDb() {

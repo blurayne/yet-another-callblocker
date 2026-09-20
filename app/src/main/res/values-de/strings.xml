@@ -234,6 +234,8 @@
     <string name="title_add_source_activity">Quelle hinzufügen</string>
     <string name="title_edit_source_activity">Quelle bearbeiten</string>
     <string name="sources_summary">Woher die Nummern geholt werden</string>
+    <string name="no_db_sources_title">Keine Quelle für die Datenbank</string>
+    <string name="no_db_sources_text">Die Datenbank wird aus den Quellen in der Liste gebaut, und davon ist keine eingeschaltet. Tragen Sie eine ein oder schalten Sie eine wieder ein, dann wird die Datenbank von dort geholt.</string>
     <string name="source_add">Quelle hinzufügen</string>
     <string name="source_name">Name</string>
     <string name="source_type">Was sie enthält</string>
@@ -260,6 +262,10 @@
     <string name="source_never_fetched">noch nie geholt</string>
     <string name="source_delete">Löschen</string>
     <string name="source_delete_message">Diese Quelle entfernen? Die Nummern, die sie mitgebracht hat, verschwinden mit ihr; selbst Eingetragenes bleibt unberührt.</string>
+    <string name="source_reorder">Verschieben</string>
+    <string name="sources_order_hint">In dieser Reihenfolge wird die Datenbank gebaut: Die erste eingeschaltete Quelle bringt die Datenbank selbst, jede darunter legt ihre Nummern darüber und kann auch Nummern wieder herausnehmen. Zum Verschieben am Griff ziehen.</string>
+    <string name="source_role_base">die Datenbank</string>
+    <string name="source_role_layer">Ebene %d</string>
     <string name="source_test">Verbindung testen</string>
     <string name="source_test_running">Wird getestet\u2026</string>
     <string name="source_test_result">Test: %s</string>
@@ -450,8 +456,17 @@
 
     <!-- Datenbank-Filterung -->
     <string name="settings_screen_db_filtering">Datenbank filtern</string>
+    <string name="db_filtering_status">Status</string>
+    <string name="db_filtering_status_filtered">Gefiltert, behalten wird %s</string>
+    <string name="db_filtering_status_not_filtered">Nicht gefiltert: die Datenbank enthält alles, womit sie kam</string>
+    <string name="db_filtering_status_nothing_set">Filterung ist an, aber es ist nichts zum Behalten eingetragen</string>
+    <string name="db_filtering_status_copy_kept">eine Kopie der ungefilterten Datenbank ist vorhanden</string>
+    <string name="db_filtering_status_no_copy">es ist keine Kopie der ungefilterten Datenbank vorhanden</string>
+    <string name="db_filtering_category_what">Was behalten wird</string>
+    <string name="db_filtering_category_apply">Anwenden</string>
+    <string name="db_filtering_category_storage">Speicherplatz</string>
     <string name="db_filtering_info">Erklärung</string>
-    <string name="db_filtering_info_summary">Mit dieser Funktion lässt sich Speicherplatz sparen, indem Daten entfernt werden, die Sie nicht betreffen (etwa Nummern anderer Regionen oder Länder). Die Arbeitsweise der App (etwa die Anrufblockierung) ändert sich dadurch nicht. Gefiltert wird beim ersten Herunterladen der Datenbank und bei jeder Aktualisierung. Bereits vorhandene Daten (die vor dem Einschalten heruntergeladen wurden) lassen sich mit „Datenbank jetzt filtern“ unten filtern. Wenn die Funktion ausgeschaltet oder die Einstellungen geändert werden, kommen entfernte Daten nicht zurück – dafür muss die Datenbank neu heruntergeladen werden</string>
+    <string name="db_filtering_info_summary">Die Datenbank enthält Nummern aus aller Welt. Beim Filtern bleiben die, die Sie erreichen können, der Rest fällt weg; das spart Speicherplatz und ändert sonst nichts an der App. Gefiltert wird beim Holen der Datenbank und nach jeder Aktualisierung. Gefiltert wird immer ausgehend von der ungefilterten Datenbank – ist keine Kopie vorhanden, wird sie bei den Quellen neu geholt –, damit eine Änderung nie eine schon eingeschränkte Datenbank weiter einschränkt</string>
     <string name="db_filtering_enabled">Filterung eingeschaltet</string>
     <string name="db_filtering_enabled_summary">Beim Herunterladen und Aktualisieren der Datenbank filtern</string>
     <string name="db_filtering_prefixes_to_keep">Zu behaltende Vorwahlen</string>
@@ -463,12 +478,12 @@
     <string name="db_filtering_keep_short_numbers_max_length">Länge der zu behaltenden Nummern</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">Die größte Länge (einschließlich), bis zu der kurze Nummern unabhängig von den Vorwahlen behalten werden. Beim Wert 5 werden zum Beispiel Nummern mit höchstens 5 Ziffern behalten</string>
     <string name="db_filtering_keep_master">Ungefilterte Datenbank behalten</string>
-    <string name="db_filtering_keep_master_summary">Eine Kopie der ungefilterten Datenbank behalten, damit sie wiederhergestellt werden kann und jede Filterung von ihr ausgeht, statt eine bereits gefilterte Datenbank weiter einzuschränken. Die Kopie braucht etwa so viel Platz wie die Datenbank selbst</string>
+    <string name="db_filtering_keep_master_summary">Eine Kopie der ungefilterten Datenbank behalten, damit erneutes Filtern – oder das Zurücknehmen – kein neues Laden bedeutet. Die Kopie braucht etwa so viel Platz wie die Datenbank selbst</string>
     <string name="db_filtering_filter_db">Datenbank jetzt filtern</string>
-    <string name="db_filtering_filter_db_summary">Die Filterung jetzt ausführen (um die vorhandenen Daten zu filtern)</string>
+    <string name="db_filtering_filter_db_summary">Den Filter jetzt auf die Datenbank anwenden. Ausgangspunkt ist immer die ungefilterte Datenbank; ist keine Kopie vorhanden, wird sie bei den Quellen neu geholt</string>
     <string name="db_filtering_revert_to_master">Ungefilterte Datenbank verwenden</string>
-    <string name="db_filtering_revert_to_master_summary">Die behaltene Kopie der ungefilterten Datenbank zurückspielen. Sie kann danach erneut gefiltert werden</string>
-    <string name="db_filtering_revert_to_master_summary_unavailable">Es ist keine Kopie der ungefilterten Datenbank vorhanden. Laden Sie die Datenbank neu herunter, um eine ungefilterte zu erhalten</string>
+    <string name="db_filtering_revert_to_master_summary">Die ungefilterte Datenbank zurückspielen. Sie kann danach erneut gefiltert werden</string>
+    <string name="db_filtering_revert_to_master_summary_unavailable">Es ist keine Kopie vorhanden, die ungefilterte Datenbank wird bei den Quellen neu geholt</string>
     <string name="db_filtering_reverting">Ungefilterte Datenbank wird wiederhergestellt …</string>
     <string name="db_filtering_reverted">Die ungefilterte Datenbank wird wieder verwendet.</string>
     <string name="db_filtering_revert_failed">Die ungefilterte Datenbank konnte nicht wiederhergestellt werden.</string>

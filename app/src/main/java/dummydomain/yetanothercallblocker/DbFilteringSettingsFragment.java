@@ -32,6 +32,7 @@ import static dummydomain.yetanothercallblocker.Settings.PREF_DB_FILTERING_PREFI
 public class DbFilteringSettingsFragment extends BaseSettingsFragment {
 
     private static final String PREF_SCREEN_DB_FILTERING = "dbFiltering";
+    private static final String PREF_STATUS = "dbFilteringStatus";
     private static final String PREF_INFO = "dbFilteringInfo";
     private static final String PREF_FILTER_DB = "dbFilteringFilterDb";
     private static final String PREF_REVERT_TO_MASTER = "dbFilteringRevertToMaster";
@@ -73,6 +74,12 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
             return true;
         });
 
+        setPrefChangeListener(Settings.PREF_DB_FILTERING_ENABLED, (pref, newValue) -> {
+            // the value is written after this returns, so the status is read after that
+            requireView().post(this::updateStatusPreference);
+            return true;
+        });
+
         setPrefChangeListener(PREF_DB_FILTERING_PREFIXES_TO_KEEP, (pref, newValue) -> {
             String value = (String) newValue;
 
@@ -83,6 +90,8 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
                 ((EditTextPreference) pref).setText(formattedPrefixes);
                 return false;
             }
+
+            requireView().post(this::updateStatusPreference);
 
             return true;
         });
@@ -105,6 +114,7 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
 
         EventUtils.register(this);
 
+        updateStatusPreference();
         updateMasterPreference();
     }
 
@@ -132,6 +142,7 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
     public void onDbFilteringFinished(DbFilteringFinishedEvent event) {
         hideProgressDialog();
 
+        updateStatusPreference();
         updateMasterPreference();
 
         showMessage(getFilteringMessage(event.result));
@@ -139,6 +150,7 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onDbFilterReverted(DbFilterRevertedEvent event) {
+        updateStatusPreference();
         updateMasterPreference();
 
         showMessage(getString(event.reverted
@@ -240,15 +252,41 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
         if (enabled) updateMasterPreference();
     }
 
-    /** The unfiltered database can only be restored while a copy of it is kept. */
+    /**
+     * Reverting works either way; without a copy it means fetching the database again, which
+     * is worth saying before it is tapped.
+     */
     private void updateMasterPreference() {
-        boolean hasMaster = new DbFilteringService(requireContext(), settings).hasMaster();
-
         Preference preference = requirePreference(PREF_REVERT_TO_MASTER);
-        preference.setEnabled(hasMaster);
-        preference.setSummary(hasMaster
+        preference.setSummary(hasMaster()
                 ? R.string.db_filtering_revert_to_master_summary
                 : R.string.db_filtering_revert_to_master_summary_unavailable);
+    }
+
+    /** What the database is right now, in a line: filtered or not, and whether a copy is kept. */
+    private void updateStatusPreference() {
+        if (!isAdded()) return;
+
+        String state;
+        if (settings.isDbFiltered()) {
+            state = getString(R.string.db_filtering_status_filtered, DbFilteringUtils
+                    .formatPrefixes(DbFilteringUtils.getPrefixesToKeep(settings)));
+        } else if (settings.isDbFilteringEnabled()
+                && DbFilteringUtils.getPrefixesToKeep(settings).isEmpty()) {
+            state = getString(R.string.db_filtering_status_nothing_set);
+        } else {
+            state = getString(R.string.db_filtering_status_not_filtered);
+        }
+
+        String copy = getString(hasMaster()
+                ? R.string.db_filtering_status_copy_kept
+                : R.string.db_filtering_status_no_copy);
+
+        requirePreference(PREF_STATUS).setSummary(state + " \u00b7 " + copy);
+    }
+
+    private boolean hasMaster() {
+        return new DbFilteringService(requireContext(), settings).hasMaster();
     }
 
     @Override

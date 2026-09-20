@@ -96,6 +96,8 @@
     <string name="title_add_source_activity">Add a source</string>
     <string name="title_edit_source_activity">Edit the source</string>
     <string name="sources_summary">Where the numbers are fetched from</string>
+    <string name="no_db_sources_title">No source for the database</string>
+    <string name="no_db_sources_text">The database is built from the sources in the list, and none of them is switched on. Add one, or switch one back on, and the database will be fetched from it.</string>
     <string name="source_add">Add a source</string>
     <string name="source_name">Name</string>
     <string name="source_type">What it holds</string>
@@ -122,6 +124,10 @@
     <string name="source_never_fetched">never fetched</string>
     <string name="source_delete">Delete</string>
     <string name="source_delete_message">Remove this source? The numbers it brought are dropped with it; nothing you wrote yourself is touched.</string>
+    <string name="source_reorder">Move</string>
+    <string name="sources_order_hint">The database is built in this order: the first source that is switched on brings the database itself, every source below it adds its numbers on top and can take numbers out again. Drag a source by its handle to move it.</string>
+    <string name="source_role_base">the database</string>
+    <string name="source_role_layer">layer %d</string>
     <string name="source_test">Test connection</string>
     <string name="source_test_running">Testing\u2026</string>
     <string name="source_test_result">test: %s</string>
@@ -176,10 +182,10 @@
     </plurals>
     <string name="settings_category_main">Main</string>
     <string name="db_filtering_keep_master">Keep the unfiltered database</string>
-    <string name="db_filtering_keep_master_summary">Keep a copy of the unfiltered database, so that it can be restored and so that filtering always starts from it instead of narrowing down an already filtered database. The copy needs about as much space as the database itself</string>
+    <string name="db_filtering_keep_master_summary">Keep a copy of the unfiltered database, so that filtering again - or undoing it - doesn\'t mean fetching it again. The copy needs about as much space as the database itself</string>
     <string name="db_filtering_revert_to_master">Use the unfiltered database</string>
-    <string name="db_filtering_revert_to_master_summary">Put the kept copy of the unfiltered database back. It can be filtered again afterwards</string>
-    <string name="db_filtering_revert_to_master_summary_unavailable">No copy of the unfiltered database is kept. Download the database again to get an unfiltered one</string>
+    <string name="db_filtering_revert_to_master_summary">Put the unfiltered database back. It can be filtered again afterwards</string>
+    <string name="db_filtering_revert_to_master_summary_unavailable">No copy is kept, so the unfiltered database is fetched from the sources again</string>
     <string name="db_filtering_reverting">Restoring the unfiltered database\u2026</string>
     <string name="db_filtering_reverted">The unfiltered database is in use again.</string>
     <string name="db_filtering_revert_failed">Couldn\'t restore the unfiltered database.</string>
@@ -323,8 +329,17 @@
     <string name="export_logcat_summary">Export and share logcat contents with an app of your choosing (for example with an email client). The reports may contain sensitive data (phone numbers, contact names). Only the chosen app will have access to this data</string>
 
     <string name="settings_screen_db_filtering">Database filtering</string>
+    <string name="db_filtering_status">Status</string>
+    <string name="db_filtering_status_filtered">Filtered, keeping %s</string>
+    <string name="db_filtering_status_not_filtered">Not filtered: the database holds every number it came with</string>
+    <string name="db_filtering_status_nothing_set">Filtering is on, but nothing is set to keep</string>
+    <string name="db_filtering_status_copy_kept">a copy of the unfiltered database is kept</string>
+    <string name="db_filtering_status_no_copy">no copy of the unfiltered database is kept</string>
+    <string name="db_filtering_category_what">What is kept</string>
+    <string name="db_filtering_category_apply">Apply</string>
+    <string name="db_filtering_category_storage">Storage</string>
     <string name="db_filtering_info">Explanation</string>
-    <string name="db_filtering_info_summary">This feature allows to save storage space by removing some data that is not applicable to you (like numbers belonging to different regions or countries). It doesn\'t affect general app performance (like call blocking). Filtering occurs during the initial database download and during database update. Existing data (downloaded prior to enabling the filtering) may be filtered using the \"Filter the database\" option below. Disabling the feature or changing its parameters doesn\'t restore removed data - you need to re-download the database for that</string>
+    <string name="db_filtering_info_summary">The database holds numbers from everywhere. Filtering keeps the ones that can reach you and drops the rest, which saves storage; nothing else about the app changes. It happens while the database is fetched and after every update. Filtering always starts from the unfiltered database - when no copy is kept, the sources are asked for it again - so changing what is kept never narrows an already narrowed database</string>
     <string name="db_filtering_enabled">Filtering enabled</string>
     <string name="db_filtering_enabled_summary">Enables the filtering during the database download and update</string>
     <string name="db_filtering_prefixes_to_keep">Prefixes to keep</string>
@@ -336,7 +351,7 @@
     <string name="db_filtering_keep_short_numbers_max_length">Length of numbers to keep</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">The maximum length (inclusive) of short numbers to keep regardless of prefixes. E.g. the value of 5 will keep numbers with length of 5 digits or shorter</string>
     <string name="db_filtering_filter_db">Filter the database</string>
-    <string name="db_filtering_filter_db_summary">Run the database filtering now (to filter the existing data)</string>
+    <string name="db_filtering_filter_db_summary">Apply the filter to the database now. It starts from the unfiltered database, fetching it from the sources again if no copy is kept</string>
     <string name="filtering_db">Filtering DB…</string>
     <string name="compiling_db">Building the database (%1$d/%2$d)\u2026</string>
     <string name="source_result_database">the database</string>

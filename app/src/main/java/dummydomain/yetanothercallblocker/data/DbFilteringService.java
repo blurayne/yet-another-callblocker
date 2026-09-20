@@ -221,8 +221,13 @@ public class DbFilteringService {
         }
 
         if (mainDbReplaced) {
-            // what was just downloaded is the new unfiltered database
+            /*
+             * What was just downloaded is the new unfiltered database - saying so is what
+             * keeps the run below from deciding that the database in use is filtered and
+             * fetching yet another copy to filter instead.
+             */
             delete(getMasterDir());
+            settings.setDbFiltered(false);
 
             return filter();
         }

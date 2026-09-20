@@ -142,6 +142,14 @@ public class DbCompileService {
 
         reloadDatabases(); // the layers go on top of what was just downloaded
 
+        /*
+         * A compile is the whole database, not an addition to the last one: what an earlier
+         * compile put on top is cleared out, so that a source that was removed or switched
+         * off takes its numbers with it. The library's own updates live there too and are
+         * fetched again by the next one.
+         */
+        YacbHolder.getCommunityDatabase().resetSecondaryDatabase();
+
         for (int i = 1; i < total; i++) {
             if (listener != null) listener.onProgress(i + 1, total);
 
@@ -168,13 +176,6 @@ public class DbCompileService {
         List<NumberSource> sources = getSources();
 
         return sources.size() <= 1 || applyLayers(sources);
-    }
-
-    /** Whether there is anything to put back, so that nothing is done for nothing. */
-    public boolean hasLayers() {
-        File[] files = getLayersDir().listFiles();
-
-        return files != null && files.length > 0;
     }
 
     /** The sources the database is built from, in the order they are asked. */

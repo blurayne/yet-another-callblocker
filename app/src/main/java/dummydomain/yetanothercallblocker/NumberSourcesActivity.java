@@ -1,29 +1,43 @@
 package dummydomain.yetanothercallblocker;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 
-/** The places the app gets numbers from, as a list the user can add to. */
+/**
+ * The places the app gets numbers from, as a list the user can add to and put in order.
+ *
+ * <p>The order is what the database is built from: the first source that is switched on
+ * brings the database itself, every source below it is a layer on top of what is already
+ * there. So the list is not only a set of addresses - moving a row changes what the app
+ * knows about a number when two sources disagree about it.
+ */
 public class NumberSourcesActivity extends AppCompatActivity {
 
     public static Intent getIntent(Context context) {
@@ -35,6 +49,10 @@ public class NumberSourcesActivity extends AppCompatActivity {
     private final List<NumberSource> sources = new ArrayList<>();
 
     private SourceAdapter adapter;
+    private ItemTouchHelper touchHelper;
+
+    /** Set while a row is being dragged, so the new order is written down once, at the end. */
+    private boolean reordered;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +67,9 @@ public class NumberSourcesActivity extends AppCompatActivity {
         RecyclerView list = findViewById(R.id.sourcesList);
         list.setAdapter(adapter);
         list.addItemDecoration(new CustomVerticalDivider(this));
+
+        touchHelper = new ItemTouchHelper(new ReorderCallback());
+        touchHelper.attachToRecyclerView(list);
     }
 
     @Override
@@ -69,11 +90,11 @@ public class NumberSourcesActivity extends AppCompatActivity {
         startActivity(EditNumberSourceActivity.getIntent(this, null));
     }
 
-    /** What the row says about a source: what it holds, how often, and how it last went. */
+    /** What the row says about a source: its part in the database, how often, how it last went. */
     private String getStatus(NumberSource source) {
         List<String> parts = new ArrayList<>(3);
 
-        parts.add(getString(getTypeName(source.getType())));
+        parts.add(getRole(source));
         parts.add(getString(getUpdatesName(source.getUpdates())));
 
         if (!TextUtils.isEmpty(source.getLastResult())) {
@@ -91,6 +112,31 @@ public class NumberSourcesActivity extends AppCompatActivity {
         return TextUtils.join(" · ", parts);
     }
 
+    /**
+     * What the source is in the database: the one it is built on, or which layer on top.
+     *
+     * <p>Only the sources that are switched on are counted, because only they are asked -
+     * switching one off moves everything below it up.
+     */
+    private String getRole(NumberSource source) {
+        if (source.getType() != NumberSource.Type.DATABASE || !source.isEnabled()) {
+            return getString(getTypeName(source.getType()));
+        }
+
+        int layer = 0;
+        for (NumberSource other : sources) {
+            if (!other.isEnabled() || other.getType() != NumberSource.Type.DATABASE) continue;
+
+            if (other.getId().equals(source.getId())) break;
+
+            layer++;
+        }
+
+        return layer == 0
+                ? getString(R.string.source_role_base)
+                : getString(R.string.source_role_layer, layer);
+    }
+
     static int getTypeName(NumberSource.Type type) {
         switch (type) {
             case PHONE_BLOCK: return R.string.source_type_phone_block;
@@ -106,6 +152,63 @@ public class NumberSourcesActivity extends AppCompatActivity {
             case MONTHLY: return R.string.source_updates_monthly;
             default: return R.string.source_updates_manual;
         }
+    }
+
+    /**
+     * Moving a row moves a source in the order the database is built in.
+     *
+     * <p>The list is written down when the finger comes off rather than at every step a drag
+     * passes through, and the rows are drawn again afterwards: which source is the database
+     * and which is a layer follows from where they sit.
+     */
+    private class ReorderCallback extends ItemTouchHelper.SimpleCallback {
+
+        ReorderCallback() {
+            super(ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0);
+        }
+
+        @Override
+        public boolean isLongPressDragEnabled() {
+            return true; // besides the handle, which starts a drag straight away
+        }
+
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView,
+                              @NonNull RecyclerView.ViewHolder viewHolder,
+                              @NonNull RecyclerView.ViewHolder target) {
+            int from = viewHolder.getBindingAdapterPosition();
+            int to = target.getBindingAdapterPosition();
+
+            if (from < 0 || to < 0 || from >= sources.size() || to >= sources.size()) {
+                return false;
+            }
+
+            Collections.swap(sources, from, to);
+            adapter.notifyItemMoved(from, to);
+
+            reordered = true;
+
+            return true;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            // nothing is swiped away: a source is deleted where it is edited
+        }
+
+        @Override
+        public void clearView(@NonNull RecyclerView recyclerView,
+                              @NonNull RecyclerView.ViewHolder viewHolder) {
+            super.clearView(recyclerView, viewHolder);
+
+            if (!reordered) return;
+            reordered = false;
+
+            if (sourceService != null) sourceService.save(sources);
+
+            adapter.notifyDataSetChanged();
+        }
+
     }
 
     private class SourceAdapter extends RecyclerView.Adapter<SourceAdapter.ViewHolder> {
@@ -131,7 +234,22 @@ public class NumberSourcesActivity extends AppCompatActivity {
 
             final TextView name, url, status;
             final Button testButton;
+            final SwitchCompat enabledSwitch;
+            final ImageView dragHandle;
 
+            /** Kept, because binding a recycled row has to put it aside for a moment. */
+            final CompoundButton.OnCheckedChangeListener enabledListener = (v, checked) -> {
+                NumberSource source = getSource();
+                if (source == null || source.isEnabled() == checked) return;
+
+                source.setEnabled(checked);
+                if (sourceService != null) sourceService.save(source);
+
+                // switching one off moves every layer below it up a place
+                v.post(() -> adapter.notifyDataSetChanged());
+            };
+
+            @SuppressLint("ClickableViewAccessibility") // the handle drags, it doesn't click
             ViewHolder(@NonNull View itemView) {
                 super(itemView);
 
@@ -139,6 +257,15 @@ public class NumberSourcesActivity extends AppCompatActivity {
                 url = itemView.findViewById(R.id.url);
                 status = itemView.findViewById(R.id.status);
                 testButton = itemView.findViewById(R.id.testButton);
+                enabledSwitch = itemView.findViewById(R.id.enabledSwitch);
+                dragHandle = itemView.findViewById(R.id.dragHandle);
+
+                dragHandle.setOnTouchListener((v, event) -> {
+                    if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                        touchHelper.startDrag(this);
+                    }
+                    return false;
+                });
 
                 itemView.setOnClickListener(v -> {
                     NumberSource source = getSource();
@@ -162,6 +289,11 @@ public class NumberSourcesActivity extends AppCompatActivity {
                 url.setVisibility(TextUtils.isEmpty(source.getUrl()) ? View.GONE : View.VISIBLE);
 
                 status.setText(getStatus(source));
+
+                // set without the listener: a recycled row would report a change that isn't one
+                enabledSwitch.setOnCheckedChangeListener(null);
+                enabledSwitch.setChecked(source.isEnabled());
+                enabledSwitch.setOnCheckedChangeListener(enabledListener);
 
                 testButton.setEnabled(true);
             }

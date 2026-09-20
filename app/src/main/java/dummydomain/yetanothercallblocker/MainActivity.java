@@ -212,6 +212,19 @@ public class MainActivity extends AppCompatActivity {
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onMainDbDownloadFinished(MainDbDownloadFinishedEvent event) {
         reloadCallLog();
+
+        // an empty list of sources means nothing was fetched, which is worth saying out loud
+        if (event.noSources) showNoSourcesDialog();
+    }
+
+    private void showNoSourcesDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.no_db_sources_title)
+                .setMessage(R.string.no_db_sources_text)
+                .setPositiveButton(R.string.title_sources_activity,
+                        (d, w) -> startActivity(NumberSourcesActivity.getIntent(this)))
+                .setNegativeButton(R.string.back, null)
+                .show();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)

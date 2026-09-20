@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -20,6 +21,8 @@ import dummydomain.yetanothercallblocker.data.SiaNumberCategoryUtils;
 import dummydomain.yetanothercallblocker.data.WhitelistItem;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.db.BlacklistItem;
+import dummydomain.yetanothercallblocker.data.provider.Provider;
+import dummydomain.yetanothercallblocker.data.provider.ProviderService;
 import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
 
 /**
@@ -111,11 +114,11 @@ public class InfoDialogHelper {
             for (int id : new int[]{R.id.action_copy, R.id.action_open_contact,
                     R.id.action_whitelist, R.id.action_whitelist_rule,
                     R.id.action_blacklist, R.id.action_blacklist_rule, R.id.action_contacts,
-                    R.id.action_phone_block, R.id.action_reviews, R.id.action_web_review,
-                    R.id.action_phone_block_lookup, R.id.action_tellows,
-                    R.id.action_web_search}) {
+                    R.id.action_phone_block, R.id.action_reviews, R.id.action_web_review}) {
                 view.findViewById(id).setVisibility(View.GONE);
             }
+
+            view.findViewById(R.id.provider_actions).setVisibility(View.GONE);
 
             dialog.show();
             return;
@@ -237,31 +240,45 @@ public class InfoDialogHelper {
                             dialog.dismiss();
                         }));
 
-        String phoneBlockUrl = PhoneBlockHelper.getNumberPageUrl(number);
-
-        bindAction(view, R.id.action_phone_block_lookup, R.drawable.ic_search_24dp,
-                R.string.phone_block_lookup, phoneBlockUrl != null,
-                () -> confirmForLookup(context, numberInfo, "phoneblock.net", () -> {
-                    IntentHelper.startActivity(context, IntentHelper.getWebIntent(phoneBlockUrl));
-                    dialog.dismiss();
-                }));
-
-        bindAction(view, R.id.action_tellows, R.drawable.ic_search_24dp,
-                R.string.tellows_lookup, true,
-                () -> confirmForLookup(context, numberInfo, "tellows.de", () -> {
-                    IntentHelper.startActivity(context,
-                            IntentHelper.getWebIntent(IntentHelper.getTellowsUrl(number)));
-                    dialog.dismiss();
-                }));
-
-        bindAction(view, R.id.action_web_search, R.drawable.ic_search_24dp,
-                R.string.web_search, true,
-                () -> confirmForLookup(context, numberInfo, "Google", () -> {
-                    IntentHelper.startActivity(context, IntentHelper.getWebSearchIntent(number));
-                    dialog.dismiss();
-                }));
+        addProviderActions(context, view, numberInfo, number, dialog);
 
         dialog.show();
+    }
+
+    /**
+     * A row for every provider that is switched on: "look this number up over there".
+     *
+     * <p>Nothing is asked until one is tapped, and what that tells whom is what the
+     * confirmation is about, so the rows are addresses and not lookups.
+     */
+    private static void addProviderActions(Context context, View view, NumberInfo numberInfo,
+                                           String number, AlertDialog dialog) {
+        ViewGroup container = view.findViewById(R.id.provider_actions);
+
+        ProviderService providerService = YacbHolder.getProviderService();
+        if (providerService == null) return;
+
+        LayoutInflater inflater = LayoutInflater.from(context);
+
+        for (Provider provider : providerService.getEnabledProviders()) {
+            String url = ProviderHelper.getUrl(provider, number);
+            if (TextUtils.isEmpty(url)) continue; // an account it doesn't have, say
+
+            String host = ProviderHelper.getHost(context, provider, url);
+
+            View row = inflater.inflate(R.layout.info_dialog_action, container, false);
+
+            row.<ImageView>findViewById(R.id.icon).setImageResource(R.drawable.ic_search_24dp);
+            row.<TextView>findViewById(R.id.label).setText(context.getString(
+                    R.string.provider_lookup, ProviderHelper.getName(context, provider)));
+
+            row.setOnClickListener(v -> confirmForLookup(context, numberInfo, host, () -> {
+                IntentHelper.startActivity(context, IntentHelper.getWebIntent(url));
+                dialog.dismiss();
+            }));
+
+            container.addView(row);
+        }
     }
 
     /** Shows the text, or hides the view when there is none. */

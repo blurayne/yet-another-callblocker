@@ -101,6 +101,23 @@
                 android:value=".NumberSourcesActivity" />
         </activity>
         <activity
+            android:name=".ProvidersActivity"
+            android:label="@string/title_providers_activity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".SettingsActivity" />
+        </activity>
+        <activity
+            android:name=".EditProviderActivity"
+            android:label="@string/title_add_provider_activity"
+            android:parentActivityName=".ProvidersActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ProvidersActivity" />
+        </activity>
+        <activity
             android:name=".EditWhitelistItemActivity"
             android:label="@string/title_add_whitelist_item_activity"
             android:parentActivityName=".WhitelistActivity">

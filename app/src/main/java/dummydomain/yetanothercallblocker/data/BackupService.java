@@ -108,7 +108,8 @@ public class BackupService {
      */
     private static final Set<String> SECRET_SETTINGS = new HashSet<>(Arrays.asList(
             Settings.PREF_PHONE_BLOCK_TOKEN,
-            Settings.PREF_SOURCE_SECRETS));
+            Settings.PREF_SOURCE_SECRETS,
+            Settings.PREF_PROVIDER_SECRETS));
 
     /** How much of a file the app is willing to read as a backup. */
     private static final int MAX_SIZE = 8 * 1024 * 1024;

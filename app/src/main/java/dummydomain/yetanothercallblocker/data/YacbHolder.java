@@ -30,6 +30,7 @@ public class YacbHolder {
 
     private static CallDecisionLog callDecisionLog;
     private static dummydomain.yetanothercallblocker.data.source.SourceService sourceService;
+    private static dummydomain.yetanothercallblocker.data.provider.ProviderService providerService;
 
     private static NumberInfoService numberInfoService;
     private static NumberInfoCache numberInfoCache;
@@ -89,6 +90,16 @@ public class YacbHolder {
 
     public static dummydomain.yetanothercallblocker.data.source.SourceService getSourceService() {
         return sourceService;
+    }
+
+    static void setProviderService(
+            dummydomain.yetanothercallblocker.data.provider.ProviderService providerService) {
+        YacbHolder.providerService = providerService;
+    }
+
+    public static dummydomain.yetanothercallblocker.data.provider.ProviderService
+            getProviderService() {
+        return providerService;
     }
 
     static void setCallDecisionLog(CallDecisionLog callDecisionLog) {

@@ -12,8 +12,6 @@ import android.text.TextUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dummydomain.yetanothercallblocker.data.BlacklistUtils;
-
 public class IntentHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(IntentHelper.class);
@@ -40,25 +38,6 @@ public class IntentHelper {
     public static Intent getWebIntent(String url) {
         return new Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 .addCategory(Intent.CATEGORY_BROWSABLE);
-    }
-
-    /** The page about the number on tellows, which knows it in the {@code +49...} form. */
-    public static String getTellowsUrl(String number) {
-        return "https://www.tellows.de/num/" + Uri.encode(BlacklistUtils.cleanNumber(number));
-    }
-
-    /**
-     * Looks the number up on the web, in whatever app handles web addresses.
-     *
-     * <p>It is an ordinary address rather than a search intent, so that it opens in the
-     * browser instead of whichever app claims searches.
-     */
-    public static Intent getWebSearchIntent(String number) {
-        Uri uri = Uri.parse("https://www.google.com/search").buildUpon()
-                .appendQueryParameter("q", number)
-                .build();
-
-        return new Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE);
     }
 
     /** Lets the user store the number, either as a new contact or in an existing one. */

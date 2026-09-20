@@ -164,9 +164,6 @@
     <string name="open_contact">Kontakt öffnen</string>
     <string name="copy_number">Nummer kopieren</string>
     <string name="number_copied">Die Nummer wurde kopiert.</string>
-    <string name="web_search">Bei Google suchen</string>
-    <string name="phone_block_lookup">Bei phoneblock.net nachschlagen</string>
-    <string name="tellows_lookup">Bei tellows.de nachschlagen</string>
     <string name="web_lookup_confirmation_message">Beim Nachschlagen wird die Nummer an %1$s gesendet. Möchten Sie das wirklich mit einer Nummer aus Ihren Kontakten tun?</string>
 
     <!-- Schwarze Liste -->
@@ -236,6 +233,26 @@
     <string name="sources_summary">Woher die Nummern geholt werden</string>
     <string name="no_db_sources_title">Keine Quelle für die Datenbank</string>
     <string name="no_db_sources_text">Die Datenbank wird aus den Quellen in der Liste gebaut, und davon ist keine eingeschaltet. Tragen Sie eine ein oder schalten Sie eine wieder ein, dann wird die Datenbank von dort geholt.</string>
+    <string name="title_providers_activity">Nachschlage-Anbieter</string>
+    <string name="title_add_provider_activity">Anbieter hinzufügen</string>
+    <string name="title_edit_provider_activity">Anbieter bearbeiten</string>
+    <string name="providers_summary">Wo sich eine Nummer nachschlagen lässt und was davon in der Anrufinfo steht</string>
+    <string name="providers_hint">Das sind die Zeilen, die die Info zu einem Anruf unter „Nachschlagen bei …“ anbietet. Gefragt wird keiner davon, bevor eine Zeile angetippt wird. Schalten Sie aus, was Sie nicht sehen wollen; zum Verschieben am Griff ziehen.</string>
+    <string name="provider">Anbieter</string>
+    <string name="provider_add">Anbieter hinzufügen</string>
+    <string name="provider_name">Name</string>
+    <string name="provider_url">Adresse der Seite zu einer Nummer</string>
+    <string name="provider_url_notice">Schreiben Sie %1$s dorthin, wo die Nummer hingehört, und %2$s dorthin, wo ein Schlüssel hingehört.</string>
+    <string name="provider_url_empty">Eine Adresse wird gebraucht</string>
+    <string name="provider_token">Schlüssel oder Token</string>
+    <string name="provider_token_phone_block">API-Token</string>
+    <string name="provider_token_notice">Bleibt auf diesem Telefon; in einer Sicherung steht er nur, wenn Sie das so eingestellt haben.</string>
+    <string name="provider_enabled">In der Anrufinfo anbieten</string>
+    <string name="provider_lookup">Nachschlagen bei %s</string>
+    <string name="provider_web_search">Websuche</string>
+    <string name="provider_phone_block_address">die Seite Ihres PhoneBlock-Kontos</string>
+    <string name="provider_phone_block_notice">Das ist das PhoneBlock-Konto: Mit demselben Token werden Nummern gemeldet und Ihre persönlichen Listen geholt. Lassen Sie die Adresse leer, dann wird die Seite des Kontos verwendet.</string>
+    <string name="provider_delete_message">Diesen Anbieter entfernen? Er verschwindet nur aus der Anrufinfo, sonst ändert sich nichts.</string>
     <string name="source_add">Quelle hinzufügen</string>
     <string name="source_name">Name</string>
     <string name="source_type">Was sie enthält</string>

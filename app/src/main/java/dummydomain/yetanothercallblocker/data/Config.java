@@ -19,6 +19,7 @@ import dummydomain.yetanothercallblocker.sia.model.database.DbManager;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabase;
 import dummydomain.yetanothercallblocker.sia.network.DbDownloader;
 import dummydomain.yetanothercallblocker.sia.network.DbUpdateRequester;
+import dummydomain.yetanothercallblocker.data.provider.ProviderService;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceHttp;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
@@ -100,6 +101,8 @@ public class Config {
 
         SourceService sourceService = new SourceService(settings);
         YacbHolder.setSourceService(sourceService);
+
+        YacbHolder.setProviderService(new ProviderService(settings));
 
         /*
          * The database is fetched the way the source it comes from says: with whatever it

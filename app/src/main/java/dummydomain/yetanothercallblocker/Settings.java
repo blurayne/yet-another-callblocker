@@ -36,6 +36,9 @@ public class Settings extends GenericSettings {
     public static final String PREF_NUMBER_SOURCES = "numberSources";
     public static final String PREF_SOURCE_SECRETS = "sourceSecrets";
     public static final String PREF_SOURCES_MIGRATED = "sourcesMigrated";
+    public static final String PREF_PROVIDERS = "providers";
+    public static final String PREF_PROVIDER_SECRETS = "providerSecrets";
+    public static final String PREF_PROVIDERS_SEEDED = "providersSeeded";
     public static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
     public static final String PREF_BACKUP_SECRETS = "backupSecrets";
     public static final String PREF_AUTO_BACKUP = "autoBackup";
@@ -391,6 +394,33 @@ public class Settings extends GenericSettings {
     }
 
     /** Whether what older versions kept has been turned into the list of sources. */
+    /** The providers the dialog about a call offers, as JSON. */
+    public String getProviders() {
+        return getString(PREF_PROVIDERS, "");
+    }
+
+    public void setProviders(String providers) {
+        setString(PREF_PROVIDERS, providers);
+    }
+
+    /** The tokens of the providers, kept out of a backup unless the user asks. */
+    public String getProviderSecrets() {
+        return getString(PREF_PROVIDER_SECRETS, "");
+    }
+
+    public void setProviderSecrets(String secrets) {
+        setString(PREF_PROVIDER_SECRETS, secrets);
+    }
+
+    /** Whether the three the app has always offered have been put into the list. */
+    public boolean getProvidersSeeded() {
+        return getBoolean(PREF_PROVIDERS_SEEDED, false);
+    }
+
+    public void setProvidersSeeded(boolean seeded) {
+        setBoolean(PREF_PROVIDERS_SEEDED, seeded);
+    }
+
     public boolean getSourcesMigrated() {
         return getBoolean(PREF_SOURCES_MIGRATED, false);
     }

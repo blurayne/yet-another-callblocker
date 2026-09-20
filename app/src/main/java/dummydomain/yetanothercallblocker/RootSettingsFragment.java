@@ -55,6 +55,7 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_DB_MANAGEMENT = "dbManagement";
     private static final String PREF_PHONE_BLOCK_SCREEN = "phoneBlockScreen";
     private static final String PREF_NUMBER_SOURCES = "numberSources";
+    private static final String PREF_PROVIDERS = "providersScreen";
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
     private static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
     private static final String PREF_BACKUP_NOW = "backupNow";
@@ -246,6 +247,11 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
         requirePreference(PREF_NUMBER_SOURCES).setOnPreferenceClickListener(preference -> {
             startActivity(NumberSourcesActivity.getIntent(requireContext()));
+            return true;
+        });
+
+        requirePreference(PREF_PROVIDERS).setOnPreferenceClickListener(preference -> {
+            startActivity(ProvidersActivity.getIntent(requireContext()));
             return true;
         });
 

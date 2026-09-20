@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 import dummydomain.yetanothercallblocker.BuildConfig;
+import dummydomain.yetanothercallblocker.data.PhoneBlockList;
+import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.utils.DeferredInit;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -41,9 +43,6 @@ public class SourceTester {
 
     private static final int CONNECT_TIMEOUT_SECONDS = 20;
     private static final int READ_TIMEOUT_SECONDS = 20;
-
-    /** Where PhoneBlock answers whether it knows the token. */
-    private static final String PHONE_BLOCK_TEST_ENDPOINT = "test-connect";
 
     /** What a CardDAV server is asked, which is the least it has to understand. */
     private static final String PROPFIND_BODY
@@ -154,21 +153,33 @@ public class SourceTester {
     }
 
     /**
-     * Asks PhoneBlock what it asks itself before reporting: it is the one place that answers
-     * about the token without changing anything.
+     * Asks PhoneBlock for its list, the way the app asks for it.
+     *
+     * <p>It used to ask the endpoint that only answers about the token, which is a different
+     * question at a different address - and one that can fail while fetching the list works
+     * perfectly well. A test that takes another path than the thing it is testing is worth
+     * nothing, so this one sends the same address, the same parameters and the same token.
+     *
+     * <p>"since" keeps the answer small: everything the list has learned since what is
+     * already on the phone, which after the first fetch is next to nothing.
      */
     private static Result testPhoneBlock(NumberSource source, String secret) {
         HttpUrl url = HttpUrl.parse(source.getUrl());
         if (url == null) return new Result(Outcome.BAD_URL, 0, null, null);
 
-        HttpUrl.Builder builder = url.newBuilder().query(null);
+        HttpUrl.Builder builder = url.newBuilder().addQueryParameter("format", "json");
 
-        int segments = url.pathSegments().size();
-        if (segments > 0) builder.removePathSegment(segments - 1); // the "blocklist" part
+        PhoneBlockList list = YacbHolder.getPhoneBlockList();
+        if (list != null && list.getListVersion() > 0) {
+            builder.addQueryParameter("since", String.valueOf(list.getListVersion()));
+        }
 
-        HttpUrl testUrl = builder.addPathSegment(PHONE_BLOCK_TEST_ENDPOINT).build();
-
-        Request.Builder requestBuilder = newRequest(testUrl, source, secret);
+        /*
+         * No range is asked for: a file server understands one, an API that builds its answer
+         * may refuse it, and refusing is exactly the false alarm this is meant to end. The
+         * answer is dropped unread instead, which closes the connection after the headers.
+         */
+        Request.Builder requestBuilder = newRequest(builder.build(), source, secret);
 
         // PhoneBlock knows one way of logging in, whatever the source says about it
         if (source.getAuth() == NumberSource.Auth.NONE && !TextUtils.isEmpty(secret)) {

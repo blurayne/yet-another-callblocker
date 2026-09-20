@@ -27,6 +27,8 @@ public class ProviderHelper {
             case Provider.ID_PHONE_BLOCK: return "PhoneBlock";
             case Provider.ID_TELLOWS: return "tellows";
             case Provider.ID_WEB_SEARCH: return context.getString(R.string.provider_web_search);
+            case Provider.ID_CLEVER_DIALER: return "Clever Dialer";
+            case Provider.ID_DASOERTLICHE: return "Das \u00d6rtliche";
             default: return context.getString(R.string.provider);
         }
     }

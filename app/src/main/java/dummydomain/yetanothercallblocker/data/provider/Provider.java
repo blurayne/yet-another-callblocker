@@ -28,6 +28,11 @@ public class Provider {
     /** Looking the number up on the web, which is where it has always gone. */
     public static final String ID_WEB_SEARCH = "websearch";
 
+    public static final String ID_CLEVER_DIALER = "cleverdialer";
+
+    /** The phone book, which knows the numbers that are in it rather than the spam ones. */
+    public static final String ID_DASOERTLICHE = "dasoertliche";
+
     /**
      * Where the number goes in the address, in the form the provider wants it.
      *
@@ -100,9 +105,16 @@ public class Provider {
         this.enabled = enabled;
     }
 
-    /** One of the three the app knows by itself, which are kept rather than deleted. */
+    /**
+     * Whether this row is the PhoneBlock account rather than an address.
+     *
+     * <p>It is the one that can't be deleted: the token behind it reports numbers and fetches
+     * the personal lists, so throwing the row away would throw away more than a link. The
+     * others are addresses and can go - the app puts one back only when it first learns of
+     * it, never again.
+     */
     public boolean isBuiltIn() {
-        return ID_PHONE_BLOCK.equals(id) || ID_TELLOWS.equals(id) || ID_WEB_SEARCH.equals(id);
+        return ID_PHONE_BLOCK.equals(id);
     }
 
     /** Whether the address is built by the app rather than written out here. */

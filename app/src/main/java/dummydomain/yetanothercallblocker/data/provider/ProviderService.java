@@ -37,6 +37,45 @@ public class ProviderService {
     private static final String WEB_SEARCH_URL
             = "https://www.google.com/search?q=" + Provider.PLACEHOLDER_NUMBER;
 
+    private static final String CLEVER_DIALER_URL
+            = "https://www.cleverdialer.de/telefonnummer/" + Provider.PLACEHOLDER_NATIONAL;
+
+    private static final String DASOERTLICHE_URL
+            = "https://www.dasoertliche.de/?form_name=search_inv&ph="
+            + Provider.PLACEHOLDER_NATIONAL;
+
+    /**
+     * The providers the app offers by itself, and the version it learned each of them in.
+     *
+     * <p>A version is what keeps a later one from bringing back what the user has thrown
+     * away: everything up to the version that was last put in is left alone, and only what
+     * came after it is added.
+     */
+    private static final Defaults[] DEFAULTS = {
+            new Defaults(Provider.ID_PHONE_BLOCK, null, 1),
+            new Defaults(Provider.ID_TELLOWS, TELLOWS_URL, 1),
+            new Defaults(Provider.ID_WEB_SEARCH, WEB_SEARCH_URL, 1),
+            new Defaults(Provider.ID_CLEVER_DIALER, CLEVER_DIALER_URL, 2),
+            new Defaults(Provider.ID_DASOERTLICHE, DASOERTLICHE_URL, 2),
+    };
+
+    /** The highest version in {@link #DEFAULTS}. */
+    private static final int SEED_VERSION = 2;
+
+    private static class Defaults {
+
+        final String id;
+        final String url;
+        final int version;
+
+        Defaults(String id, String url, int version) {
+            this.id = id;
+            this.url = url;
+            this.version = version;
+        }
+
+    }
+
     private final Settings settings;
 
     public ProviderService(Settings settings) {
@@ -45,7 +84,7 @@ public class ProviderService {
 
     /** The providers, in the order the user put them in. */
     public List<Provider> getProviders() {
-        if (!settings.getProvidersSeeded()) seed();
+        if (settings.getProvidersSeededVersion() < SEED_VERSION) seed();
 
         return parse(settings.getProviders());
     }
@@ -215,25 +254,44 @@ public class ProviderService {
     }
 
     /**
-     * Puts the three the app has always offered into the list - once.
+     * Puts the ones the app knows into the list - each of them once, ever.
      *
-     * <p>Written down as having happened, so that a user who deletes all three gets an empty
-     * list rather than them back.
+     * <p>Which ones have been offered is written down as a number, so that a later version
+     * can add what it has learned since without bringing back what the user threw away.
      */
     private void seed() {
         List<Provider> providers = parse(settings.getProviders());
 
-        if (providers.isEmpty()) {
-            providers.add(builtIn(Provider.ID_PHONE_BLOCK, null));
-            providers.add(builtIn(Provider.ID_TELLOWS, TELLOWS_URL));
-            providers.add(builtIn(Provider.ID_WEB_SEARCH, WEB_SEARCH_URL));
+        int seeded = settings.getProvidersSeededVersion();
 
-            save(providers);
+        // the version that only knew whether it had happened at all offered the first three
+        if (seeded == 0 && settings.getProvidersSeeded()) seeded = 1;
 
-            LOG.info("seed() made providers of the three fixed rows");
+        boolean added = false;
+
+        for (Defaults defaults : DEFAULTS) {
+            if (defaults.version <= seeded) continue; // offered once already
+
+            boolean present = false;
+            for (Provider provider : providers) {
+                if (provider.getId().equals(defaults.id)) {
+                    present = true;
+                    break;
+                }
+            }
+
+            if (present) continue;
+
+            providers.add(builtIn(defaults.id, defaults.url));
+            added = true;
+
+            LOG.info("seed() added {}", defaults.id);
         }
 
+        if (added) save(providers);
+
         settings.setProvidersSeeded(true);
+        settings.setProvidersSeededVersion(SEED_VERSION);
     }
 
     private static Provider builtIn(String id, String url) {

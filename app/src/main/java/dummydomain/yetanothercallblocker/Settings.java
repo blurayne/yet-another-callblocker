@@ -39,6 +39,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_PROVIDERS = "providers";
     public static final String PREF_PROVIDER_SECRETS = "providerSecrets";
     public static final String PREF_PROVIDERS_SEEDED = "providersSeeded";
+    public static final String PREF_PROVIDERS_SEEDED_VERSION = "providersSeededVersion";
     public static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
     public static final String PREF_BACKUP_SECRETS = "backupSecrets";
     public static final String PREF_AUTO_BACKUP = "autoBackup";
@@ -412,13 +413,27 @@ public class Settings extends GenericSettings {
         setString(PREF_PROVIDER_SECRETS, secrets);
     }
 
-    /** Whether the three the app has always offered have been put into the list. */
+    /** Whether the ones the app knows have been put into the list; see the version below. */
     public boolean getProvidersSeeded() {
         return getBoolean(PREF_PROVIDERS_SEEDED, false);
     }
 
     public void setProvidersSeeded(boolean seeded) {
         setBoolean(PREF_PROVIDERS_SEEDED, seeded);
+    }
+
+    /**
+     * How far the list of known providers had got when they were last put in.
+     *
+     * <p>A version the app has already offered is never offered again, so that one the user
+     * deleted stays deleted while a newly known one still arrives.
+     */
+    public int getProvidersSeededVersion() {
+        return getInt(PREF_PROVIDERS_SEEDED_VERSION, 0);
+    }
+
+    public void setProvidersSeededVersion(int version) {
+        setInt(PREF_PROVIDERS_SEEDED_VERSION, version);
     }
 
     public boolean getSourcesMigrated() {

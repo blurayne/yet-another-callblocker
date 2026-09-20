@@ -364,11 +364,12 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_filtering_status_nothing_set">Filtering is on, but nothing is set to keep</string>
     <string name="db_filtering_status_copy_kept">a copy of the unfiltered database is kept</string>
     <string name="db_filtering_status_no_copy">no copy of the unfiltered database is kept</string>
+    <string name="db_filtering_status_numbers">%s numbers</string>
     <string name="db_filtering_category_what">What is kept</string>
     <string name="db_filtering_category_apply">Apply</string>
     <string name="db_filtering_category_storage">Storage</string>
     <string name="db_filtering_info">Explanation</string>
-    <string name="db_filtering_info_summary">The database holds numbers from everywhere. Filtering keeps the ones that can reach you and drops the rest, which saves storage; nothing else about the app changes. It happens while the database is fetched and after every update. Filtering always starts from the unfiltered database - when no copy is kept, the sources are asked for it again - so changing what is kept never narrows an already narrowed database</string>
+    <string name="db_filtering_info_summary">The database holds numbers from everywhere. Filtering keeps the ones that can reach you and drops the rest, which saves storage; nothing else about the app changes. It happens while the database is fetched and after every update. Every source is compiled into one table first and a copy of it is put aside; the filter then runs on that table, so filtering always starts from the unfiltered database - and when no copy is kept, the sources are asked for it again rather than a narrowed database being narrowed further</string>
     <string name="db_filtering_enabled">Filtering enabled</string>
     <string name="db_filtering_enabled_summary">Enables the filtering during the database download and update</string>
     <string name="db_filtering_prefixes_to_keep">Prefixes to keep</string>

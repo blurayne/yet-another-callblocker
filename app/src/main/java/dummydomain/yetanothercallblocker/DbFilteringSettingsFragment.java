@@ -16,9 +16,11 @@ import androidx.preference.PreferenceScreen;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.text.NumberFormat;
 import java.util.List;
 
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.DbFilterRevertedEvent;
 import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
@@ -282,7 +284,18 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
                 ? R.string.db_filtering_status_copy_kept
                 : R.string.db_filtering_status_no_copy);
 
-        requirePreference(PREF_STATUS).setSummary(state + " \u00b7 " + copy);
+        StringBuilder summary = new StringBuilder(state);
+
+        // how many numbers are actually in there, which is what filtering is about
+        long count = new NumbersCompiler(requireContext()).getCount();
+        if (count >= 0) {
+            summary.append(" \u00b7 ").append(getString(R.string.db_filtering_status_numbers,
+                    NumberFormat.getInstance().format(count)));
+        }
+
+        summary.append(" \u00b7 ").append(copy);
+
+        requirePreference(PREF_STATUS).setSummary(summary.toString());
     }
 
     private boolean hasMaster() {

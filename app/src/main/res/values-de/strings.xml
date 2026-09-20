@@ -488,11 +488,12 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_filtering_status_nothing_set">Filterung ist an, aber es ist nichts zum Behalten eingetragen</string>
     <string name="db_filtering_status_copy_kept">eine Kopie der ungefilterten Datenbank ist vorhanden</string>
     <string name="db_filtering_status_no_copy">es ist keine Kopie der ungefilterten Datenbank vorhanden</string>
+    <string name="db_filtering_status_numbers">%s Nummern</string>
     <string name="db_filtering_category_what">Was behalten wird</string>
     <string name="db_filtering_category_apply">Anwenden</string>
     <string name="db_filtering_category_storage">Speicherplatz</string>
     <string name="db_filtering_info">Erklärung</string>
-    <string name="db_filtering_info_summary">Die Datenbank enthält Nummern aus aller Welt. Beim Filtern bleiben die, die Sie erreichen können, der Rest fällt weg; das spart Speicherplatz und ändert sonst nichts an der App. Gefiltert wird beim Holen der Datenbank und nach jeder Aktualisierung. Gefiltert wird immer ausgehend von der ungefilterten Datenbank – ist keine Kopie vorhanden, wird sie bei den Quellen neu geholt –, damit eine Änderung nie eine schon eingeschränkte Datenbank weiter einschränkt</string>
+    <string name="db_filtering_info_summary">Die Datenbank enthält Nummern aus aller Welt. Beim Filtern bleiben die, die Sie erreichen können, der Rest fällt weg; das spart Speicherplatz und ändert sonst nichts an der App. Gefiltert wird beim Holen der Datenbank und nach jeder Aktualisierung. Alle Quellen werden zuerst zu einer Tabelle zusammengebaut und davon eine Kopie beiseitegelegt; gefiltert wird dann diese Tabelle, also immer ausgehend von der ungefilterten Datenbank – und ist keine Kopie vorhanden, wird bei den Quellen neu geholt, statt eine schon eingeschränkte Tabelle weiter einzuschränken</string>
     <string name="db_filtering_enabled">Filterung eingeschaltet</string>
     <string name="db_filtering_enabled_summary">Beim Herunterladen und Aktualisieren der Datenbank filtern</string>
     <string name="db_filtering_prefixes_to_keep">Zu behaltende Vorwahlen</string>

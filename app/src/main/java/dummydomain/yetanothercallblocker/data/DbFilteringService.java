@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dummydomain.yetanothercallblocker.Settings;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseDataSlice;
 import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
 
@@ -194,6 +195,8 @@ public class DbFilteringService {
 
             settings.setDbFiltered(true);
 
+            filterNumbers();
+
             if (!settings.getDbFilteringKeepMaster()) {
                 LOG.debug("filter() dropping the master database");
                 delete(masterDir);
@@ -268,6 +271,8 @@ public class DbFilteringService {
             settings.setDbFiltered(false);
             reloadDatabases();
 
+            // a build leaves the table unfiltered, so there is nothing else to undo
+
             return true;
         }
 
@@ -275,6 +280,8 @@ public class DbFilteringService {
 
         delete(masterDir);
         settings.setDbFiltered(false);
+
+        new NumbersCompiler(context).revertToShadowCopy();
 
         reloadDatabases();
 
@@ -366,6 +373,26 @@ public class DbFilteringService {
         }
         return name.substring(SLICE_NAME_PREFIX.length(),
                 name.length() - SLICE_NAME_POSTFIX.length());
+    }
+
+    /**
+     * Filters the compiled table the way the files are filtered: from the copy that was put
+     * aside when it was built, never from a table that has been narrowed already.
+     */
+    private void filterNumbers() {
+        NumbersCompiler compiler = new NumbersCompiler(context);
+
+        if (compiler.hasShadowCopy()) {
+            compiler.revertToShadowCopy();
+        } else {
+            compiler.makeShadowCopy();
+        }
+
+        compiler.filter(DbFilteringUtils.getPrefixesToKeep(settings),
+                settings.getDbFilteringKeepShortNumbers()
+                        ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0);
+
+        if (!settings.getDbFilteringKeepMaster()) compiler.dropShadowCopy();
     }
 
     /** Builds the database from the sources, which is what an unfiltered database is. */

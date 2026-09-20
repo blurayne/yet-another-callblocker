@@ -1,0 +1,157 @@
+package dummydomain.yetanothercallblocker.data.numbers;
+
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
+import android.text.TextUtils;
+
+import java.io.Closeable;
+
+/**
+ * Writes what a source says into the table, a field at a time.
+ *
+ * <p>A source only ever sets what it knows. The community database brings a rating and a
+ * category, a phone book brings a name, a list of numbers to block brings nothing but the
+ * fact that it is on the list - so a layer must be able to change the rating of a number
+ * without erasing the category another source gave it, which is why a merge reads the row
+ * first rather than writing over it.
+ *
+ * <p>The database itself is the exception: it is written into an empty table and has nothing
+ * to merge with, so it goes in with one statement per row and no read at all. That is the
+ * difference between a build that takes a minute and one that takes ten.
+ */
+public class NumbersWriter implements Closeable {
+
+    private static final String INSERT_NUMBER
+            = "INSERT OR REPLACE INTO numbers (number, flags, score, source, updated)"
+            + " VALUES (?, ?, ?, ?, ?)";
+
+    private static final String DELETE_NUMBER = "DELETE FROM numbers WHERE number = ?";
+
+    private static final String INSERT_NAME
+            = "INSERT OR REPLACE INTO names (number, name, source) VALUES (?, ?, ?)";
+
+    private static final String DELETE_NAME = "DELETE FROM names WHERE number = ?";
+
+    private final SQLiteDatabase db;
+
+    private final SQLiteStatement insertNumber;
+    private final SQLiteStatement deleteNumber;
+    private final SQLiteStatement insertName;
+    private final SQLiteStatement deleteName;
+
+    /** Days since the epoch: what "when did this arrive" is written as. */
+    private final int today;
+
+    public NumbersWriter(SQLiteDatabase db) {
+        this.db = db;
+
+        insertNumber = db.compileStatement(INSERT_NUMBER);
+        deleteNumber = db.compileStatement(DELETE_NUMBER);
+        insertName = db.compileStatement(INSERT_NAME);
+        deleteName = db.compileStatement(DELETE_NAME);
+
+        today = (int) (System.currentTimeMillis() / (24L * 60 * 60 * 1000));
+    }
+
+    /** Puts a source into the table the rows point at, and says which row it is. */
+    public int addSource(String uuid, String name, int type, int layer) {
+        try (SQLiteStatement statement = db.compileStatement(
+                "INSERT INTO sources (uuid, name, type, layer) VALUES (?, ?, ?, ?)")) {
+            bindString(statement, 1, uuid);
+            bindString(statement, 2, name);
+            statement.bindLong(3, type);
+            statement.bindLong(4, layer);
+
+            return (int) statement.executeInsert();
+        }
+    }
+
+    /**
+     * Writes a row without looking at what was there - for the source that fills an empty
+     * table.
+     */
+    public void put(long number, int flags, int score, int sourceId) {
+        if (number <= 0) return;
+
+        insertNumber.bindLong(1, number);
+        insertNumber.bindLong(2, flags);
+        insertNumber.bindLong(3, score);
+        insertNumber.bindLong(4, sourceId);
+        insertNumber.bindLong(5, today);
+
+        insertNumber.executeInsert();
+    }
+
+    /**
+     * Writes what this source knows and leaves the rest of the row as it is.
+     *
+     * @param rating the rating, or null when this source doesn't have one
+     * @param category the category, or null when this source doesn't have one
+     * @param score how strongly it feels, or null when it doesn't say
+     * @param personal whether this is the user's own word rather than a stranger's
+     */
+    public void merge(long number, Integer rating, Integer category, Integer score,
+                      boolean personal, int sourceId) {
+        if (number <= 0) return;
+
+        int flags = 0;
+        int currentScore = 0;
+
+        try (Cursor cursor = db.rawQuery("SELECT flags, score FROM numbers WHERE number = ?",
+                new String[]{String.valueOf(number)})) {
+            if (cursor.moveToFirst()) {
+                flags = cursor.getInt(0);
+                currentScore = cursor.getInt(1);
+            }
+        }
+
+        if (rating != null) flags = NumberFlags.withRating(flags, rating);
+        if (category != null) flags = NumberFlags.withCategory(flags, category);
+        if (personal) flags = NumberFlags.withFlag(flags, NumberFlags.FLAG_PERSONAL, true);
+
+        // a merge never leaves the row marked as taken out: this source has just spoken for it
+        flags = NumberFlags.withFlag(flags, NumberFlags.FLAG_DELETED, false);
+
+        put(number, flags, score != null ? score : currentScore, sourceId);
+    }
+
+    /** Takes a number out, which is what a source says when it disagrees with the one below. */
+    public void delete(long number) {
+        if (number <= 0) return;
+
+        deleteNumber.bindLong(1, number);
+        deleteNumber.executeUpdateDelete();
+
+        deleteName.bindLong(1, number);
+        deleteName.executeUpdateDelete();
+    }
+
+    /** The name a phone book has for the number, or nothing when it has none. */
+    public void putName(long number, String name, int sourceId) {
+        if (number <= 0 || TextUtils.isEmpty(name)) return;
+
+        insertName.bindLong(1, number);
+        insertName.bindString(2, name);
+        insertName.bindLong(3, sourceId);
+
+        insertName.executeInsert();
+    }
+
+    private static void bindString(SQLiteStatement statement, int index, String value) {
+        if (value != null) {
+            statement.bindString(index, value);
+        } else {
+            statement.bindNull(index);
+        }
+    }
+
+    @Override
+    public void close() {
+        insertNumber.close();
+        deleteNumber.close();
+        insertName.close();
+        deleteName.close();
+    }
+
+}

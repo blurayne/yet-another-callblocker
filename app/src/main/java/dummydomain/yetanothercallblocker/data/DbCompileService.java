@@ -23,6 +23,7 @@ import dummydomain.yetanothercallblocker.R;
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceHttp;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseDataSlice;
@@ -159,6 +160,8 @@ public class DbCompileService {
         dropLayersOfGoneSources(sources);
 
         if (!applyLayers(sources)) return new Result(Status.FAILED, total - failed, failed);
+
+        buildNumbersTable(sources, listener);
 
         LOG.info("compile() built the database from {} of {} sources", total - failed, total);
 
@@ -377,6 +380,44 @@ public class DbCompileService {
         } catch (Exception e) {
             LOG.warn("countItems() couldn't read {}", file, e);
             return -1;
+        }
+    }
+
+    /**
+     * Writes what every source brought into the one table, and puts a copy aside.
+     *
+     * <p>This is where the sources stop being files in three formats and become rows: the
+     * database fills the empty table, the updates and the layers go on top of it, and what
+     * comes out is one file with the number as its key.
+     *
+     * <p>The copy is made while the table is still whole, because filtering is what happens
+     * next and there has to be something to go back to that isn't a download.
+     */
+    private void buildNumbersTable(List<NumberSource> sources, ProgressListener listener) {
+        NumbersCompiler compiler = new NumbersCompiler(context);
+
+        String dataDir = YacbHolder.getStorage().getDataDirPath();
+
+        NumbersCompiler.Result result = compiler.compile(sources,
+                new File(dataDir, SiaConstants.SIA_PATH_PREFIX),
+                new File(dataDir, SiaConstants.SIA_SECONDARY_PATH_PREFIX),
+                getLayersDir(),
+                listener != null ? listener::onProgress : null);
+
+        if (!result.ok) {
+            LOG.warn("buildNumbersTable() the table couldn't be built");
+            return;
+        }
+
+        compiler.makeShadowCopy();
+
+        if (settings.isDbFilteringEnabled()) {
+            compiler.filter(DbFilteringUtils.getPrefixesToKeep(settings),
+                    settings.getDbFilteringKeepShortNumbers()
+                            ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0);
+
+            // the copy is what the filtering can be taken back to; not everyone wants to pay
+            if (!settings.getDbFilteringKeepMaster()) compiler.dropShadowCopy();
         }
     }
 

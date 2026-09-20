@@ -53,7 +53,6 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_BLACKLIST_SCREEN = "blacklistScreen";
     private static final String PREF_WHITELIST_SCREEN = "whitelistScreen";
     private static final String PREF_DB_MANAGEMENT = "dbManagement";
-    private static final String PREF_PHONE_BLOCK_SCREEN = "phoneBlockScreen";
     private static final String PREF_NUMBER_SOURCES = "numberSources";
     private static final String PREF_PROVIDERS = "providersScreen";
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
@@ -669,14 +668,11 @@ public class RootSettingsFragment extends BaseSettingsFragment {
                 : getString(R.string.whitelist_summary));
     }
 
-    /** Says how fresh each source of numbers is, and whether PhoneBlock has anything to block. */
+    /** Says how fresh the community database is, and whether PhoneBlock has anything to block. */
     private void updateSourcePreferences() {
         requirePreference(PREF_DB_MANAGEMENT).setSummary(getCommunityDbStatus());
 
-        requirePreference(PREF_PHONE_BLOCK_SCREEN)
-                .setSummary(PhoneBlockHelper.getListStatus(requireContext()));
-
-        // the list can only block while it is kept at all, which is a question of its own screen
+        // the list can only block while it is fetched at all, which the sources decide
         requirePreference(Settings.PREF_BLOCK_PHONE_BLOCK)
                 .setEnabled(App.getSettings().getUsePhoneBlock());
     }

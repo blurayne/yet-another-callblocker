@@ -81,15 +81,30 @@
             android:text="@string/provider_token_notice"
             android:textSize="12sp" />
 
-        <Button
-            android:id="@+id/checkTokenButton"
-            style="?attr/borderlessButtonStyle"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="-4dp"
-            android:layout_marginStart="-4dp"
-            android:onClick="onCheckTokenClicked"
-            android:text="@string/phone_block_check_token" />
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/checkTokenButton"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="-4dp"
+                android:layout_marginStart="-4dp"
+                android:onClick="onCheckTokenClicked"
+                android:text="@string/phone_block_check_token" />
+
+            <Button
+                android:id="@+id/getTokenButton"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="onGetTokenClicked"
+                android:text="@string/phone_block_get_token" />
+
+        </LinearLayout>
 
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/enabledSwitch"

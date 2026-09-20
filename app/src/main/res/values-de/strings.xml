@@ -254,6 +254,13 @@
     <string name="provider_phone_block_notice">Das ist das PhoneBlock-Konto: Mit demselben Token werden Nummern gemeldet und Ihre persönlichen Listen geholt. Lassen Sie die Adresse leer, dann wird die Seite des Kontos verwendet.</string>
     <string name="provider_delete_message">Diesen Anbieter entfernen? Er verschwindet nur aus der Anrufinfo, sonst ändert sich nichts.</string>
     <string name="source_add">Quelle hinzufügen</string>
+    <string name="source_preset_database">Gemeinschaftsdatenbank (die, die die App immer genutzt hat)</string>
+    <string name="source_preset_phone_block">PhoneBlock-Liste</string>
+    <string name="source_preset_custom">Etwas anderes\u2026</string>
+    <string name="source_fetch">Jetzt abrufen</string>
+    <string name="source_fetching">Wird abgerufen\u2026</string>
+    <string name="sources_compile">Datenbank jetzt bauen</string>
+    <string name="sources_compiling">Datenbank wird gebaut\u2026</string>
     <string name="source_name">Name</string>
     <string name="source_type">Was sie enthält</string>
     <string name="source_type_database">Community-Datenbank</string>

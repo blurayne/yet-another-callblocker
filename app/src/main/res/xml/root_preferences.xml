@@ -115,10 +115,6 @@
             app:key="dbFiltering"
             app:title="@string/settings_screen_db_filtering" />
         <Preference
-            app:fragment="dummydomain.yetanothercallblocker.PhoneBlockSettingsFragment"
-            app:key="phoneBlockScreen"
-            app:title="@string/settings_category_phone_block" />
-        <Preference
             app:key="numberSources"
             app:persistent="false"
             app:summary="@string/sources_summary"

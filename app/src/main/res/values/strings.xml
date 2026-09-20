@@ -119,6 +119,13 @@
     <string name="provider_phone_block_notice">This is the PhoneBlock account: the same token reports numbers and fetches your personal lists. Leave the address empty to use the account\'s own page.</string>
     <string name="provider_delete_message">Remove this provider? It only disappears from the call info; nothing else changes.</string>
     <string name="source_add">Add a source</string>
+    <string name="source_preset_database">Community database (the one the app has always used)</string>
+    <string name="source_preset_phone_block">PhoneBlock list</string>
+    <string name="source_preset_custom">Something else\u2026</string>
+    <string name="source_fetch">Fetch now</string>
+    <string name="source_fetching">Fetching\u2026</string>
+    <string name="sources_compile">Build the database now</string>
+    <string name="sources_compiling">Building the database\u2026</string>
     <string name="source_name">Name</string>
     <string name="source_type">What it holds</string>
     <string name="source_type_database">Community database</string>

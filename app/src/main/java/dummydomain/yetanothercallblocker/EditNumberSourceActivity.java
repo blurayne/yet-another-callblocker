@@ -33,11 +33,23 @@ import dummydomain.yetanothercallblocker.data.source.SourceService;
 public class EditNumberSourceActivity extends AppCompatActivity {
 
     private static final String PARAM_ID = "sourceId";
+    private static final String PARAM_TYPE = "sourceType";
+    private static final String PARAM_URL = "sourceUrl";
+    private static final String PARAM_AUTH = "sourceAuth";
 
     public static Intent getIntent(Context context, String id) {
         Intent intent = new Intent(context, EditNumberSourceActivity.class);
         if (id != null) intent.putExtra(PARAM_ID, id);
         return intent;
+    }
+
+    /** A new source, with what is known about one of the places the app can fetch from. */
+    public static Intent getIntent(Context context, NumberSource.Type type, String url,
+                                   NumberSource.Auth auth) {
+        return new Intent(context, EditNumberSourceActivity.class)
+                .putExtra(PARAM_TYPE, type.name())
+                .putExtra(PARAM_URL, url)
+                .putExtra(PARAM_AUTH, auth.name());
     }
 
     private final SourceService sourceService = YacbHolder.getSourceService();
@@ -83,6 +95,14 @@ public class EditNumberSourceActivity extends AppCompatActivity {
             setTitle(R.string.title_edit_source_activity);
         } else {
             source = new NumberSource();
+
+            // what the user picked when adding it, which is what the form starts from
+            Intent intent = getIntent();
+            if (intent.hasExtra(PARAM_TYPE)) {
+                source.setType(NumberSource.Type.valueOf(intent.getStringExtra(PARAM_TYPE)));
+                source.setUrl(intent.getStringExtra(PARAM_URL));
+                source.setAuth(NumberSource.Auth.valueOf(intent.getStringExtra(PARAM_AUTH)));
+            }
         }
 
         if (savedInstanceState == null) fill();

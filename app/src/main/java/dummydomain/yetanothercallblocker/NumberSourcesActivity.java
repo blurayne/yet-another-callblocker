@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,11 +16,13 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,9 +30,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
+import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
+import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
+import dummydomain.yetanothercallblocker.sia.model.database.DbManager;
+import dummydomain.yetanothercallblocker.work.TaskService;
 
 /**
  * The places the app gets numbers from, as a list the user can add to and put in order.
@@ -76,7 +88,59 @@ public class NumberSourcesActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        EventUtils.register(this);
+
         reload(); // a source may have been edited on the screen this one leads to
+    }
+
+    @Override
+    protected void onStop() {
+        EventUtils.unregister(this);
+
+        super.onStop();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.activity_number_sources, menu);
+        return true;
+    }
+
+    /** Builds the database from the sources again, in the order the list has them. */
+    public void onCompileClicked(MenuItem item) {
+        Toast.makeText(this, R.string.sources_compiling, Toast.LENGTH_SHORT).show();
+
+        TaskService.start(this, TaskService.TASK_DOWNLOAD_MAIN_DB);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMainDbDownloadFinished(MainDbDownloadFinishedEvent event) {
+        reload(); // every source that was asked wrote down how it went
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onPhoneBlockUpdateFinished(PhoneBlockUpdateFinishedEvent event) {
+        reload();
+
+        String message;
+        switch (event.result.status) {
+            case UPDATED:
+                message = getString(R.string.phone_block_update_result, event.result.size);
+                break;
+
+            case NOT_DUE:
+                message = getString(R.string.phone_block_update_not_due, event.result.size);
+                break;
+
+            case NOT_CONFIGURED:
+                return; // the source is switched off, there is nothing to say
+
+            default:
+                message = getString(R.string.phone_block_update_failed);
+                break;
+        }
+
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
     private void reload() {
@@ -86,8 +150,35 @@ public class NumberSourcesActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
+    /**
+     * Adding a source starts from the ones the app knows, because their addresses are the
+     * part nobody remembers: the community database it has always used, and the PhoneBlock
+     * list. Anything else starts from an empty form.
+     */
     public void onAddClicked(View view) {
-        startActivity(EditNumberSourceActivity.getIntent(this, null));
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.source_add)
+                .setItems(R.array.source_presets, (dialog, which) -> {
+                    switch (which) {
+                        case 0:
+                            startActivity(EditNumberSourceActivity.getIntent(this,
+                                    NumberSource.Type.DATABASE, DbManager.DEFAULT_URL,
+                                    NumberSource.Auth.NONE));
+                            break;
+
+                        case 1:
+                            startActivity(EditNumberSourceActivity.getIntent(this,
+                                    NumberSource.Type.PHONE_BLOCK, PhoneBlockService.DEFAULT_URL,
+                                    NumberSource.Auth.BEARER));
+                            break;
+
+                        default:
+                            startActivity(EditNumberSourceActivity.getIntent(this, null));
+                            break;
+                    }
+                })
+                .setNegativeButton(R.string.back, null)
+                .show();
     }
 
     /** What the row says about a source: its part in the database, how often, how it last went. */
@@ -97,7 +188,10 @@ public class NumberSourcesActivity extends AppCompatActivity {
         parts.add(getRole(source));
         parts.add(getString(getUpdatesName(source.getUpdates())));
 
-        if (!TextUtils.isEmpty(source.getLastResult())) {
+        if (source.getType() == NumberSource.Type.PHONE_BLOCK) {
+            // the list keeps its own account of when it was fetched and how big it is
+            parts.add(PhoneBlockHelper.getListStatus(this));
+        } else if (!TextUtils.isEmpty(source.getLastResult())) {
             parts.add(source.getLastResult());
         } else if (source.getLastUpdate() > 0) {
             parts.add(getString(R.string.source_last_update, DateUtils.getRelativeTimeSpanString(
@@ -233,7 +327,7 @@ public class NumberSourcesActivity extends AppCompatActivity {
         class ViewHolder extends RecyclerView.ViewHolder {
 
             final TextView name, url, status;
-            final Button testButton;
+            final Button testButton, fetchButton;
             final SwitchCompat enabledSwitch;
             final ImageView dragHandle;
 
@@ -257,6 +351,7 @@ public class NumberSourcesActivity extends AppCompatActivity {
                 url = itemView.findViewById(R.id.url);
                 status = itemView.findViewById(R.id.status);
                 testButton = itemView.findViewById(R.id.testButton);
+                fetchButton = itemView.findViewById(R.id.fetchButton);
                 enabledSwitch = itemView.findViewById(R.id.enabledSwitch);
                 dragHandle = itemView.findViewById(R.id.dragHandle);
 
@@ -279,6 +374,11 @@ public class NumberSourcesActivity extends AppCompatActivity {
                     NumberSource source = getSource();
                     if (source != null) test(source);
                 });
+
+                fetchButton.setOnClickListener(v -> {
+                    NumberSource source = getSource();
+                    if (source != null) fetch(source);
+                });
             }
 
             void bind(NumberSource source) {
@@ -295,6 +395,13 @@ public class NumberSourcesActivity extends AppCompatActivity {
                 enabledSwitch.setChecked(source.isEnabled());
                 enabledSwitch.setOnCheckedChangeListener(enabledListener);
 
+                /*
+                 * A PhoneBlock list is fetched by itself; the database is built from all the
+                 * sources at once, which is what the menu does rather than a row.
+                 */
+                fetchButton.setVisibility(source.getType() == NumberSource.Type.PHONE_BLOCK
+                        ? View.VISIBLE : View.GONE);
+
                 testButton.setEnabled(true);
             }
 
@@ -304,6 +411,15 @@ public class NumberSourcesActivity extends AppCompatActivity {
 
                 return position >= 0 && position < sources.size()
                         ? sources.get(position) : null;
+            }
+
+            /** Asks the source for its numbers now, rather than waiting for the next day. */
+            private void fetch(NumberSource source) {
+                Toast.makeText(NumberSourcesActivity.this,
+                        R.string.source_fetching, Toast.LENGTH_SHORT).show();
+
+                TaskService.start(NumberSourcesActivity.this,
+                        TaskService.TASK_UPDATE_PHONE_BLOCK);
             }
 
             /**

@@ -88,6 +88,11 @@ public class EditProviderActivity extends AppCompatActivity {
         findViewById(R.id.phoneBlockNotice).setVisibility(phoneBlock ? View.VISIBLE : View.GONE);
         findViewById(R.id.checkTokenButton).setVisibility(phoneBlock ? View.VISIBLE : View.GONE);
 
+        // the token is on a page of the account, which is easier opened than typed
+        findViewById(R.id.getTokenButton).setVisibility(
+                phoneBlock && PhoneBlockHelper.getTokenPageUrl() != null
+                        ? View.VISIBLE : View.GONE);
+
         tokenTextField.setHint(getString(phoneBlock
                 ? R.string.provider_token_phone_block : R.string.provider_token));
     }
@@ -134,6 +139,14 @@ public class EditProviderActivity extends AppCompatActivity {
                 })
                 .setNegativeButton(R.string.back, null)
                 .show();
+    }
+
+    /** Opens the page of the account the token is on. */
+    public void onGetTokenClicked(View view) {
+        String url = PhoneBlockHelper.getTokenPageUrl();
+        if (url == null) return;
+
+        IntentHelper.startActivity(this, IntentHelper.getWebIntent(url));
     }
 
     /** Asks PhoneBlock whether the token that is typed in works. */

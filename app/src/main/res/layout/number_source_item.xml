@@ -52,18 +52,36 @@
             android:textSize="12sp"
             tools:text="The database · daily · test: works, and looks like a tar.gz archive" />
 
-        <Button
-            android:id="@+id/testButton"
-            style="?attr/borderlessButtonStyle"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="-4dp"
-            android:layout_marginStart="-4dp"
-            android:minHeight="0dp"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"
-            android:text="@string/source_test"
-            android:textSize="12sp" />
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/testButton"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="-4dp"
+                android:layout_marginStart="-4dp"
+                android:minHeight="0dp"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:text="@string/source_test"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/fetchButton"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="0dp"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:text="@string/source_fetch"
+                android:textSize="12sp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

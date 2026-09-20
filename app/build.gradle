@@ -32,6 +32,48 @@ if (keystorePath != null && !signRelease) {
     logger.warn("The keystore ${keystorePath} doesn't exist, the release build won't be signed")
 }
 
+/**
+ * What the working tree was when this was built.
+ *
+ * <p>A build that isn't the one someone thinks it is costs an evening, so the APK carries the
+ * revision it came from, the branch, and whether anything was uncommitted at the time.
+ */
+def gitOutput(File dir, String... command) {
+    try {
+        def process = new ProcessBuilder(command).directory(dir).redirectErrorStream(true).start()
+        def output = process.inputStream.text.trim()
+
+        return process.waitFor() == 0 ? output : ""
+    } catch (Exception ignored) {
+        return ""
+    }
+}
+
+def gitRevision = {
+    def revision = gitOutput(rootDir, "git", "rev-parse", "--short=8", "HEAD")
+    if (!revision) return "unknown"
+
+    // a build from a tree with changes in it is not the revision it names
+    return gitOutput(rootDir, "git", "status", "--porcelain") ? revision + "+" : revision
+}()
+
+def gitBranch = {
+    // on CI the checkout is detached, and the name is in the environment instead
+    def name = System.getenv("GITHUB_REF_NAME")
+    if (name) return name
+
+    name = gitOutput(rootDir, "git", "rev-parse", "--abbrev-ref", "HEAD")
+
+    return name && name != "HEAD" ? name : "unknown"
+}()
+
+def buildTime = {
+    def format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm 'UTC'", Locale.US)
+    format.timeZone = TimeZone.getTimeZone("UTC")
+
+    return format.format(new Date())
+}()
+
 android {
     compileSdkVersion 33
     defaultConfig {
@@ -40,6 +82,10 @@ android {
         targetSdkVersion 33
         versionCode 5170
         versionName "0.5.17"
+
+        buildConfigField "String", "GIT_REVISION", "\"${gitRevision}\""
+        buildConfigField "String", "GIT_BRANCH", "\"${gitBranch}\""
+        buildConfigField "String", "BUILD_TIME", "\"${buildTime}\""
 
         javaCompileOptions {
             annotationProcessorOptions {

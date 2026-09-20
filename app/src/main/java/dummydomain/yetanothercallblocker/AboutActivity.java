@@ -43,8 +43,18 @@ public class AboutActivity extends AppCompatActivity {
         setLink(R.id.translate, R.string.url_translate, R.string.translate);
         setLink(R.id.issues, R.string.url_issues, R.string.issues);
 
-        ((TextView) findViewById(R.id.app_version)).setText(
-                getString(R.string.version_string, BuildConfig.VERSION_NAME));
+        ((TextView) findViewById(R.id.app_version)).setText(getString(R.string.version_string,
+                BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE));
+
+        /*
+         * Which build this actually is. A screenshot of something that was fixed an hour ago
+         * costs an evening, and the answer is the revision it was built from, the branch it
+         * came off, and when - the plus after the revision means the tree had changes in it.
+         */
+        ((TextView) findViewById(R.id.build_info)).setText(
+                getString(R.string.build_info, BuildConfig.BUILD_TYPE,
+                        BuildConfig.GIT_BRANCH, BuildConfig.GIT_REVISION)
+                        + "\n" + getString(R.string.build_time, BuildConfig.BUILD_TIME));
 
         dbInfoTv = findViewById(R.id.db_info);
 

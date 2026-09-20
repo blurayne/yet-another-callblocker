@@ -554,7 +554,9 @@ Tokens and passwords come back only if the backup was made with them in it.</str
 
     <string name="open_about_activity">About</string>
     <string name="about_activity">About</string>
-    <string name="version_string">v%s</string>
+    <string name="version_string">v%1$s (%2$d)</string>
+    <string name="build_info">%1$s \u00b7 %2$s \u00b7 %3$s</string>
+    <string name="build_time">built %s</string>
     <string name="db_version">Database version: %s</string>
     <string name="db_version_not_available">n/a</string>
     <string name="db_last_update_check">Last update check: %s</string>

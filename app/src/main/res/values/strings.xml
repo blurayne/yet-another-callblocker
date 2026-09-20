@@ -155,12 +155,17 @@
     <string name="backup_now_summary">Settings, blacklist and whitelist as a JSON file</string>
     <string name="backup_last">Last backup: %s</string>
     <string name="backup_message">The file holds your settings and both lists - your own numbers, in other words - so keep it somewhere you would keep those.\n\nThe PhoneBlock token is not in it: it is the password to your account rather than a setting. Enter it again on the other phone; the page it comes from is named in the PhoneBlock settings.</string>
+    <string name="backup_secrets">Include passwords and tokens</string>
+    <string name="backup_secrets_summary">Write the PhoneBlock token and the passwords of the sources into the backup as well. The file then holds them in plain text: keep it where you would keep the passwords themselves</string>
+    <string name="backup_message_with_secrets">The file holds your settings, both lists - your own numbers, in other words - and, because you asked for it, your tokens and passwords in plain text.\n\nKeep it where you would keep the passwords themselves.</string>
     <string name="backup_now_confirmation">Back up</string>
     <string name="backup_done">Backup written</string>
     <string name="backup_failed">The backup could not be written</string>
     <string name="backup_restore">Restore</string>
     <string name="backup_restore_summary">Read the backup from a directory</string>
-    <string name="backup_restore_message">Point at the directory the backup is in. Entries are added to the two lists; entries already there are left as they are, and nothing is deleted.\n\nThe PhoneBlock token is never part of a backup, so it stays as it is here.</string>
+    <string name="backup_restore_message">Point at the directory the backup is in. Entries are added to the two lists; entries already there are left as they are, and nothing is deleted.
+
+Tokens and passwords come back only if the backup was made with them in it.</string>
     <string name="backup_restore_confirmation">Choose a directory</string>
     <string name="backup_restore_what">Restore the settings as well, or only the blacklist and the whitelist?</string>
     <string name="backup_restore_everything">Settings and lists</string>

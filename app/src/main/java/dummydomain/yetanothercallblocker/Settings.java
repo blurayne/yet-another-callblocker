@@ -37,6 +37,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_SOURCE_SECRETS = "sourceSecrets";
     public static final String PREF_SOURCES_MIGRATED = "sourcesMigrated";
     public static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
+    public static final String PREF_BACKUP_SECRETS = "backupSecrets";
     public static final String PREF_AUTO_BACKUP = "autoBackup";
     public static final String PREF_LAST_BACKUP_TIME = "lastBackupTime";
     public static final String PREF_UI_MODE = "uiMode";
@@ -405,6 +406,20 @@ public class Settings extends GenericSettings {
 
     public void setBackupDirectory(String uri) {
         setString(PREF_BACKUP_DIRECTORY, uri);
+    }
+
+    /**
+     * Whether passwords and tokens go into the backup.
+     *
+     * <p>Off unless the user says so: a backup is a file that gets copied around, and what is
+     * in it is readable by whoever ends up with it.
+     */
+    public boolean getBackupSecrets() {
+        return getBoolean(PREF_BACKUP_SECRETS, false);
+    }
+
+    public void setBackupSecrets(boolean backup) {
+        setBoolean(PREF_BACKUP_SECRETS, backup);
     }
 
     /** Whether the app writes the backup by itself. Off until the user says otherwise. */

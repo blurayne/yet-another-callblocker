@@ -81,8 +81,6 @@ public class BackupService {
      * user wants the app to behave.
      */
     private static final Set<String> EXCLUDED_SETTINGS = new HashSet<>(Arrays.asList(
-            Settings.PREF_PHONE_BLOCK_TOKEN,
-            Settings.PREF_SOURCE_SECRETS, // the passwords of the sources, for the same reason
             Settings.PREF_PHONE_BLOCK_TOKEN_VALID,
             Settings.PREF_PHONE_BLOCK_LAST_TOKEN_CHECK_TIME,
             Settings.PREF_PHONE_BLOCK_TOKEN_PROBLEM_NOTIFIED,
@@ -100,19 +98,36 @@ public class BackupService {
             Settings.PREF_DB_FILTERED,
             Settings.PREF_DB_FILTERING_PREFIXES_PREFILLED));
 
+    /**
+     * What the user has to ask for before it is written out: the passwords and tokens.
+     *
+     * <p>They are left out by default because a backup is a file that gets carried around and
+     * read by whoever ends up with it, and because everything else in it can be handed to a
+     * new phone without giving anything away. Asking for them makes the file worth as much as
+     * the accounts behind it.
+     */
+    private static final Set<String> SECRET_SETTINGS = new HashSet<>(Arrays.asList(
+            Settings.PREF_PHONE_BLOCK_TOKEN,
+            Settings.PREF_SOURCE_SECRETS));
+
     /** How much of a file the app is willing to read as a backup. */
     private static final int MAX_SIZE = 8 * 1024 * 1024;
 
     private static final Logger LOG = LoggerFactory.getLogger(BackupService.class);
 
-    /** The backup as it is written to a file. */
-    public String write(Settings settings, BlacklistDao blacklistDao) throws JSONException {
+    /**
+     * The backup as it is written to a file.
+     *
+     * @param withSecrets whether the passwords and tokens are written out as well
+     */
+    public String write(Settings settings, BlacklistDao blacklistDao, boolean withSecrets)
+            throws JSONException {
         JSONObject backup = new JSONObject();
 
         backup.put(KEY_FORMAT, FORMAT);
         backup.put(KEY_VERSION, VERSION);
         backup.put(KEY_CREATED, new Date().getTime());
-        backup.put(KEY_SETTINGS, writeSettings(settings));
+        backup.put(KEY_SETTINGS, writeSettings(settings, withSecrets));
         backup.put(KEY_BLACKLIST, writeBlacklist(blacklistDao));
         backup.put(KEY_WHITELIST, writeWhitelist(settings));
 
@@ -143,7 +158,8 @@ public class BackupService {
         return true;
     }
 
-    private JSONObject writeSettings(Settings settings) throws JSONException {
+    private JSONObject writeSettings(Settings settings, boolean withSecrets)
+            throws JSONException {
         JSONObject json = new JSONObject();
 
         // in the order of their names, so that a file only changes when its content does
@@ -151,7 +167,7 @@ public class BackupService {
             String key = entry.getKey();
             Object value = entry.getValue();
 
-            if (isExcluded(key) || value == null) continue;
+            if (isExcluded(key, withSecrets) || value == null) continue;
 
             String type;
             Object written = value;
@@ -230,6 +246,9 @@ public class BackupService {
     /**
      * Reads a backup and puts what is in it back: the settings replace the ones on this phone,
      * the list entries are added to the lists, and an entry that is already there is left alone.
+     *
+     * <p>Passwords and tokens are only in the file when the backup was asked to hold them;
+     * when they are, putting the settings back puts them back too.
      *
      * @param withSettings whether the settings are put back as well, or only the two lists
      * @return what was read, or a result that is not ok when the file isn't a backup
@@ -391,9 +410,12 @@ public class BackupService {
         return count;
     }
 
-    private static boolean isExcluded(String key) {
+    private static boolean isExcluded(String key, boolean withSecrets) {
         // keys the app keeps for itself start with two underscores
-        return TextUtils.isEmpty(key) || key.startsWith("__") || EXCLUDED_SETTINGS.contains(key);
+        if (TextUtils.isEmpty(key) || key.startsWith("__")) return true;
+
+        return EXCLUDED_SETTINGS.contains(key)
+                || (!withSecrets && SECRET_SETTINGS.contains(key));
     }
 
     private static Set<String> toStringSet(JSONArray array) {

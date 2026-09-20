@@ -107,7 +107,8 @@ public class BackupHelper {
 
         String backup;
         try {
-            backup = backupService.write(App.getSettings(), YacbHolder.getBlacklistDao());
+            backup = backupService.write(App.getSettings(), YacbHolder.getBlacklistDao(),
+                    App.getSettings().getBackupSecrets());
         } catch (Exception e) {
             LOG.warn("backup() couldn't put the backup together", e);
             return false;

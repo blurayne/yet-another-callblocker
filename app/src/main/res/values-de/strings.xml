@@ -293,12 +293,17 @@
     <string name="backup_now_summary">Einstellungen, schwarze und weiße Liste als JSON-Datei</string>
     <string name="backup_last">Letzte Sicherung: %s</string>
     <string name="backup_message">Die Datei enthält Ihre Einstellungen und beide Listen – also Ihre eigenen Nummern. Bewahren Sie sie entsprechend auf.\n\nDer PhoneBlock-Token ist nicht enthalten: Er ist das Passwort zu Ihrem Konto und keine Einstellung. Tragen Sie ihn auf dem anderen Telefon erneut ein; die Seite dazu steht in den PhoneBlock-Einstellungen.</string>
+    <string name="backup_secrets">Passwörter und Tokens mitsichern</string>
+    <string name="backup_secrets_summary">Den PhoneBlock-Token und die Passwörter der Quellen mit in die Sicherung schreiben. Die Datei enthält sie dann im Klartext: Bewahren Sie sie dort auf, wo Sie auch die Passwörter selbst aufbewahren würden</string>
+    <string name="backup_message_with_secrets">Die Datei enthält Ihre Einstellungen, beide Listen – also Ihre eigenen Nummern – und, weil Sie es so eingestellt haben, Ihre Tokens und Passwörter im Klartext.\n\nBewahren Sie sie dort auf, wo Sie auch die Passwörter selbst aufbewahren würden.</string>
     <string name="backup_now_confirmation">Sichern</string>
     <string name="backup_done">Sicherung geschrieben</string>
     <string name="backup_failed">Die Sicherung konnte nicht geschrieben werden</string>
     <string name="backup_restore">Wiederherstellen</string>
     <string name="backup_restore_summary">Die Sicherung aus einem Verzeichnis einlesen</string>
-    <string name="backup_restore_message">Wählen Sie das Verzeichnis, in dem die Sicherung liegt. Einträge werden den beiden Listen hinzugefügt; vorhandene Einträge bleiben, wie sie sind, und es wird nichts gelöscht.\n\nDer PhoneBlock-Token ist nie Teil einer Sicherung und bleibt hier unverändert.</string>
+    <string name="backup_restore_message">Zeigen Sie auf das Verzeichnis, in dem die Sicherung liegt. Einträge werden den beiden Listen hinzugefügt; vorhandene bleiben, wie sie sind, und nichts wird gelöscht.
+
+Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string>
     <string name="backup_restore_confirmation">Verzeichnis wählen</string>
     <string name="backup_restore_what">Auch die Einstellungen wiederherstellen oder nur die schwarze und die weiße Liste?</string>
     <string name="backup_restore_everything">Einstellungen und Listen</string>

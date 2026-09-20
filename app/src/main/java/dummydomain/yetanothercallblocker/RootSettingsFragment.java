@@ -224,7 +224,9 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         requirePreference(PREF_BACKUP_NOW).setOnPreferenceClickListener(preference -> {
             new AlertDialog.Builder(requireActivity())
                     .setTitle(R.string.backup_now)
-                    .setMessage(R.string.backup_message)
+                    // what the file will hold depends on whether the secrets go in it
+                    .setMessage(App.getSettings().getBackupSecrets()
+                            ? R.string.backup_message_with_secrets : R.string.backup_message)
                     .setPositiveButton(R.string.backup_now_confirmation, (d, w) -> backupNow())
                     .setNegativeButton(R.string.back, null)
                     .show();

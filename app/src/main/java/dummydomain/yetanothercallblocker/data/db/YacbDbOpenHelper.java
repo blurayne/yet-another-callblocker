@@ -2,6 +2,7 @@ package dummydomain.yetanothercallblocker.data.db;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
 import org.greenrobot.greendao.database.Database;
 import org.slf4j.Logger;
@@ -42,7 +43,9 @@ public class YacbDbOpenHelper extends DaoMaster.OpenHelper {
      * rest, so letting it through costs a column it ignores and saves the whole blacklist.
      */
     @Override
-    public void onDowngrade(Database db, int oldVersion, int newVersion) {
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // greenDAO wraps the database for onCreate and onUpgrade, but has nothing to say
+        // about a downgrade, so this is the one the framework calls
         LOG.info("onDowngrade() oldVersion={}, newVersion={}", oldVersion, newVersion);
     }
 

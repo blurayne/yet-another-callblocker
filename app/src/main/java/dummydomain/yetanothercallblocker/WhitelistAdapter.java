@@ -144,7 +144,7 @@ public class WhitelistAdapter extends RecyclerView.Adapter<WhitelistAdapter.View
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
-        final TextView name, pattern;
+        final TextView name, notes, pattern;
 
         ItemDetailsLookup.ItemDetails<String> itemDetails;
 
@@ -152,6 +152,7 @@ public class WhitelistAdapter extends RecyclerView.Adapter<WhitelistAdapter.View
             super(itemView);
 
             name = itemView.findViewById(R.id.name);
+            notes = itemView.findViewById(R.id.notes);
             pattern = itemView.findViewById(R.id.pattern);
 
             itemView.setOnClickListener(v -> {
@@ -165,6 +166,9 @@ public class WhitelistAdapter extends RecyclerView.Adapter<WhitelistAdapter.View
             name.setVisibility(TextUtils.isEmpty(item.getName()) ? View.GONE : View.VISIBLE);
 
             pattern.setText(item.getPattern());
+
+            notes.setText(item.getNotes());
+            notes.setVisibility(TextUtils.isEmpty(item.getNotes()) ? View.GONE : View.VISIBLE);
 
             itemView.setActivated(selectionTracker != null
                     && selectionTracker.isSelected(item.getPattern()));

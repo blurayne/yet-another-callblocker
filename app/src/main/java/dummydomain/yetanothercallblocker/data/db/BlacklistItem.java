@@ -20,6 +20,9 @@ public class BlacklistItem {
 
     private String name;
 
+    /** What the user wants to remember about the number; not used for anything else. */
+    private String notes;
+
     @Index
     @NotNull
     private String pattern;
@@ -39,20 +42,11 @@ public class BlacklistItem {
     public BlacklistItem() {}
 
     public BlacklistItem(String name, String pattern) {
-        this(null, name, patternFromHumanReadable(pattern), new Date(), false, 0, null);
-    }
-
-    @Generated(hash = 1295831)
-    public BlacklistItem(Long id, String name, @NotNull String pattern,
-                         @NotNull Date creationDate, boolean invalid, int numberOfCalls,
-                         Date lastCallDate) {
-        this.id = id;
         this.name = name;
-        this.pattern = pattern;
-        this.creationDate = creationDate;
-        this.invalid = invalid;
-        this.numberOfCalls = numberOfCalls;
-        this.lastCallDate = lastCallDate;
+        this.pattern = patternFromHumanReadable(pattern);
+        this.creationDate = new Date();
+        this.invalid = false;
+        this.numberOfCalls = 0;
     }
 
     public Long getId() {
@@ -69,6 +63,14 @@ public class BlacklistItem {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getNotes() {
+        return this.notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
     public String getPattern() {

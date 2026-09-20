@@ -85,7 +85,7 @@ public class BlacklistItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
     class ViewHolder extends GenericRecyclerViewAdapter
             <BlacklistItem, BlacklistItemRecyclerViewAdapter.ViewHolder>.GenericViewHolder {
 
-        final TextView name, pattern, stats;
+        final TextView name, notes, pattern, stats;
         final AppCompatImageView errorIcon;
 
         ItemDetailsLookup.ItemDetails<Long> itemDetails;
@@ -94,6 +94,7 @@ public class BlacklistItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
             super(itemView);
 
             name = itemView.findViewById(R.id.name);
+            notes = itemView.findViewById(R.id.notes);
             pattern = itemView.findViewById(R.id.pattern);
             stats = itemView.findViewById(R.id.stats);
             errorIcon = itemView.findViewById(R.id.errorIcon);
@@ -103,6 +104,7 @@ public class BlacklistItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
         void bind(BlacklistItem item) {
             if (item == null) { // placeholder
                 name.setVisibility(View.INVISIBLE);
+                notes.setVisibility(View.GONE);
                 pattern.setVisibility(View.INVISIBLE);
                 stats.setVisibility(View.GONE);
                 errorIcon.setVisibility(View.GONE);
@@ -116,6 +118,9 @@ public class BlacklistItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
 
             pattern.setText(item.getHumanReadablePattern());
             pattern.setVisibility(View.VISIBLE);
+
+            notes.setText(item.getNotes());
+            notes.setVisibility(TextUtils.isEmpty(item.getNotes()) ? View.GONE : View.VISIBLE);
 
             if (item.getNumberOfCalls() > 0) {
                 stats.setVisibility(View.VISIBLE);

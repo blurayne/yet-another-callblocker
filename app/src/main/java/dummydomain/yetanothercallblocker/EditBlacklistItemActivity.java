@@ -47,6 +47,7 @@ public class EditBlacklistItemActivity extends AppCompatActivity {
     private BlacklistService blacklistService = YacbHolder.getBlacklistService();
 
     private TextInputLayout nameTextField;
+    private TextInputLayout notesTextField;
     private TextInputLayout patternTextField;
 
     private BlacklistItem blacklistItem;
@@ -75,6 +76,7 @@ public class EditBlacklistItemActivity extends AppCompatActivity {
         }
 
         nameTextField = findViewById(R.id.nameTextField);
+        notesTextField = findViewById(R.id.notesTextField);
         patternTextField = findViewById(R.id.patternTextField);
 
         EditText patternEditText = Objects.requireNonNull(patternTextField.getEditText());
@@ -115,10 +117,12 @@ public class EditBlacklistItemActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             String name;
+            String notes = null;
             String pattern;
 
             if (blacklistItem != null) {
                 name = blacklistItem.getName();
+                notes = blacklistItem.getNotes();
                 pattern = blacklistItem.getPattern();
             } else {
                 name = getIntent().getStringExtra(PARAM_NAME);
@@ -130,6 +134,7 @@ public class EditBlacklistItemActivity extends AppCompatActivity {
             }
 
             setString(nameTextField, name);
+            setString(notesTextField, notes);
             setString(patternTextField, pattern);
         }
 
@@ -211,6 +216,7 @@ public class EditBlacklistItemActivity extends AppCompatActivity {
 
     private void save() {
         String name = getString(nameTextField);
+        String notes = getString(notesTextField);
         String pattern = cleanPattern(patternFromHumanReadable(getString(patternTextField)));
         boolean invalid = !BlacklistUtils.isValidPattern(pattern);
 
@@ -218,6 +224,10 @@ public class EditBlacklistItemActivity extends AppCompatActivity {
             boolean changed = false;
             if (!TextUtils.equals(name, blacklistItem.getName())) {
                 blacklistItem.setName(name);
+                changed = true;
+            }
+            if (!TextUtils.equals(notes, blacklistItem.getNotes())) {
+                blacklistItem.setNotes(notes);
                 changed = true;
             }
             if (!TextUtils.equals(pattern, blacklistItem.getPattern())) {
@@ -232,7 +242,8 @@ public class EditBlacklistItemActivity extends AppCompatActivity {
                 blacklistService.save(blacklistItem);
             }
         } else {
-            if (TextUtils.isEmpty(name) && TextUtils.isEmpty(pattern)) {
+            if (TextUtils.isEmpty(name) && TextUtils.isEmpty(notes)
+                    && TextUtils.isEmpty(pattern)) {
                 LOG.info("save() not creating a new item because fields are empty");
                 return;
             }
@@ -244,6 +255,7 @@ public class EditBlacklistItemActivity extends AppCompatActivity {
             }
 
             BlacklistItem blacklistItem = new BlacklistItem(name, pattern);
+            blacklistItem.setNotes(notes);
             blacklistService.save(blacklistItem);
         }
     }

@@ -89,7 +89,8 @@ android {
 }
 
 greendao {
-    schemaVersion 1
+    // 2: the notes of a blacklist entry; YacbDbOpenHelper adds the column to an existing database
+    schemaVersion 2
 }
 
 dependencies {

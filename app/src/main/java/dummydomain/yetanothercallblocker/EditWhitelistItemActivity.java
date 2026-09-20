@@ -41,6 +41,7 @@ public class EditWhitelistItemActivity extends AppCompatActivity {
     private final WhitelistService whitelistService = YacbHolder.getWhitelistService();
 
     private TextInputLayout nameTextField;
+    private TextInputLayout notesTextField;
     private TextInputLayout patternTextField;
 
     /** The pattern of the entry being edited, or null when one is being added. */
@@ -73,6 +74,7 @@ public class EditWhitelistItemActivity extends AppCompatActivity {
         }
 
         nameTextField = findViewById(R.id.nameTextField);
+        notesTextField = findViewById(R.id.notesTextField);
         patternTextField = findViewById(R.id.patternTextField);
 
         EditText patternEditText = Objects.requireNonNull(patternTextField.getEditText());
@@ -99,6 +101,7 @@ public class EditWhitelistItemActivity extends AppCompatActivity {
         PatternKeys.setUp(findViewById(R.id.patternKeys), patternEditText);
 
         String name = getIntent().getStringExtra(PARAM_NAME);
+        String notes = null;
         String pattern = Whitelist.normalize(getIntent().getStringExtra(PARAM_PATTERN));
 
         if (getIntent().getBooleanExtra(PARAM_EDIT, false)) {
@@ -110,12 +113,14 @@ public class EditWhitelistItemActivity extends AppCompatActivity {
 
             editedPattern = item.getPattern();
             name = item.getName();
+            notes = item.getNotes();
 
             setTitle(R.string.title_edit_whitelist_item_activity);
         }
 
         if (savedInstanceState == null) {
             setString(nameTextField, name);
+            setString(notesTextField, notes);
             setString(patternTextField, pattern);
         }
 
@@ -136,8 +141,8 @@ public class EditWhitelistItemActivity extends AppCompatActivity {
     public void onSaveClicked(MenuItem item) {
         if (!validate()) return;
 
-        WhitelistItem whitelistItem = new WhitelistItem(
-                getString(nameTextField), getString(patternTextField));
+        WhitelistItem whitelistItem = new WhitelistItem(getString(nameTextField),
+                getString(patternTextField), getString(notesTextField));
 
         boolean saved = editedPattern != null
                 ? whitelistService.replace(editedPattern, whitelistItem)

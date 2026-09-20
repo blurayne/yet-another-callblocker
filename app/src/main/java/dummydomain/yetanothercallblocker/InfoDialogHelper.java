@@ -79,6 +79,9 @@ public class InfoDialogHelper {
                 ? numberInfo.whitelistItem.getName() : null;
         setText(view, R.id.whitelist_name, whitelistName);
 
+        // what the user wrote down about the number, whichever list it is on
+        setText(view, R.id.list_notes, getListNotes(numberInfo));
+
         // the lists the number is on, each with the entry that matched when it isn't the
         // number itself - a pattern covering the number is worth knowing about
         setText(view, R.id.whitelisted, NumberInfoUtils.getWhitelistStatus(context, numberInfo));
@@ -300,6 +303,21 @@ public class InfoDialogHelper {
         row.setOnClickListener(v -> action.run());
 
         return row;
+    }
+
+    /** What the user wrote down about the number in either list, or null when nothing. */
+    private static String getListNotes(NumberInfo numberInfo) {
+        if (numberInfo.blacklistItem != null
+                && !TextUtils.isEmpty(numberInfo.blacklistItem.getNotes())) {
+            return numberInfo.blacklistItem.getNotes();
+        }
+
+        if (numberInfo.whitelistItem != null
+                && !TextUtils.isEmpty(numberInfo.whitelistItem.getNotes())) {
+            return numberInfo.whitelistItem.getNotes();
+        }
+
+        return null;
     }
 
     /** The entry that is the number itself, or null when a pattern is what matched. */

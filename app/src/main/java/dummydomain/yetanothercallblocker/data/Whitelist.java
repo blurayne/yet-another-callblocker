@@ -39,6 +39,7 @@ public class Whitelist {
     };
 
     private static final String JSON_NAME = "name";
+    private static final String JSON_NOTES = "notes";
     private static final String JSON_PATTERN = "pattern";
 
     /** How the entries were written before they could have names. */
@@ -157,8 +158,9 @@ public class Whitelist {
                     JSONObject entry = array.optJSONObject(i);
                     if (entry == null) continue;
 
-                    add(items, new WhitelistItem(
-                            entry.optString(JSON_NAME), entry.optString(JSON_PATTERN)));
+                    // an entry written before there were notes simply has none
+                    add(items, new WhitelistItem(entry.optString(JSON_NAME),
+                            entry.optString(JSON_PATTERN), entry.optString(JSON_NOTES)));
                 }
             } catch (Exception e) {
                 LOG.error("parse() couldn't read the whitelist", e);
@@ -186,6 +188,7 @@ public class Whitelist {
                 JSONObject entry = new JSONObject();
                 entry.put(JSON_PATTERN, item.getPattern());
                 if (!TextUtils.isEmpty(item.getName())) entry.put(JSON_NAME, item.getName());
+                if (!TextUtils.isEmpty(item.getNotes())) entry.put(JSON_NOTES, item.getNotes());
 
                 array.put(entry);
             } catch (Exception e) {

@@ -345,6 +345,7 @@
     <string name="title_add_blacklist_item_activity">Add number</string>
     <string name="title_edit_blacklist_item_activity">Edit number</string>
     <string name="edit_blacklist_item_name">Name</string>
+    <string name="edit_item_notes">Notes</string>
     <string name="edit_blacklist_item_number_pattern">Number pattern</string>
     <string name="number_pattern_incorrect">Incorrect pattern</string>
     <string name="number_pattern_empty">Empty pattern</string>

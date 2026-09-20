@@ -46,17 +46,20 @@ public class BlacklistImporterExporter {
     private static final int INDEX_CREATION_DATE = 3;
     private static final int INDEX_NUMBER_OF_CALLS = 4;
     private static final int INDEX_LAST_CALL_DATE = 5;
+    /** Added later, so a file without it is read as one without notes. */
+    private static final int INDEX_NOTES = 6;
 
     public boolean writeBackup(Iterable<BlacklistItem> blacklistItems, Appendable out) {
         try (CSVPrinter printer = CSVFormat.DEFAULT.print(out)) {
             printer.printRecord(HEADER_ID, HEADER_NAME, HEADER_PATTERN,
-                    "creationTimestamp", "numberOfCalls", "lastCallTimestamp");
+                    "creationTimestamp", "numberOfCalls", "lastCallTimestamp", "notes");
 
             for (BlacklistItem item : blacklistItems) {
                 printer.printRecord(item.getId(), item.getName(),
                         patternToHumanReadable(item.getPattern()),
                         item.getCreationDate().getTime(), item.getNumberOfCalls(),
-                        item.getLastCallDate() != null ? item.getLastCallDate().getTime() : "");
+                        item.getLastCallDate() != null ? item.getLastCallDate().getTime() : "",
+                        item.getNotes() != null ? item.getNotes() : "");
             }
         } catch (IOException e) {
             LOG.warn("write()", e);
@@ -100,6 +103,11 @@ public class BlacklistImporterExporter {
                 if (TextUtils.isEmpty(existingItem.getName())
                         && !TextUtils.isEmpty(item.getName())) {
                     existingItem.setName(item.getName());
+                    changed = true;
+                }
+                if (TextUtils.isEmpty(existingItem.getNotes())
+                        && !TextUtils.isEmpty(item.getNotes())) {
+                    existingItem.setNotes(item.getNotes());
                     changed = true;
                 }
                 if (existingItem.getNumberOfCalls() < item.getNumberOfCalls()) {
@@ -263,6 +271,8 @@ public class BlacklistImporterExporter {
                         item.setLastCallDate(new Date(Long.parseLong(
                                 get(record, INDEX_LAST_CALL_DATE))));
                     }
+
+                    item.setNotes(get(record, INDEX_NOTES));
                 } catch (Exception e) {
                     LOG.warn("readYacbBackup() error parsing item", e);
                 }

@@ -62,6 +62,7 @@ public class BackupService {
     private static final String KEY_VALUE = "value";
 
     private static final String KEY_NAME = "name";
+    private static final String KEY_NOTES = "notes";
     private static final String KEY_PATTERN = "pattern";
     private static final String KEY_CREATION_TIME = "creationTime";
     private static final String KEY_NUMBER_OF_CALLS = "numberOfCalls";
@@ -189,6 +190,7 @@ public class BackupService {
             JSONObject json = new JSONObject();
 
             json.put(KEY_NAME, item.getName());
+            json.put(KEY_NOTES, item.getNotes());
             // the pattern is written the way the user writes it, not the way SQL matches it
             json.put(KEY_PATTERN, BlacklistUtils.patternToHumanReadable(item.getPattern()));
 
@@ -215,6 +217,7 @@ public class BackupService {
             JSONObject json = new JSONObject();
 
             json.put(KEY_NAME, item.getName());
+            json.put(KEY_NOTES, item.getNotes());
             json.put(KEY_PATTERN, item.getPattern());
 
             array.put(json);
@@ -349,6 +352,7 @@ public class BackupService {
             BlacklistItem item = new BlacklistItem();
             item.setPattern(pattern);
             item.setName(json.optString(KEY_NAME));
+            item.setNotes(json.optString(KEY_NOTES));
             item.setNumberOfCalls(json.optInt(KEY_NUMBER_OF_CALLS));
 
             long creationTime = json.optLong(KEY_CREATION_TIME);
@@ -377,7 +381,8 @@ public class BackupService {
             if (TextUtils.isEmpty(pattern)) continue;
 
             // add() leaves an entry that is already there alone, and says so
-            if (whitelistService.add(new WhitelistItem(json.optString(KEY_NAME), pattern))) {
+            if (whitelistService.add(new WhitelistItem(json.optString(KEY_NAME), pattern,
+                    json.optString(KEY_NOTES)))) {
                 count++;
             }
         }

@@ -44,6 +44,25 @@
 
         <include layout="@layout/pattern_keys" />
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/notesTextField"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/item_padding"
+            android:hint="@string/edit_item_notes">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/notesEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
+                android:maxLines="4"
+                android:minLines="2" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

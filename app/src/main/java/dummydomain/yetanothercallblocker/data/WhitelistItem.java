@@ -11,15 +11,26 @@ import android.text.TextUtils;
 public class WhitelistItem {
 
     private final String name;
+    private final String notes;
     private final String pattern;
 
     public WhitelistItem(String name, String pattern) {
+        this(name, pattern, null);
+    }
+
+    public WhitelistItem(String name, String pattern, String notes) {
         this.name = name != null ? name.trim() : "";
+        this.notes = notes != null ? notes.trim() : "";
         this.pattern = Whitelist.normalize(pattern);
     }
 
     public String getName() {
         return name;
+    }
+
+    /** What the user wants to remember about the number; not used for anything else. */
+    public String getNotes() {
+        return notes;
     }
 
     public String getPattern() {
@@ -42,12 +53,13 @@ public class WhitelistItem {
         if (!(o instanceof WhitelistItem)) return false;
 
         WhitelistItem other = (WhitelistItem) o;
-        return pattern.equals(other.pattern) && name.equals(other.name);
+        return pattern.equals(other.pattern) && name.equals(other.name)
+                && notes.equals(other.notes);
     }
 
     @Override
     public int hashCode() {
-        return pattern.hashCode() * 31 + name.hashCode();
+        return (pattern.hashCode() * 31 + name.hashCode()) * 31 + notes.hashCode();
     }
 
     @Override

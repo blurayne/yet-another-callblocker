@@ -1,9 +1,7 @@
 package dummydomain.yetanothercallblocker;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.database.ContentObserver;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -13,7 +11,6 @@ import android.view.MenuItem;
 import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.arch.core.util.Function;
 import androidx.lifecycle.LiveData;
@@ -38,10 +35,8 @@ import dummydomain.yetanothercallblocker.event.BlacklistChangedEvent;
 import dummydomain.yetanothercallblocker.event.BlacklistItemChangedEvent;
 import dummydomain.yetanothercallblocker.event.CallEndedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
-import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
 import dummydomain.yetanothercallblocker.event.WhitelistChangedEvent;
-import dummydomain.yetanothercallblocker.work.TaskService;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -63,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
 
     private final Runnable refreshCallLogRunnable = this::refreshCallLog;
 
-    private AsyncTask<Void, Void, Boolean> checkMainDbTask;
 
     private boolean activityFirstStart = true;
 
@@ -138,8 +132,6 @@ public class MainActivity extends AppCompatActivity {
 
         EventUtils.register(this);
 
-        startCheckMainDbTask();
-
         checkPermissions();
 
         registerContactsObserver();
@@ -162,13 +154,6 @@ public class MainActivity extends AppCompatActivity {
         unregisterContactsObserver();
 
         super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        cancelCheckMainDbTask();
-
-        super.onDestroy();
     }
 
     @Override
@@ -212,19 +197,6 @@ public class MainActivity extends AppCompatActivity {
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onMainDbDownloadFinished(MainDbDownloadFinishedEvent event) {
         reloadCallLog();
-
-        // an empty list of sources means nothing was fetched, which is worth saying out loud
-        if (event.noSources) showNoSourcesDialog();
-    }
-
-    private void showNoSourcesDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.no_db_sources_title)
-                .setMessage(R.string.no_db_sources_text)
-                .setPositiveButton(R.string.title_sources_activity,
-                        (d, w) -> startActivity(NumberSourcesActivity.getIntent(this)))
-                .setNegativeButton(R.string.back, null)
-                .show();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
@@ -236,47 +208,6 @@ public class MainActivity extends AppCompatActivity {
         PermissionHelper.checkPermissions(this,
                 settings.getIncomingCallNotifications(), settings.getCallBlockingEnabled(),
                 settings.getUseContacts());
-    }
-
-    private void startCheckMainDbTask() {
-        cancelCheckMainDbTask();
-        @SuppressLint("StaticFieldLeak")
-        AsyncTask<Void, Void, Boolean> checkMainDbTask = this.checkMainDbTask
-                = new AsyncTask<Void, Void, Boolean>() {
-            @Override
-            protected Boolean doInBackground(Void... voids) {
-                return YacbHolder.getCommunityDatabase().isOperational();
-            }
-
-            @Override
-            protected void onPostExecute(Boolean result) {
-                if (!result && EventUtils.bus().getStickyEvent(MainDbDownloadingEvent.class) == null) {
-                    showNoMainDbDialog();
-                }
-            }
-        };
-        checkMainDbTask.execute();
-    }
-
-    private void cancelCheckMainDbTask() {
-        if (checkMainDbTask != null) {
-            checkMainDbTask.cancel(true);
-            checkMainDbTask = null;
-        }
-    }
-
-    private void showNoMainDbDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.no_main_db_title)
-                .setMessage(R.string.no_main_db_text)
-                .setPositiveButton(R.string.download_main_db,
-                        (d, w) -> downloadMainDb())
-                .setNegativeButton(R.string.no, null)
-                .show();
-    }
-
-    public void downloadMainDb() {
-        TaskService.start(this, TaskService.TASK_DOWNLOAD_MAIN_DB);
     }
 
     public void onLookupNumberClicked(MenuItem item) {

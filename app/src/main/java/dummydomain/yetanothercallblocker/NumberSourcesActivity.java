@@ -116,6 +116,10 @@ public class NumberSourcesActivity extends AppCompatActivity {
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onMainDbDownloadFinished(MainDbDownloadFinishedEvent event) {
         reload(); // every source that was asked wrote down how it went
+
+        if (event.noSources) {
+            Toast.makeText(this, R.string.sources_none_enabled, Toast.LENGTH_LONG).show();
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
@@ -396,11 +400,16 @@ public class NumberSourcesActivity extends AppCompatActivity {
                 enabledSwitch.setOnCheckedChangeListener(enabledListener);
 
                 /*
-                 * A PhoneBlock list is fetched by itself; the database is built from all the
-                 * sources at once, which is what the menu does rather than a row.
+                 * A PhoneBlock list is fetched on its own. The database is downloaded and
+                 * built in one go - it is built from every source that is switched on, so
+                 * this row starts the same work the menu does, from where the user is.
                  */
-                fetchButton.setVisibility(source.getType() == NumberSource.Type.PHONE_BLOCK
-                        ? View.VISIBLE : View.GONE);
+                boolean canFetch = source.getType() == NumberSource.Type.PHONE_BLOCK
+                        || source.getType() == NumberSource.Type.DATABASE;
+
+                fetchButton.setVisibility(canFetch ? View.VISIBLE : View.GONE);
+                fetchButton.setText(source.getType() == NumberSource.Type.DATABASE
+                        ? R.string.source_download : R.string.source_fetch);
 
                 testButton.setEnabled(true);
             }
@@ -413,13 +422,22 @@ public class NumberSourcesActivity extends AppCompatActivity {
                         ? sources.get(position) : null;
             }
 
-            /** Asks the source for its numbers now, rather than waiting for the next day. */
+            /**
+             * Asks the source for its numbers now, rather than waiting for the next day.
+             *
+             * <p>For the database that means downloading it and building it in one go: what
+             * is downloaded is of no use until the layers are on it and the filter has run,
+             * so there is no state in between to leave the user in.
+             */
             private void fetch(NumberSource source) {
-                Toast.makeText(NumberSourcesActivity.this,
-                        R.string.source_fetching, Toast.LENGTH_SHORT).show();
+                boolean database = source.getType() == NumberSource.Type.DATABASE;
 
-                TaskService.start(NumberSourcesActivity.this,
-                        TaskService.TASK_UPDATE_PHONE_BLOCK);
+                Toast.makeText(NumberSourcesActivity.this,
+                        database ? R.string.sources_compiling : R.string.source_fetching,
+                        Toast.LENGTH_SHORT).show();
+
+                TaskService.start(NumberSourcesActivity.this, database
+                        ? TaskService.TASK_DOWNLOAD_MAIN_DB : TaskService.TASK_UPDATE_PHONE_BLOCK);
             }
 
             /**

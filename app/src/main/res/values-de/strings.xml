@@ -73,9 +73,6 @@
     <string name="default_caller_id_app_unset">Legen Sie in den Systemeinstellungen eine andere App als „Anrufer-ID-App“ fest</string>
 
     <!-- Datenbank -->
-    <string name="no_main_db_title">Hauptdatenbank herunterladen</string>
-    <string name="no_main_db_text">Die Datenbank ist nicht vorhanden. Ohne sie funktionieren die Hauptfunktionen der App nicht. Der Download umfasst etwa 25 MB.</string>
-    <string name="download_main_db">Datenbank herunterladen</string>
     <string name="main_db_downloading">Datenbank wird heruntergeladen …</string>
     <string name="secondary_db_updating">Datenbank wird aktualisiert …</string>
     <string name="filtering_db">Datenbank wird gefiltert …</string>
@@ -231,8 +228,6 @@
     <string name="title_add_source_activity">Quelle hinzufügen</string>
     <string name="title_edit_source_activity">Quelle bearbeiten</string>
     <string name="sources_summary">Woher die Nummern geholt werden</string>
-    <string name="no_db_sources_title">Keine Quelle für die Datenbank</string>
-    <string name="no_db_sources_text">Die Datenbank wird aus den Quellen in der Liste gebaut, und davon ist keine eingeschaltet. Tragen Sie eine ein oder schalten Sie eine wieder ein, dann wird die Datenbank von dort geholt.</string>
     <string name="title_providers_activity">Nachschlage-Anbieter</string>
     <string name="title_add_provider_activity">Anbieter hinzufügen</string>
     <string name="title_edit_provider_activity">Anbieter bearbeiten</string>
@@ -258,6 +253,8 @@
     <string name="source_preset_phone_block">PhoneBlock-Liste</string>
     <string name="source_preset_custom">Etwas anderes\u2026</string>
     <string name="source_fetch">Jetzt abrufen</string>
+    <string name="source_download">Jetzt herunterladen</string>
+    <string name="sources_none_enabled">Keine Quelle ist eingeschaltet, es wurde nichts geholt.</string>
     <string name="source_fetching">Wird abgerufen\u2026</string>
     <string name="sources_compile">Datenbank jetzt bauen</string>
     <string name="sources_compiling">Datenbank wird gebaut\u2026</string>

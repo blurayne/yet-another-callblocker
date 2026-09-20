@@ -82,6 +82,7 @@ public class BackupService {
      */
     private static final Set<String> EXCLUDED_SETTINGS = new HashSet<>(Arrays.asList(
             Settings.PREF_PHONE_BLOCK_TOKEN,
+            Settings.PREF_SOURCE_SECRETS, // the passwords of the sources, for the same reason
             Settings.PREF_PHONE_BLOCK_TOKEN_VALID,
             Settings.PREF_PHONE_BLOCK_LAST_TOKEN_CHECK_TIME,
             Settings.PREF_PHONE_BLOCK_TOKEN_PROBLEM_NOTIFIED,

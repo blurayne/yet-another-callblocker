@@ -117,7 +117,8 @@ public class TaskService extends IntentService {
 
         postStickyEvent(sticky);
         try {
-            YacbHolder.getDbManager().downloadMainDb(App.getSettings().getDatabaseDownloadUrl());
+            YacbHolder.getDbManager()
+                    .downloadMainDb(YacbHolder.getSourceService().getDatabaseUrl());
             YacbHolder.getCommunityDatabase().reload();
             YacbHolder.getFeaturedDatabase().reload();
             YacbHolder.getSiaMetadata().reload();

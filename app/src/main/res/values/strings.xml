@@ -91,6 +91,37 @@
     <string name="title_settings_activity">Settings</string>
     <!-- the sections of the settings screen -->
     <!-- the backup: one file, in a directory the user picks -->
+    <!-- where the numbers come from: a list of sources the user keeps -->
+    <string name="title_sources_activity">Number sources</string>
+    <string name="title_add_source_activity">Add a source</string>
+    <string name="title_edit_source_activity">Edit the source</string>
+    <string name="sources_summary">Where the numbers are fetched from</string>
+    <string name="source_add">Add a source</string>
+    <string name="source_name">Name</string>
+    <string name="source_type">What it holds</string>
+    <string name="source_type_database">Community database</string>
+    <string name="source_type_phone_block">PhoneBlock</string>
+    <string name="source_type_carddav">Address book (CardDAV), blocked</string>
+    <string name="source_url">Address</string>
+    <string name="source_url_empty">An address is needed</string>
+    <string name="source_auth">How to log in</string>
+    <string name="source_auth_none">No login</string>
+    <string name="source_auth_bearer">Token (Bearer)</string>
+    <string name="source_auth_basic">User and password</string>
+    <string name="source_username">User</string>
+    <string name="source_secret">Password or token</string>
+    <string name="source_secret_notice">Kept on this phone only: a backup holds the source but never its password.</string>
+    <string name="source_updates">Fetch by itself</string>
+    <string name="source_updates_manual">Only when I say so</string>
+    <string name="source_updates_daily">Daily</string>
+    <string name="source_updates_weekly">Weekly</string>
+    <string name="source_updates_monthly">Monthly</string>
+    <string name="source_enabled">Use this source</string>
+    <string name="source_off">off</string>
+    <string name="source_last_update">last: %s</string>
+    <string name="source_never_fetched">never fetched</string>
+    <string name="source_delete">Delete</string>
+    <string name="source_delete_message">Remove this source? The numbers it brought are dropped with it; nothing you wrote yourself is touched.</string>
     <string name="settings_category_backup">Backup</string>
     <string name="backup_directory">Backup directory</string>
     <string name="backup_directory_none">Not chosen yet</string>

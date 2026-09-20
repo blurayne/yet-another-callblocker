@@ -29,6 +29,7 @@ public class YacbHolder {
     private static WhitelistService whitelistService;
 
     private static CallDecisionLog callDecisionLog;
+    private static dummydomain.yetanothercallblocker.data.source.SourceService sourceService;
 
     private static NumberInfoService numberInfoService;
     private static NumberInfoCache numberInfoCache;
@@ -79,6 +80,15 @@ public class YacbHolder {
 
     static void setWhitelistService(WhitelistService whitelistService) {
         YacbHolder.whitelistService = whitelistService;
+    }
+
+    static void setSourceService(
+            dummydomain.yetanothercallblocker.data.source.SourceService sourceService) {
+        YacbHolder.sourceService = sourceService;
+    }
+
+    public static dummydomain.yetanothercallblocker.data.source.SourceService getSourceService() {
+        return sourceService;
     }
 
     static void setCallDecisionLog(CallDecisionLog callDecisionLog) {

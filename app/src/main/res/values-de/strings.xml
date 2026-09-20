@@ -223,6 +223,37 @@
     <string name="title_settings_activity">Einstellungen</string>
     <!-- die Abschnitte der Einstellungen -->
     <!-- die Sicherung: eine Datei in einem Verzeichnis, das der Nutzer wählt -->
+    <!-- woher die Nummern kommen: eine Liste von Quellen -->
+    <string name="title_sources_activity">Datenquellen</string>
+    <string name="title_add_source_activity">Quelle hinzufügen</string>
+    <string name="title_edit_source_activity">Quelle bearbeiten</string>
+    <string name="sources_summary">Woher die Nummern geholt werden</string>
+    <string name="source_add">Quelle hinzufügen</string>
+    <string name="source_name">Name</string>
+    <string name="source_type">Was sie enthält</string>
+    <string name="source_type_database">Community-Datenbank</string>
+    <string name="source_type_phone_block">PhoneBlock</string>
+    <string name="source_type_carddav">Adressbuch (CardDAV), blockiert</string>
+    <string name="source_url">Adresse</string>
+    <string name="source_url_empty">Eine Adresse wird gebraucht</string>
+    <string name="source_auth">Anmeldung</string>
+    <string name="source_auth_none">Ohne Anmeldung</string>
+    <string name="source_auth_bearer">Token (Bearer)</string>
+    <string name="source_auth_basic">Benutzer und Passwort</string>
+    <string name="source_username">Benutzer</string>
+    <string name="source_secret">Passwort oder Token</string>
+    <string name="source_secret_notice">Bleibt auf diesem Telefon: Eine Sicherung enthält die Quelle, aber nie ihr Passwort.</string>
+    <string name="source_updates">Automatisch holen</string>
+    <string name="source_updates_manual">Nur auf Zuruf</string>
+    <string name="source_updates_daily">Täglich</string>
+    <string name="source_updates_weekly">Wöchentlich</string>
+    <string name="source_updates_monthly">Monatlich</string>
+    <string name="source_enabled">Diese Quelle verwenden</string>
+    <string name="source_off">aus</string>
+    <string name="source_last_update">zuletzt: %s</string>
+    <string name="source_never_fetched">noch nie geholt</string>
+    <string name="source_delete">Löschen</string>
+    <string name="source_delete_message">Diese Quelle entfernen? Die Nummern, die sie mitgebracht hat, verschwinden mit ihr; selbst Eingetragenes bleibt unberührt.</string>
     <string name="settings_category_backup">Sicherung</string>
     <string name="backup_directory">Verzeichnis für die Sicherung</string>
     <string name="backup_directory_none">Noch nicht gewählt</string>

@@ -43,16 +43,6 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        app:key="categoryAdvancedDb"
-        app:title="@string/settings_category_database">
-
-        <EditTextPreference
-            app:key="databaseDownloadUrl"
-            app:title="@string/database_download_url" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
         app:key="categoryDebugging"
         app:title="@string/settings_category_debugging">
 

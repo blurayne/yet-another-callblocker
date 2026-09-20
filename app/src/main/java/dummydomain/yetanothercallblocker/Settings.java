@@ -33,6 +33,8 @@ public class Settings extends GenericSettings {
     public static final String PREF_WHITELIST = "whitelist";
     public static final String PREF_CALL_DECISIONS = "callDecisions";
     public static final String PREF_BLOCKING_PAUSED_UNTIL = "blockingPausedUntil";
+    public static final String PREF_NUMBER_SOURCES = "numberSources";
+    public static final String PREF_SOURCE_SECRETS = "sourceSecrets";
     public static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
     public static final String PREF_AUTO_BACKUP = "autoBackup";
     public static final String PREF_LAST_BACKUP_TIME = "lastBackupTime";
@@ -208,6 +210,14 @@ public class Settings extends GenericSettings {
         return getString(PREF_PHONE_BLOCK_TOKEN);
     }
 
+    public void setPhoneBlockUrl(String url) {
+        setString(PREF_PHONE_BLOCK_URL, url);
+    }
+
+    public void setPhoneBlockToken(String token) {
+        setString(PREF_PHONE_BLOCK_TOKEN, token);
+    }
+
     public String getPhoneBlockUrl() {
         return getNonEmptyString(PREF_PHONE_BLOCK_URL,
                 dummydomain.yetanothercallblocker.data.PhoneBlockService.DEFAULT_URL);
@@ -355,6 +365,27 @@ public class Settings extends GenericSettings {
 
     public void setBlacklistIsNotEmpty(boolean flag) {
         setBoolean(PREF_BLACKLIST_IS_NOT_EMPTY, flag);
+    }
+
+    /** The places the app gets numbers from, as {@code SourceService} writes them. */
+    public String getNumberSources() {
+        return getString(PREF_NUMBER_SOURCES, "");
+    }
+
+    public void setNumberSources(String sources) {
+        setString(PREF_NUMBER_SOURCES, sources);
+    }
+
+    /**
+     * The passwords and tokens of those sources, apart from the list itself so that a backup
+     * can hold the one without the other.
+     */
+    public String getSourceSecrets() {
+        return getString(PREF_SOURCE_SECRETS, "");
+    }
+
+    public void setSourceSecrets(String secrets) {
+        setString(PREF_SOURCE_SECRETS, secrets);
     }
 
     /** Where the backup is kept: a directory the user picked, as a document tree. */

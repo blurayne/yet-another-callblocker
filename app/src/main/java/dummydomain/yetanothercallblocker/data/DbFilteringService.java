@@ -341,7 +341,8 @@ public class DbFilteringService {
         LOG.debug("downloadDb() no database, downloading it");
 
         try {
-            return YacbHolder.getDbManager().downloadMainDb(settings.getDatabaseDownloadUrl());
+            return YacbHolder.getDbManager()
+                    .downloadMainDb(YacbHolder.getSourceService().getDatabaseUrl());
         } catch (Exception e) {
             LOG.warn("downloadDb() failed", e);
             return false;

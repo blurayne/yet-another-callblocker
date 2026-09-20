@@ -19,6 +19,9 @@ import dummydomain.yetanothercallblocker.sia.model.database.DbManager;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabase;
 import dummydomain.yetanothercallblocker.sia.network.DbDownloader;
 import dummydomain.yetanothercallblocker.sia.network.DbUpdateRequester;
+import dummydomain.yetanothercallblocker.data.source.NumberSource;
+import dummydomain.yetanothercallblocker.data.source.SourceHttp;
+import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.sia.network.OkHttpClientFactory;
 import dummydomain.yetanothercallblocker.sia.network.WebService;
 import dummydomain.yetanothercallblocker.sia.utils.Utils;
@@ -95,6 +98,23 @@ public class Config {
             return new OkHttpClient();
         };
 
+        SourceService sourceService = new SourceService(settings);
+        YacbHolder.setSourceService(sourceService);
+
+        /*
+         * The database is fetched the way the source it comes from says: with whatever it
+         * needs to let us in, and unpacked when it arrives packed. Which source that is can
+         * change while the app runs, so it is looked up per request rather than kept.
+         */
+        OkHttpClientFactory dbClientFactory = () -> {
+            DeferredInit.initNetwork();
+
+            NumberSource source = sourceService.getActiveDatabaseSource();
+
+            return SourceHttp.decorate(new OkHttpClient(), source,
+                    source != null ? sourceService.getSecret(source.getId()) : null);
+        };
+
         YacbHolder.setStorage(storage);
         YacbHolder.setSiaSettings(siaSettings);
 
@@ -118,7 +138,7 @@ public class Config {
         YacbHolder.setWebService(webService);
 
         YacbHolder.setDbManager(new DbManager(storage, SIA_PATH_PREFIX,
-                new DbDownloader(okHttpClientFactory), new DbUpdateRequester(webService),
+                new DbDownloader(dbClientFactory), new DbUpdateRequester(webService),
                 communityDatabase));
 
         YacbHolder.getDbManager().setNumberFilter(DbFilteringUtils.getNumberFilter(settings));

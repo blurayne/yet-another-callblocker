@@ -301,8 +301,12 @@ public class BackupService {
         for (Iterator<String> it = json.keys(); it.hasNext(); ) {
             String key = it.next();
 
-            // a token in a file is not read back, whoever put it there
-            if (isExcluded(key)) continue;
+            /*
+             * A token that is in the file is put back: it is only there because the backup
+             * was asked to hold it. What is never read back is what belongs to this phone
+             * rather than to the user - which is what the other list is.
+             */
+            if (isExcluded(key, true)) continue;
 
             JSONObject setting = json.optJSONObject(key);
             if (setting == null) continue;

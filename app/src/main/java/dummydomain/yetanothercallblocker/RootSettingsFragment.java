@@ -511,8 +511,8 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         File file = new File(requireContext().getCacheDir(), BackupHelper.FILE_NAME);
 
         try {
-            String backup = new BackupService()
-                    .write(App.getSettings(), YacbHolder.getBlacklistDao());
+            String backup = new BackupService().write(App.getSettings(),
+                    YacbHolder.getBlacklistDao(), App.getSettings().getBackupSecrets());
 
             try (Writer writer = new OutputStreamWriter(
                     new FileOutputStream(file), "UTF-8")) {

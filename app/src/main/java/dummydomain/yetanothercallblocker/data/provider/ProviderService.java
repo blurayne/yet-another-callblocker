@@ -13,6 +13,7 @@ import java.util.List;
 
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.BlacklistUtils;
+import dummydomain.yetanothercallblocker.data.NumberUtils;
 
 /**
  * The providers the app knows, in the order the dialog about a call offers them.
@@ -160,9 +161,10 @@ public class ProviderService {
     /**
      * The address of the page about a number, or null when there is none to open.
      *
-     * <p>The number goes in cleaned - digits and a leading plus - and the token only where
-     * the address asks for it, which is how a provider whose API wants a key in the query
-     * can be written down without the app knowing anything about that API.
+     * <p>The number is put in the form the address asks for - with a plus, with 00, as digits,
+     * or the way it is written at home - and the token only where the address asks for it,
+     * which is how a provider whose API wants a key in the query can be written down without
+     * the app knowing anything about that API.
      */
     public String getUrl(Provider provider, String number) {
         if (provider == null || TextUtils.isEmpty(number)) return null;
@@ -170,8 +172,35 @@ public class ProviderService {
         String url = provider.getUrl();
         if (TextUtils.isEmpty(url)) return null;
 
-        url = url.replace(Provider.PLACEHOLDER_NUMBER,
-                encode(BlacklistUtils.cleanNumber(number)));
+        String cleanNumber = BlacklistUtils.cleanNumber(number);
+
+        String international = null, national = null;
+
+        for (String variant : NumberUtils.getVariants(number,
+                NumberUtils.normalizeNumber(number, settings.getCountryCode()),
+                settings.getCountryCode())) {
+            if (variant.startsWith("+")) {
+                if (international == null) international = variant;
+            } else if (variant.startsWith("00")) {
+                if (international == null) international = "+" + variant.substring(2);
+            } else if (variant.startsWith("0") && national == null) {
+                national = variant;
+            }
+        }
+
+        // a number that doesn't normalize is used as it came in, whatever form was asked for
+        if (international == null) international = cleanNumber;
+        if (national == null) national = cleanNumber;
+
+        String digits = international.startsWith("+")
+                ? international.substring(1) : international;
+
+        url = url.replace(Provider.PLACEHOLDER_NUMBER_00,
+                        encode(international.startsWith("+")
+                                ? "00" + digits : international))
+                .replace(Provider.PLACEHOLDER_DIGITS, encode(digits))
+                .replace(Provider.PLACEHOLDER_NATIONAL, encode(national))
+                .replace(Provider.PLACEHOLDER_NUMBER, encode(international));
 
         if (url.contains(Provider.PLACEHOLDER_TOKEN)) {
             String secret = getSecret(provider.getId());

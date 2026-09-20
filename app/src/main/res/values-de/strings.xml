@@ -242,7 +242,7 @@
     <string name="provider_add">Anbieter hinzufügen</string>
     <string name="provider_name">Name</string>
     <string name="provider_url">Adresse der Seite zu einer Nummer</string>
-    <string name="provider_url_notice">Schreiben Sie %1$s dorthin, wo die Nummer hingehört, und %2$s dorthin, wo ein Schlüssel hingehört.</string>
+    <string name="provider_url_notice">Dort, wo die Nummer hingehört, schreiben Sie {number} (+4930…), {number00} (004930…), {digits} (4930…) oder {national} (030…) – je nachdem, welche Form die Seite versteht. Wo ein Schlüssel hingehört, schreiben Sie {token}.</string>
     <string name="provider_url_empty">Eine Adresse wird gebraucht</string>
     <string name="provider_token">Schlüssel oder Token</string>
     <string name="provider_token_phone_block">API-Token</string>

@@ -9,7 +9,6 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
@@ -78,10 +77,6 @@ public class EditProviderActivity extends AppCompatActivity {
         }
 
         if (savedInstanceState == null) fill();
-
-        this.<TextView>findViewById(R.id.urlNotice).setText(getString(
-                R.string.provider_url_notice,
-                Provider.PLACEHOLDER_NUMBER, Provider.PLACEHOLDER_TOKEN));
 
         boolean phoneBlock = Provider.ID_PHONE_BLOCK.equals(provider.getId());
 

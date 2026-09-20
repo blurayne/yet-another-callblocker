@@ -43,12 +43,11 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
-            android:id="@+id/urlNotice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textSize="12sp"
-            tools:text="Put {number} where the number belongs." />
+            android:text="@string/provider_url_notice"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/phoneBlockNotice"

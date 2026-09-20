@@ -107,7 +107,7 @@
     <string name="provider_add">Add a provider</string>
     <string name="provider_name">Name</string>
     <string name="provider_url">Address of the page about a number</string>
-    <string name="provider_url_notice">Put %1$s where the number belongs, and %2$s where a key belongs.</string>
+    <string name="provider_url_notice">Where the number goes, put {number} (+4930…), {number00} (004930…), {digits} (4930…) or {national} (030…) — whichever form the site understands. Where a key goes, put {token}.</string>
     <string name="provider_url_empty">An address is needed</string>
     <string name="provider_token">Key or token</string>
     <string name="provider_token_phone_block">API token</string>

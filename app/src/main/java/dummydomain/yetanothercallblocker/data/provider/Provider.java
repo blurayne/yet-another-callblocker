@@ -28,8 +28,24 @@ public class Provider {
     /** Looking the number up on the web, which is where it has always gone. */
     public static final String ID_WEB_SEARCH = "websearch";
 
-    /** Where the number goes in the address. */
+    /**
+     * Where the number goes in the address, in the form the provider wants it.
+     *
+     * <p>The same number is written four ways, and which one a site understands is a question
+     * only that site can answer: one takes {@code +4930123456}, the next wants the same thing
+     * as {@code 004930123456}, a third has no room for either sign, and a fourth knows only
+     * the form the number has at home, {@code 030123456}.
+     */
     public static final String PLACEHOLDER_NUMBER = "{number}";
+
+    /** The international form with 00 instead of the plus. */
+    public static final String PLACEHOLDER_NUMBER_00 = "{number00}";
+
+    /** Nothing but the digits: no plus, no 00, no leading zero. */
+    public static final String PLACEHOLDER_DIGITS = "{digits}";
+
+    /** The form the number has in its own country, with the trunk zero, where that is known. */
+    public static final String PLACEHOLDER_NATIONAL = "{national}";
 
     /** Where the token goes in the address, for a provider that wants one there. */
     public static final String PLACEHOLDER_TOKEN = "{token}";

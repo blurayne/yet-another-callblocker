@@ -8,6 +8,7 @@ import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -129,6 +130,7 @@ public class NumberSourcesActivity extends AppCompatActivity {
         class ViewHolder extends RecyclerView.ViewHolder {
 
             final TextView name, url, status;
+            final Button testButton;
 
             ViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -136,13 +138,19 @@ public class NumberSourcesActivity extends AppCompatActivity {
                 name = itemView.findViewById(R.id.name);
                 url = itemView.findViewById(R.id.url);
                 status = itemView.findViewById(R.id.status);
+                testButton = itemView.findViewById(R.id.testButton);
 
                 itemView.setOnClickListener(v -> {
-                    int position = getBindingAdapterPosition();
-                    if (position < 0 || position >= sources.size()) return;
+                    NumberSource source = getSource();
+                    if (source != null) {
+                        startActivity(EditNumberSourceActivity.getIntent(
+                                NumberSourcesActivity.this, source.getId()));
+                    }
+                });
 
-                    startActivity(EditNumberSourceActivity.getIntent(
-                            NumberSourcesActivity.this, sources.get(position).getId()));
+                testButton.setOnClickListener(v -> {
+                    NumberSource source = getSource();
+                    if (source != null) test(source);
                 });
             }
 
@@ -154,6 +162,38 @@ public class NumberSourcesActivity extends AppCompatActivity {
                 url.setVisibility(TextUtils.isEmpty(source.getUrl()) ? View.GONE : View.VISIBLE);
 
                 status.setText(getStatus(source));
+
+                testButton.setEnabled(true);
+            }
+
+            /** The source this row is showing right now, or null if the list moved on. */
+            private NumberSource getSource() {
+                int position = getBindingAdapterPosition();
+
+                return position >= 0 && position < sources.size()
+                        ? sources.get(position) : null;
+            }
+
+            /**
+             * Tries the source out and keeps what came of it: the row is the stored source,
+             * so what the test found is worth writing down next to how the last fetch went.
+             */
+            private void test(NumberSource source) {
+                testButton.setEnabled(false);
+                status.setText(R.string.source_test_running);
+
+                String secret = sourceService != null
+                        ? sourceService.getSecret(source.getId()) : null;
+
+                SourceTestHelper.test(NumberSourcesActivity.this, source, secret,
+                        (result, message) -> {
+                            if (isFinishing()) return;
+
+                            source.setLastResult(message);
+                            if (sourceService != null) sourceService.save(source);
+
+                            adapter.notifyDataSetChanged();
+                        });
             }
         }
     }

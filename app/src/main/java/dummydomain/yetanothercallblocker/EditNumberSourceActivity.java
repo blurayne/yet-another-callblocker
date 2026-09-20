@@ -115,19 +115,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
     public void onSaveClicked(MenuItem item) {
         if (sourceService == null) return;
 
-        String url = getString(urlTextField);
-        if (TextUtils.isEmpty(url)) {
-            urlTextField.setError(getString(R.string.source_url_empty));
-            return;
-        }
-
-        source.setName(getString(nameTextField));
-        source.setUrl(url);
-        source.setType(selected(typeSpinner, NumberSource.Type.values()));
-        source.setAuth(selected(authSpinner, NumberSource.Auth.values()));
-        source.setUsername(getString(usernameTextField));
-        source.setUpdates(selected(updatesSpinner, NumberSource.Updates.values()));
-        source.setEnabled(enabledSwitch.isChecked());
+        if (!apply(source)) return;
 
         sourceService.save(source);
 
@@ -140,6 +128,49 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         }
 
         finish();
+    }
+
+    /**
+     * Tries the source out as it stands on the screen, which is not always what is stored:
+     * an address that was just typed is exactly the one worth trying.
+     */
+    public void onTestClicked(MenuItem item) {
+        NumberSource candidate = new NumberSource(source.getId());
+        if (!apply(candidate)) return;
+
+        String secret = getString(secretTextField);
+        if (TextUtils.isEmpty(secret) && sourceService != null) {
+            secret = sourceService.getSecret(source.getId()); // kept, rather than typed again
+        }
+
+        TextView status = findViewById(R.id.status);
+        status.setText(R.string.source_test_running);
+
+        SourceTestHelper.test(this, candidate, secret, (result, message) -> {
+            if (isFinishing()) return;
+
+            status.setText(message);
+        });
+    }
+
+    /** Puts what is on the screen into a source; false when there isn't enough of it. */
+    private boolean apply(NumberSource target) {
+        String url = getString(urlTextField);
+        if (TextUtils.isEmpty(url)) {
+            urlTextField.setError(getString(R.string.source_url_empty));
+            return false;
+        }
+        urlTextField.setError(null);
+
+        target.setName(getString(nameTextField));
+        target.setUrl(url);
+        target.setType(selected(typeSpinner, NumberSource.Type.values()));
+        target.setAuth(selected(authSpinner, NumberSource.Auth.values()));
+        target.setUsername(getString(usernameTextField));
+        target.setUpdates(selected(updatesSpinner, NumberSource.Updates.values()));
+        target.setEnabled(enabledSwitch.isChecked());
+
+        return true;
     }
 
     public void onDeleteClicked(MenuItem item) {

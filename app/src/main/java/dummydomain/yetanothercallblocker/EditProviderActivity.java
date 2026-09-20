@@ -9,6 +9,10 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
@@ -18,6 +22,8 @@ import androidx.appcompat.widget.SwitchCompat;
 
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
@@ -46,8 +52,10 @@ public class EditProviderActivity extends AppCompatActivity {
 
     private Provider provider;
 
-    private TextInputLayout nameTextField, urlTextField, tokenTextField;
-    private SwitchCompat enabledSwitch;
+    private TextInputLayout nameTextField, searchUrlTextField, reportUrlTextField,
+            patternTextField, usernameTextField, apiUrlTextField, tokenTextField;
+    private Spinner authSpinner, apiSpinner;
+    private SwitchCompat apiSwitch, enabledSwitch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,9 +66,19 @@ public class EditProviderActivity extends AppCompatActivity {
         if (actionBar != null) actionBar.setDisplayHomeAsUpEnabled(true);
 
         nameTextField = findViewById(R.id.nameTextField);
-        urlTextField = findViewById(R.id.urlTextField);
+        searchUrlTextField = findViewById(R.id.searchUrlTextField);
+        reportUrlTextField = findViewById(R.id.reportUrlTextField);
+        patternTextField = findViewById(R.id.patternTextField);
+        usernameTextField = findViewById(R.id.usernameTextField);
+        apiUrlTextField = findViewById(R.id.apiUrlTextField);
         tokenTextField = findViewById(R.id.tokenTextField);
+        authSpinner = findViewById(R.id.authSpinner);
+        apiSpinner = findViewById(R.id.apiSpinner);
+        apiSwitch = findViewById(R.id.apiSwitch);
         enabledSwitch = findViewById(R.id.enabledSwitch);
+
+        setUpSpinner(authSpinner, Provider.Auth.values(), this::getAuthName);
+        setUpSpinner(apiSpinner, Provider.Api.values(), this::getApiName);
 
         String id = getIntent().getStringExtra(PARAM_ID);
         provider = id != null && providerService != null ? providerService.findById(id) : null;
@@ -77,6 +95,29 @@ public class EditProviderActivity extends AppCompatActivity {
         }
 
         if (savedInstanceState == null) fill();
+
+        apiSwitch.setOnCheckedChangeListener((v, checked) -> updateMode());
+        authSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateAuthFields();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        apiSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateApiFields();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        updateMode();
 
         boolean phoneBlock = Provider.ID_PHONE_BLOCK.equals(provider.getId());
 
@@ -106,14 +147,34 @@ public class EditProviderActivity extends AppCompatActivity {
     public void onSaveClicked(MenuItem item) {
         if (providerService == null) return;
 
-        String url = getString(urlTextField);
-        if (TextUtils.isEmpty(url) && !provider.hasOwnAddress()) {
-            urlTextField.setError(getString(R.string.provider_url_empty));
+        boolean api = apiSwitch.isChecked();
+
+        String searchUrl = getString(searchUrlTextField);
+        String reportUrl = getString(reportUrlTextField);
+        String apiUrl = getString(apiUrlTextField);
+
+        Provider.Api apiKind = selected(apiSpinner, Provider.Api.values());
+
+        if (api) {
+            if (apiKind == Provider.Api.CUSTOM && TextUtils.isEmpty(apiUrl)) {
+                apiUrlTextField.setError(getString(R.string.provider_url_empty));
+                return;
+            }
+        } else if (TextUtils.isEmpty(searchUrl) && TextUtils.isEmpty(reportUrl)
+                && !provider.hasOwnAddress()) {
+            searchUrlTextField.setError(getString(R.string.provider_url_empty));
             return;
         }
 
         provider.setName(getString(nameTextField));
-        provider.setUrl(url);
+        provider.setMode(api ? Provider.Mode.API : Provider.Mode.URLS);
+        provider.setSearchUrl(searchUrl);
+        provider.setReportUrl(reportUrl);
+        provider.setPattern(getString(patternTextField));
+        provider.setAuth(selected(authSpinner, Provider.Auth.values()));
+        provider.setUsername(getString(usernameTextField));
+        provider.setApi(apiKind);
+        provider.setApiUrl(apiUrl);
         provider.setEnabled(enabledSwitch.isChecked());
 
         providerService.save(provider);
@@ -186,13 +247,105 @@ public class EditProviderActivity extends AppCompatActivity {
 
     private void fill() {
         setString(nameTextField, ProviderHelper.getName(this, provider));
-        setString(urlTextField, provider.getUrl());
+        setString(searchUrlTextField, provider.getSearchUrl());
+        setString(reportUrlTextField, provider.getReportUrl());
+        setString(patternTextField, provider.getPattern());
+        setString(usernameTextField, provider.getUsername());
+        setString(apiUrlTextField, provider.getApiUrl());
+
+        select(authSpinner, Provider.Auth.values(), provider.getAuth());
+        select(apiSpinner, Provider.Api.values(), provider.getApi());
+
+        apiSwitch.setChecked(provider.getMode() == Provider.Mode.API);
 
         if (providerService != null) {
             setString(tokenTextField, providerService.getSecret(provider.getId()));
         }
 
         enabledSwitch.setChecked(provider.isEnabled());
+    }
+
+    /** Addresses and an API are two ways of asking; only one of them is filled in. */
+    private void updateMode() {
+        boolean api = apiSwitch.isChecked();
+
+        findViewById(R.id.urlsBlock).setVisibility(api ? View.GONE : View.VISIBLE);
+        findViewById(R.id.apiBlock).setVisibility(api ? View.VISIBLE : View.GONE);
+
+        if (!api) updateAuthFields();
+        if (api) updateApiFields();
+    }
+
+    /** A user name is only asked for where the login has one. */
+    private void updateAuthFields() {
+        usernameTextField.setVisibility(selected(authSpinner, Provider.Auth.values())
+                == Provider.Auth.BASIC ? View.VISIBLE : View.GONE);
+    }
+
+    /** The two APIs the app knows live at addresses it knows; only a custom one is typed. */
+    private void updateApiFields() {
+        Provider.Api api = selected(apiSpinner, Provider.Api.values());
+
+        apiUrlTextField.setVisibility(api == Provider.Api.CUSTOM ? View.VISIBLE : View.GONE);
+
+        int notice;
+        switch (api) {
+            case PHONE_BLOCK: notice = R.string.provider_api_phone_block_notice; break;
+            case TELLOWS: notice = R.string.provider_api_tellows_notice; break;
+            default: notice = R.string.provider_api_custom_notice; break;
+        }
+
+        this.<TextView>findViewById(R.id.apiNotice).setText(notice);
+    }
+
+    private String getAuthName(Provider.Auth auth) {
+        switch (auth) {
+            case BEARER: return getString(R.string.source_auth_bearer);
+            case BASIC: return getString(R.string.source_auth_basic);
+            default: return getString(R.string.source_auth_none);
+        }
+    }
+
+    private String getApiName(Provider.Api api) {
+        switch (api) {
+            case PHONE_BLOCK: return "PhoneBlock";
+            case TELLOWS: return "tellows";
+            default: return getString(R.string.provider_api_custom);
+        }
+    }
+
+    /** A spinner over the values of an enum, shown by name. */
+    private <T> void setUpSpinner(Spinner spinner, T[] values, Namer<T> namer) {
+        List<String> names = new ArrayList<>(values.length);
+        for (T value : values) {
+            names.add(namer.getName(value));
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, names);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spinner.setAdapter(adapter);
+    }
+
+    /** The value behind what the spinner shows: it holds names, the enum holds meaning. */
+    private <T> T selected(Spinner spinner, T[] values) {
+        int position = spinner.getSelectedItemPosition();
+
+        return position >= 0 && position < values.length ? values[position] : values[0];
+    }
+
+    private <T> void select(Spinner spinner, T[] values, T value) {
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == value) {
+                spinner.setSelection(i);
+                return;
+            }
+        }
+    }
+
+    private interface Namer<T> {
+        String getName(T value);
     }
 
     private String getString(TextInputLayout textInputLayout) {

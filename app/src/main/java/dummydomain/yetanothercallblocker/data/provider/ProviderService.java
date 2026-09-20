@@ -60,11 +60,12 @@ public class ProviderService {
      * was typed over it.
      */
     private static final Defaults[] DEFAULTS = {
-            new Defaults(Provider.ID_PHONE_BLOCK, null, 1),
-            new Defaults(Provider.ID_TELLOWS, TELLOWS_URL, 1),
-            new Defaults(Provider.ID_WEB_SEARCH, WEB_SEARCH_URL, 1),
-            new Defaults(Provider.ID_CLEVER_DIALER, CLEVER_DIALER_URL, 2),
-            new Defaults(Provider.ID_DASOERTLICHE, DASOERTLICHE_URL, 2, DASOERTLICHE_OLD_URL),
+            new Defaults(Provider.ID_PHONE_BLOCK, null, null, 1),
+            new Defaults(Provider.ID_TELLOWS, TELLOWS_URL, null, 1),
+            new Defaults(Provider.ID_WEB_SEARCH, WEB_SEARCH_URL, null, 1),
+            new Defaults(Provider.ID_CLEVER_DIALER, CLEVER_DIALER_URL, null, 2),
+            new Defaults(Provider.ID_DASOERTLICHE, DASOERTLICHE_URL, "49*", 2,
+                    DASOERTLICHE_OLD_URL),
     };
 
     /** The highest version in {@link #DEFAULTS}. */
@@ -74,13 +75,16 @@ public class ProviderService {
 
         final String id;
         final String url;
+        /** The numbers it can answer for, where that is not all of them. */
+        final String pattern;
         final int version;
         /** Addresses this one has replaced, which are put right where they are still stored. */
         final String[] outdatedUrls;
 
-        Defaults(String id, String url, int version, String... outdatedUrls) {
+        Defaults(String id, String url, String pattern, int version, String... outdatedUrls) {
             this.id = id;
             this.url = url;
+            this.pattern = pattern;
             this.version = version;
             this.outdatedUrls = outdatedUrls;
         }
@@ -217,10 +221,16 @@ public class ProviderService {
      * the app knowing anything about that API.
      */
     public String getUrl(Provider provider, String number) {
-        if (provider == null || TextUtils.isEmpty(number)) return null;
+        return fill(provider, provider != null ? provider.getSearchUrl() : null, number);
+    }
 
-        String url = provider.getUrl();
-        if (TextUtils.isEmpty(url)) return null;
+    /** Where a number is reported, or null when this provider takes no reports. */
+    public String getReportUrl(Provider provider, String number) {
+        return fill(provider, provider != null ? provider.getReportUrl() : null, number);
+    }
+
+    private String fill(Provider provider, String url, String number) {
+        if (provider == null || TextUtils.isEmpty(number) || TextUtils.isEmpty(url)) return null;
 
         String cleanNumber = BlacklistUtils.cleanNumber(number);
 
@@ -292,12 +302,16 @@ public class ProviderService {
             if (present == null) {
                 if (defaults.version <= seeded) continue; // offered once already
 
-                providers.add(builtIn(defaults.id, defaults.url));
+                providers.add(builtIn(defaults));
                 changed = true;
 
                 LOG.info("seed() added {}", defaults.id);
-            } else if (isOutdated(defaults, present.getUrl())) {
-                present.setUrl(defaults.url);
+            } else if (isOutdated(defaults, present.getSearchUrl())) {
+                present.setSearchUrl(defaults.url);
+
+                // a row still holding the app's own address hasn't been touched otherwise
+                if (TextUtils.isEmpty(present.getPattern())) present.setPattern(defaults.pattern);
+
                 changed = true;
 
                 LOG.info("seed() put the address of {} right", defaults.id);
@@ -321,9 +335,10 @@ public class ProviderService {
         return false;
     }
 
-    private static Provider builtIn(String id, String url) {
-        Provider provider = new Provider(id);
-        provider.setUrl(url);
+    private static Provider builtIn(Defaults defaults) {
+        Provider provider = new Provider(defaults.id);
+        provider.setSearchUrl(defaults.url);
+        provider.setPattern(defaults.pattern);
 
         return provider;
     }

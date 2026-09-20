@@ -41,7 +41,11 @@ public class ProviderHelper {
             return context.getString(R.string.provider_phone_block_address);
         }
 
-        return provider.getUrl() != null ? provider.getUrl() : "";
+        if (provider.getMode() == Provider.Mode.API) {
+            return context.getString(R.string.provider_api_address, provider.getApi().name());
+        }
+
+        return provider.getSearchUrl() != null ? provider.getSearchUrl() : "";
     }
 
     /**
@@ -58,6 +62,15 @@ public class ProviderHelper {
         ProviderService providerService = YacbHolder.getProviderService();
 
         return providerService != null ? providerService.getUrl(provider, number) : null;
+    }
+
+    /** Where a number is reported, or null when this provider takes no reports by address. */
+    public static String getReportUrl(Provider provider, String number) {
+        if (provider == null) return null;
+
+        ProviderService providerService = YacbHolder.getProviderService();
+
+        return providerService != null ? providerService.getReportUrl(provider, number) : null;
     }
 
     /** Who is told about the number, as the confirmation puts it: the host, or the name. */

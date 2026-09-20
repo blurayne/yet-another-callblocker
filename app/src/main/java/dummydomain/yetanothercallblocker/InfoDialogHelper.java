@@ -261,24 +261,46 @@ public class InfoDialogHelper {
         LayoutInflater inflater = LayoutInflater.from(context);
 
         for (Provider provider : providerService.getEnabledProviders()) {
-            String url = ProviderHelper.getUrl(provider, number);
-            if (TextUtils.isEmpty(url)) continue; // an account it doesn't have, say
+            // a German phone book has nothing to say about an Australian number
+            if (!provider.appliesTo(number)) continue;
 
-            String host = ProviderHelper.getHost(context, provider, url);
+            // an API is asked by the app rather than opened; nothing to offer here yet
+            if (provider.getMode() == Provider.Mode.API) continue;
 
-            View row = inflater.inflate(R.layout.info_dialog_action, container, false);
+            String name = ProviderHelper.getName(context, provider);
 
-            row.<ImageView>findViewById(R.id.icon).setImageResource(R.drawable.ic_search_24dp);
-            row.<TextView>findViewById(R.id.label).setText(context.getString(
-                    R.string.provider_lookup, ProviderHelper.getName(context, provider)));
+            addProviderAction(context, container, inflater, numberInfo, dialog,
+                    ProviderHelper.getUrl(provider, number), provider,
+                    context.getString(R.string.provider_lookup, name),
+                    R.drawable.ic_search_24dp);
 
-            row.setOnClickListener(v -> confirmForLookup(context, numberInfo, host, () -> {
-                IntentHelper.startActivity(context, IntentHelper.getWebIntent(url));
-                dialog.dismiss();
-            }));
-
-            container.addView(row);
+            addProviderAction(context, container, inflater, numberInfo, dialog,
+                    ProviderHelper.getReportUrl(provider, number), provider,
+                    context.getString(R.string.provider_report, name),
+                    R.drawable.ic_thumb_down_24dp);
         }
+    }
+
+    /** One row, when there is an address behind it. */
+    private static void addProviderAction(Context context, ViewGroup container,
+                                          LayoutInflater inflater, NumberInfo numberInfo,
+                                          AlertDialog dialog, String url, Provider provider,
+                                          CharSequence label, int iconResId) {
+        if (TextUtils.isEmpty(url)) return; // an account it doesn't have, say
+
+        String host = ProviderHelper.getHost(context, provider, url);
+
+        View row = inflater.inflate(R.layout.info_dialog_action, container, false);
+
+        row.<ImageView>findViewById(R.id.icon).setImageResource(iconResId);
+        row.<TextView>findViewById(R.id.label).setText(label);
+
+        row.setOnClickListener(v -> confirmForLookup(context, numberInfo, host, () -> {
+            IntentHelper.startActivity(context, IntentHelper.getWebIntent(url));
+            dialog.dismiss();
+        }));
+
+        container.addView(row);
     }
 
     /** Shows the text, or hides the view when there is none. */

@@ -7,18 +7,42 @@ import org.json.JSONObject;
 
 import java.util.UUID;
 
+import dummydomain.yetanothercallblocker.data.BlacklistUtils;
+
 /**
- * A place on the web that knows something about a number.
+ * A place that knows something about a number.
  *
  * <p>The app doesn't ask any of them by itself - that would tell them who is calling whom -
- * so a provider is an address with a place for the number in it, offered in the dialog about
- * a call and opened when the user decides to look. PhoneBlock, tellows and a web search were
- * three fixed rows there; they are three of these now, and there can be others.
+ * so a provider is offered in the dialog about a call and only ever asked when the user
+ * decides to ask. Most of them are an address with a place for the number in it; some speak
+ * an API instead and want a token rather than a link.
+ *
+ * <p>A provider can say which numbers it is worth anything for: a German phone book has
+ * nothing to say about an Australian number, and the row is left out rather than opened for
+ * nothing. Without that, it applies to every number.
  *
  * <p>The token, where one is needed, is kept apart from the list, the way the passwords of
  * the sources are: the list can go into a backup, the token only when the user says so.
  */
 public class Provider {
+
+    /** How the app talks to it. */
+    public enum Mode {
+        /** Addresses that are opened in a browser. */
+        URLS,
+        /** An API the app asks itself, with a token. */
+        API
+    }
+
+    /** Which API a provider speaks, for the ones that do. */
+    public enum Api {
+        PHONE_BLOCK, TELLOWS, CUSTOM
+    }
+
+    /** How the app says who it is, when an address wants to know. */
+    public enum Auth {
+        NONE, BEARER, BASIC
+    }
 
     /** The account the app can also report numbers to; its page about a number. */
     public static final String ID_PHONE_BLOCK = "phoneblock";
@@ -57,15 +81,35 @@ public class Provider {
 
     private static final String KEY_ID = "id";
     private static final String KEY_NAME = "name";
+    private static final String KEY_MODE = "mode";
+    /** What the address used to be called, when there was only one. */
     private static final String KEY_URL = "url";
+    private static final String KEY_SEARCH_URL = "searchUrl";
+    private static final String KEY_REPORT_URL = "reportUrl";
+    private static final String KEY_PATTERN = "pattern";
+    private static final String KEY_AUTH = "auth";
+    private static final String KEY_USERNAME = "username";
+    private static final String KEY_API = "api";
+    private static final String KEY_API_URL = "apiUrl";
     private static final String KEY_ENABLED = "enabled";
 
     /** Stays the same for the life of the provider: its token hangs off it. */
     private final String id;
 
     private String name;
-    private String url;
+    private Mode mode = Mode.URLS;
     private boolean enabled = true;
+
+    /** Which numbers it is worth asking about; empty means all of them. */
+    private String pattern;
+
+    private String searchUrl;
+    private String reportUrl;
+    private Auth auth = Auth.NONE;
+    private String username;
+
+    private Api api = Api.CUSTOM;
+    private String apiUrl;
 
     public Provider() {
         this(UUID.randomUUID().toString());
@@ -87,13 +131,12 @@ public class Provider {
         this.name = name;
     }
 
-    /** The address of the page about a number, with {@link #PLACEHOLDER_NUMBER} in it. */
-    public String getUrl() {
-        return url;
+    public Mode getMode() {
+        return mode;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setMode(Mode mode) {
+        this.mode = mode != null ? mode : Mode.URLS;
     }
 
     /** Whether the dialog about a call offers it. */
@@ -106,25 +149,105 @@ public class Provider {
     }
 
     /**
-     * Whether this row is the PhoneBlock account rather than an address.
+     * The numbers this provider is offered for, as a pattern with {@code *} in it.
      *
-     * <p>It is the one that can't be deleted: the token behind it reports numbers and fetches
-     * the personal lists, so throwing the row away would throw away more than a link. The
-     * others are addresses and can go - the app puts one back only when it first learns of
-     * it, never again.
+     * <p>Empty means every number. {@code 49*} means the German ones - which is the whole of
+     * what a German phone book can answer.
      */
+    public String getPattern() {
+        return pattern;
+    }
+
+    public void setPattern(String pattern) {
+        this.pattern = pattern;
+    }
+
+    /** The address of the page about a number, with {@link #PLACEHOLDER_NUMBER} in it. */
+    public String getSearchUrl() {
+        return searchUrl;
+    }
+
+    public void setSearchUrl(String searchUrl) {
+        this.searchUrl = searchUrl;
+    }
+
+    /** Where a number is reported, when the provider takes reports through an address. */
+    public String getReportUrl() {
+        return reportUrl;
+    }
+
+    public void setReportUrl(String reportUrl) {
+        this.reportUrl = reportUrl;
+    }
+
+    public Auth getAuth() {
+        return auth;
+    }
+
+    public void setAuth(Auth auth) {
+        this.auth = auth != null ? auth : Auth.NONE;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public Api getApi() {
+        return api;
+    }
+
+    public void setApi(Api api) {
+        this.api = api != null ? api : Api.CUSTOM;
+    }
+
+    /** Where the API lives, for one the app doesn't know by itself. */
+    public String getApiUrl() {
+        return apiUrl;
+    }
+
+    public void setApiUrl(String apiUrl) {
+        this.apiUrl = apiUrl;
+    }
+
+    /** One of the three the app knows by itself, which are kept rather than deleted. */
     public boolean isBuiltIn() {
         return ID_PHONE_BLOCK.equals(id);
     }
 
     /** Whether the address is built by the app rather than written out here. */
     public boolean hasOwnAddress() {
-        return ID_PHONE_BLOCK.equals(id) && TextUtils.isEmpty(url);
+        return ID_PHONE_BLOCK.equals(id) && TextUtils.isEmpty(searchUrl);
     }
 
-    /** Whether there is enough here to open anything. */
+    /** Whether there is enough here to do anything at all. */
     public boolean isValid() {
-        return !TextUtils.isEmpty(url) || hasOwnAddress();
+        if (mode == Mode.API) {
+            return api != Api.CUSTOM || !TextUtils.isEmpty(apiUrl);
+        }
+
+        return !TextUtils.isEmpty(searchUrl) || !TextUtils.isEmpty(reportUrl) || hasOwnAddress();
+    }
+
+    /**
+     * Whether this provider has anything to say about the number.
+     *
+     * <p>The pattern is matched the way the two lists match theirs, so what is written here
+     * means what it means everywhere else in the app.
+     */
+    public boolean appliesTo(String number) {
+        if (TextUtils.isEmpty(pattern)) return true;
+        if (TextUtils.isEmpty(number)) return false;
+
+        String cleanNumber = BlacklistUtils.cleanNumber(number);
+        String digits = cleanNumber.startsWith("+") ? cleanNumber.substring(1) : cleanNumber;
+
+        return BlacklistUtils.matches(BlacklistUtils.patternFromHumanReadable(pattern), cleanNumber)
+                || BlacklistUtils.matches(
+                        BlacklistUtils.patternFromHumanReadable(pattern), digits);
     }
 
     public JSONObject toJson() throws JSONException {
@@ -132,7 +255,14 @@ public class Provider {
 
         json.put(KEY_ID, id);
         json.put(KEY_NAME, name);
-        json.put(KEY_URL, url);
+        json.put(KEY_MODE, mode.name());
+        json.put(KEY_SEARCH_URL, searchUrl);
+        json.put(KEY_REPORT_URL, reportUrl);
+        json.put(KEY_PATTERN, pattern);
+        json.put(KEY_AUTH, auth.name());
+        json.put(KEY_USERNAME, username);
+        json.put(KEY_API, api.name());
+        json.put(KEY_API_URL, apiUrl);
         json.put(KEY_ENABLED, enabled);
 
         return json;
@@ -142,10 +272,33 @@ public class Provider {
         Provider provider = new Provider(json.optString(KEY_ID, null));
 
         provider.setName(json.optString(KEY_NAME, null));
-        provider.setUrl(json.optString(KEY_URL, null));
+        provider.setMode(parse(Mode.class, json.optString(KEY_MODE), Mode.URLS));
+
+        // what one version wrote as "url" is what this one calls the search address
+        String searchUrl = json.optString(KEY_SEARCH_URL, null);
+        provider.setSearchUrl(!TextUtils.isEmpty(searchUrl)
+                ? searchUrl : json.optString(KEY_URL, null));
+
+        provider.setReportUrl(json.optString(KEY_REPORT_URL, null));
+        provider.setPattern(json.optString(KEY_PATTERN, null));
+        provider.setAuth(parse(Auth.class, json.optString(KEY_AUTH), Auth.NONE));
+        provider.setUsername(json.optString(KEY_USERNAME, null));
+        provider.setApi(parse(Api.class, json.optString(KEY_API), Api.CUSTOM));
+        provider.setApiUrl(json.optString(KEY_API_URL, null));
         provider.setEnabled(json.optBoolean(KEY_ENABLED, true));
 
         return provider;
+    }
+
+    /** A value a later version wrote, or nonsense, reads as the one that is always safe. */
+    private static <T extends Enum<T>> T parse(Class<T> type, String value, T defaultValue) {
+        if (TextUtils.isEmpty(value)) return defaultValue;
+
+        try {
+            return Enum.valueOf(type, value);
+        } catch (IllegalArgumentException e) {
+            return defaultValue;
+        }
     }
 
 }

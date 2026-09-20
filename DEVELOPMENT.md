@@ -164,3 +164,56 @@ database into the APK). It attaches the APKs and their checksums to the run as a
 `apk-<build time>-<revision>` artifact and the lint reports as `reports`, prints the lint
 findings in the job log (the project doesn't fail the build on them), and checks that the
 caller ID provider survived the manifest merge. Pushing a `v*` tag additionally publishes the APKs as a GitHub release.
+
+## The custom provider API
+
+A provider in the app is normally an address that is opened in a browser. One can instead be
+switched to "ask an API", and then the app talks to it itself - which means the app has to know
+what to send and what comes back. PhoneBlock and tellows are two it knows by name; anything else
+is a *custom* API and follows the contract below.
+
+Nothing is asked without the user asking first: the app has no business telling a server who is
+calling whom, so an API is only ever consulted from the dialog about a call, after a tap.
+
+**The request.** `GET <address>` with the number substituted into it, or - when the address has
+no place for a number - `POST <address>` with a JSON body:
+
+```
+POST https://example.net/lookup
+Authorization: Bearer <the token from the provider screen>
+Content-Type: application/json
+
+{"number": "+4930123456"}
+```
+
+The same placeholders the address of a search uses work here: `{number}` (`+4930123456`),
+`{number00}` (`004930123456`), `{digits}` (`4930123456`), `{national}` (`030123456`) and
+`{token}`. An address that contains one of them is fetched with GET; one that contains none is
+asked with POST and the body above.
+
+**The answer.** JSON, and every field is optional:
+
+```json
+{
+  "name": "Some Company GmbH",
+  "rating": "negative",
+  "category": "telemarketer",
+  "score": 42,
+  "comments": 17,
+  "url": "https://example.net/num/4930123456"
+}
+```
+
+* `name` - what the number is known as; shown where a contact name would be
+* `rating` - one of `positive`, `neutral`, `negative`, `unknown`
+* `category` - free text, shown as it is
+* `score` - how strongly the provider feels, -100 (harmless) to 100 (certain spam)
+* `comments` - how many people said something about it
+* `url` - a page about the number, offered as a row of its own
+
+An answer that isn't JSON, or a status that isn't 2xx, is reported as a failed lookup and
+changes nothing about the number.
+
+**Not implemented yet.** The provider screen stores all of this - the choice, the address, the
+token - and the caller info does not offer API providers while there is no client to ask them.
+The rows appear as soon as it exists; the settings do not have to be entered again.

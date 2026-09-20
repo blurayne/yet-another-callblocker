@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.callLogList);
         recyclerView.setAdapter(callLogAdapter);
         recyclerView.addItemDecoration(new CustomVerticalDivider(this));
+        UiUtils.speedUpAnimations(recyclerView);
 
         callLogDsFactory = new CallLogDataSource.Factory(getCallLogGroupConverter());
 

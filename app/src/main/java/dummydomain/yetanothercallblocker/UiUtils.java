@@ -12,6 +12,7 @@ import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.preference.MultiSelectListPreference;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +20,26 @@ import java.util.List;
 import java.util.Set;
 
 public class UiUtils {
+
+    /**
+     * Halves the time a list takes to show a change.
+     *
+     * <p>The rows of this app carry short, plain text, so the framework's default pace - a
+     * fifth of a second for a row that moves or changes - is longer than it takes to read
+     * what moved. At half of it the change is still visible as a movement rather than a jump.
+     *
+     * <p>Whatever the framework's defaults are is what gets halved, so this follows them if
+     * they ever change.
+     */
+    public static void speedUpAnimations(RecyclerView list) {
+        RecyclerView.ItemAnimator animator = list.getItemAnimator();
+        if (animator == null) return;
+
+        animator.setAddDuration(animator.getAddDuration() / 2);
+        animator.setRemoveDuration(animator.getRemoveDuration() / 2);
+        animator.setMoveDuration(animator.getMoveDuration() / 2);
+        animator.setChangeDuration(animator.getChangeDuration() / 2);
+    }
 
     @ColorInt
     public static int getColorInt(@NonNull Context context, @ColorRes int colorResId) {

@@ -60,6 +60,7 @@ public class ReviewsActivity extends AppCompatActivity {
         RecyclerView reviewsList = findViewById(R.id.reviews_list);
         reviewsList.setLayoutManager(new LinearLayoutManager(this));
         reviewsList.setAdapter(listViewAdapter);
+        UiUtils.speedUpAnimations(reviewsList);
         reviewsList.addItemDecoration(new CustomVerticalDivider(this));
 
         handleIntent(getIntent());

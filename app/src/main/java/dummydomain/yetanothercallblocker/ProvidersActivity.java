@@ -62,6 +62,7 @@ public class ProvidersActivity extends AppCompatActivity {
         RecyclerView list = findViewById(R.id.providersList);
         list.setAdapter(adapter);
         list.addItemDecoration(new CustomVerticalDivider(this));
+        UiUtils.speedUpAnimations(list);
 
         touchHelper = new ItemTouchHelper(new ReorderCallback());
         touchHelper.attachToRecyclerView(list);
@@ -114,6 +115,14 @@ public class ProvidersActivity extends AppCompatActivity {
             reordered = true;
 
             return true;
+        }
+
+        @Override
+        public long getAnimationDuration(@NonNull RecyclerView recyclerView, int animationType,
+                                         float animateDx, float animateDy) {
+            // a row that is let go settles in half the usual time, like the rest of the list
+            return super.getAnimationDuration(
+                    recyclerView, animationType, animateDx, animateDy) / 2;
         }
 
         @Override

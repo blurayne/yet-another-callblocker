@@ -81,6 +81,7 @@ public class BlacklistActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.blacklistItemsList);
         recyclerView.setAdapter(blacklistAdapter);
         recyclerView.addItemDecoration(new CustomVerticalDivider(this));
+        UiUtils.speedUpAnimations(recyclerView);
 
         selectionTracker = new SelectionTracker.Builder<>(
                 "blacklistSelection", recyclerView,

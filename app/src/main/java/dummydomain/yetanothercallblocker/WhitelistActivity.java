@@ -56,6 +56,7 @@ public class WhitelistActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.whitelistItemsList);
         recyclerView.setAdapter(adapter);
+        UiUtils.speedUpAnimations(recyclerView);
         recyclerView.addItemDecoration(new CustomVerticalDivider(this));
 
         emptyView = findViewById(R.id.empty);

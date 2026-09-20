@@ -79,6 +79,12 @@
     <string name="main_db_downloading">Datenbank wird heruntergeladen …</string>
     <string name="secondary_db_updating">Datenbank wird aktualisiert …</string>
     <string name="filtering_db">Datenbank wird gefiltert …</string>
+    <string name="compiling_db">Datenbank wird gebaut (%1$d/%2$d)\u2026</string>
+    <string name="source_result_database">die Datenbank</string>
+    <string name="source_result_numbers">%d Nummern</string>
+    <string name="source_result_no_address">keine Adresse</string>
+    <string name="source_result_failed">nicht abrufbar</string>
+    <string name="source_result_not_a_database">keine Datenbankdatei</string>
     <string name="notification_background_operation">Vorgang läuft im Hintergrund …</string>
     <string name="db_version">Datenbankversion: %s</string>
     <string name="db_version_not_available">k. A.</string>

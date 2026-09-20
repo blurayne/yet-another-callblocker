@@ -242,7 +242,7 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
 
     /** The unfiltered database can only be restored while a copy of it is kept. */
     private void updateMasterPreference() {
-        boolean hasMaster = new DbFilteringService(settings).hasMaster();
+        boolean hasMaster = new DbFilteringService(requireContext(), settings).hasMaster();
 
         Preference preference = requirePreference(PREF_REVERT_TO_MASTER);
         preference.setEnabled(hasMaster);

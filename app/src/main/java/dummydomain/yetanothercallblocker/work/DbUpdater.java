@@ -3,6 +3,7 @@ package dummydomain.yetanothercallblocker.work;
 import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.PhoneBlockHelper;
 import dummydomain.yetanothercallblocker.Settings;
+import dummydomain.yetanothercallblocker.data.DbCompileService;
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
@@ -17,6 +18,7 @@ import static dummydomain.yetanothercallblocker.EventUtils.removeStickyEvent;
 public class DbUpdater {
 
     public void update() {
+        App app = App.getInstance();
         Settings settings = App.getSettings();
 
         boolean updated = false;
@@ -30,8 +32,15 @@ public class DbUpdater {
                 settings.setLastUpdateTime(System.currentTimeMillis());
                 updated = true;
 
+                /*
+                 * The update is merged where the layers of the other sources live, so it can
+                 * bury what they added - and bring back what they took out. They go on top
+                 * again, from what was fetched last time, without asking them again.
+                 */
+                if (app != null) new DbCompileService(app, settings).reapplyLayers();
+
                 // the update brings unfiltered entries with it
-                new DbFilteringService(settings).updateFilter(false);
+                if (app != null) new DbFilteringService(app, settings).updateFilter(false);
             } // TODO: handle other results
             settings.setLastUpdateCheckTime(System.currentTimeMillis());
         } finally {
@@ -46,7 +55,6 @@ public class DbUpdater {
         phoneBlockService.updatePersonalLists(false);
 
         // the token is checked here because this is what runs daily
-        App app = App.getInstance();
         if (app != null) PhoneBlockHelper.checkTokenIfDue(app, settings);
     }
 

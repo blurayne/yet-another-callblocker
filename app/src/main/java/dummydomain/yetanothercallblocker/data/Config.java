@@ -104,12 +104,13 @@ public class Config {
         /*
          * The database is fetched the way the source it comes from says: with whatever it
          * needs to let us in, and unpacked when it arrives packed. Which source that is can
-         * change while the app runs, so it is looked up per request rather than kept.
+         * change while the app runs - and changes as a compile walks the list - so it is
+         * looked up per request rather than kept.
          */
         OkHttpClientFactory dbClientFactory = () -> {
             DeferredInit.initNetwork();
 
-            NumberSource source = sourceService.getActiveDatabaseSource();
+            NumberSource source = sourceService.getFetchingSource();
 
             return SourceHttp.decorate(new OkHttpClient(), source,
                     source != null ? sourceService.getSecret(source.getId()) : null);

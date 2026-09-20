@@ -25,6 +25,9 @@ public class SourceService {
 
     private final Settings settings;
 
+    /** Set while one source is being fetched; see {@link #setFetchingSource}. */
+    private volatile NumberSource fetching;
+
     public SourceService(Settings settings) {
         this.settings = settings;
     }
@@ -49,19 +52,34 @@ public class SourceService {
         return sources;
     }
 
-    /** The database the app downloads: the first one that is switched on. */
+    /**
+     * The source the database itself comes from: the first one that is switched on.
+     *
+     * <p>There is no address behind the list: a database is downloaded because a source says
+     * so, and an empty list means nothing is downloaded at all.
+     */
     public NumberSource getActiveDatabaseSource() {
         List<NumberSource> sources = getEnabledSources(NumberSource.Type.DATABASE);
 
         return !sources.isEmpty() ? sources.get(0) : null;
     }
 
-    /** Where the community database comes from, whatever the list has to say about it. */
-    public String getDatabaseUrl() {
-        NumberSource source = getActiveDatabaseSource();
+    /**
+     * The source that is being fetched right now, so that the client logs in as that one.
+     *
+     * <p>The database is built from several sources one after another, each with its own way
+     * in, while the client that fetches it is built once and asked per request which source
+     * it is working for.
+     */
+    public void setFetchingSource(NumberSource source) {
+        this.fetching = source;
+    }
 
-        return source != null && !TextUtils.isEmpty(source.getUrl())
-                ? source.getUrl() : settings.getDatabaseDownloadUrl();
+    /** The source a download should log in as: the one being fetched, or the first one. */
+    public NumberSource getFetchingSource() {
+        NumberSource source = fetching;
+
+        return source != null ? source : getActiveDatabaseSource();
     }
 
     public NumberSource findById(String id) {

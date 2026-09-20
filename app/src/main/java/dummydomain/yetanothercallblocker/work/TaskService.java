@@ -17,6 +17,7 @@ import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.NotificationHelper;
 import dummydomain.yetanothercallblocker.PhoneBlockHelper;
 import dummydomain.yetanothercallblocker.R;
+import dummydomain.yetanothercallblocker.data.DbCompileService;
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
@@ -112,20 +113,18 @@ public class TaskService extends IntentService {
                 NotificationHelper.NOTIFICATION_ID_TASKS, createNotification(title));
     }
 
+    /** Builds the database from the sources: the first one, then every layer on top. */
     private void downloadMainDb() {
         MainDbDownloadingEvent sticky = new MainDbDownloadingEvent();
 
         postStickyEvent(sticky);
         try {
-            YacbHolder.getDbManager()
-                    .downloadMainDb(YacbHolder.getSourceService().getDatabaseUrl());
-            YacbHolder.getCommunityDatabase().reload();
-            YacbHolder.getFeaturedDatabase().reload();
-            YacbHolder.getSiaMetadata().reload();
+            new DbCompileService(this, App.getSettings()).compile((current, total) ->
+                    updateNotification(getString(R.string.compiling_db, current, total)));
 
-            // the downloaded database is unfiltered, so the filter has to be applied again
+            // what was just fetched is unfiltered, so the filter has to be applied again
             updateNotification(getString(R.string.filtering_db));
-            new DbFilteringService(App.getSettings()).updateFilter(true);
+            new DbFilteringService(this, App.getSettings()).updateFilter(true);
         } catch (Exception e) {
             LOG.warn("downloadMainDb()", e);
         } finally {
@@ -145,7 +144,7 @@ public class TaskService extends IntentService {
 
         postStickyEvent(sticky);
         try {
-            DbFilteringService.Result result = new DbFilteringService(App.getSettings())
+            DbFilteringService.Result result = new DbFilteringService(this, App.getSettings())
                     .filter((current, total) ->
                             postEvent(new DbFilteringProgressEvent(current, total)));
 
@@ -170,7 +169,7 @@ public class TaskService extends IntentService {
 
     private void revertDbFilter() {
         postEvent(new DbFilterRevertedEvent(
-                new DbFilteringService(App.getSettings()).revertToMaster()));
+                new DbFilteringService(this, App.getSettings()).revertToMaster()));
     }
 
 }

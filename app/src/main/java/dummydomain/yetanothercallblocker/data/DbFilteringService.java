@@ -1,5 +1,7 @@
 package dummydomain.yetanothercallblocker.data;
 
+import android.content.Context;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,11 @@ import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
  * <p>The database the app uses stays where the library expects it ({@code sia/}); the master is
  * the copy ({@code sia-master/}). It exists exactly while the database in use is filtered, so
  * "revert to the master" is putting it back, and a run that filters nothing out drops it again.
+ *
+ * <p>When there is no copy and the database in use is filtered already, the sources are asked
+ * for it again rather than the filter being applied twice: filtering a filtered database only
+ * ever narrows it further, and the second filter's own settings would no longer decide what
+ * is kept.
  */
 public class DbFilteringService {
 
@@ -88,9 +95,14 @@ public class DbFilteringService {
     /** Only one run happens at a time: the task service handles its intents one by one. */
     private static final AtomicBoolean CANCELLATION_REQUESTED = new AtomicBoolean();
 
+    private final Context context;
     private final Settings settings;
 
-    public DbFilteringService(Settings settings) {
+    /**
+     * @param context used when the database has to be built again before it can be filtered
+     */
+    public DbFilteringService(Context context, Settings settings) {
+        this.context = context.getApplicationContext();
         this.settings = settings;
     }
 
@@ -138,8 +150,13 @@ public class DbFilteringService {
                 LOG.debug("filter() restoring the master database");
                 if (!replaceDir(mainDir, masterDir)) return new Result(Status.FAILED, 0, 0);
             } else {
-                if (!isDatabase(mainDir) && !downloadDb()) {
-                    LOG.warn("filter() there's no database to filter");
+                /*
+                 * Filtering narrows a database down and there is no way back within it, so it
+                 * is never applied to a database that has been filtered already: without a
+                 * copy of the unfiltered one, the sources are asked for it again.
+                 */
+                if ((settings.isDbFiltered() || !isDatabase(mainDir)) && !compileDb()) {
+                    LOG.warn("filter() there's no unfiltered database to filter");
                     return new Result(Status.NO_DATABASE, 0, 0);
                 }
 
@@ -230,14 +247,23 @@ public class DbFilteringService {
         }
     }
 
-    /** Puts the unfiltered database back. */
+    /** Puts the unfiltered database back, fetching it again if no copy was kept. */
     public boolean revertToMaster() {
         LOG.debug("revertToMaster() started");
 
         File masterDir = getMasterDir();
         if (!isDatabase(masterDir)) {
-            LOG.warn("revertToMaster() there's no master database");
-            return false;
+            LOG.info("revertToMaster() no copy was kept, building the database again");
+
+            if (!compileDb()) {
+                LOG.warn("revertToMaster() the database couldn't be built");
+                return false;
+            }
+
+            settings.setDbFiltered(false);
+            reloadDatabases();
+
+            return true;
         }
 
         if (!replaceDir(getMainDir(), masterDir)) return false;
@@ -337,14 +363,14 @@ public class DbFilteringService {
                 name.length() - SLICE_NAME_POSTFIX.length());
     }
 
-    private boolean downloadDb() {
-        LOG.debug("downloadDb() no database, downloading it");
+    /** Builds the database from the sources, which is what an unfiltered database is. */
+    private boolean compileDb() {
+        LOG.debug("compileDb() building the database from the sources");
 
         try {
-            return YacbHolder.getDbManager()
-                    .downloadMainDb(YacbHolder.getSourceService().getDatabaseUrl());
+            return new DbCompileService(context, settings).compile(null).isOk();
         } catch (Exception e) {
-            LOG.warn("downloadDb() failed", e);
+            LOG.warn("compileDb() failed", e);
             return false;
         }
     }

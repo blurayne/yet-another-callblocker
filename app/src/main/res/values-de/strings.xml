@@ -48,7 +48,6 @@
     <string name="open_blacklist_activity">Schwarze Liste</string>
     <string name="open_whitelist_activity">Weiße Liste</string>
     <string name="open_about_activity">Über</string>
-    <string name="open_db_management_activity">Datenbank verwalten</string>
     <string name="call_log_permission_message">Erteilen Sie die Berechtigung „Telefon“, um die letzten Anrufe anzuzeigen</string>
     <!-- was aus einem Anruf wurde -->
     <string name="call_status_blocked">Blockiert</string>
@@ -336,7 +335,6 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="settings_category_number_sources">Woher die Nummern kommen</string>
     <string name="settings_category_appearance">Darstellung</string>
     <string name="settings_screen_advanced_summary">Ländervorwahlen, Verhalten vor dem Entsperren, Fehlerbehebung</string>
-    <string name="community_database">Community-Datenbank</string>
     <string name="blocking_stats">Letzte 30 Tage: %1$d blockiert, %2$d stumm gestellt von %3$d Anrufen</string>
     <string name="blocking_stats_none">Bisher keine Anrufe gesehen</string>
     <string name="blacklist_count_with_rules">%1$d Einträge, davon %2$d Regeln</string>
@@ -523,12 +521,31 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_filtering_result_no_database">Es gibt keine Datenbank zum Filtern, und sie konnte nicht heruntergeladen werden.</string>
 
     <!-- Datenbank verwalten -->
-    <string name="db_management_activity_label">Datenbank verwalten</string>
-    <string name="db_management_db_info">Datenbankinfo</string>
-    <string name="db_management_reset_base">Datenbank zurücksetzen</string>
-    <string name="db_management_reset_secondary">Aktualisierungen zurücksetzen</string>
-    <string name="db_management_update_db">Datenbank aktualisieren</string>
-    <string name="db_management_update_result">Aktualisierung abgeschlossen; Datenbankversion: %d</string>
+    <string name="db_management">Datenbank verwalten</string>
+    <string name="db_management_status">Was drinsteht</string>
+    <string name="db_management_status_empty">Noch nichts gebaut</string>
+    <string name="db_management_status_built">gebaut %s</string>
+    <string name="db_management_sources">Woher sie kommt</string>
+    <string name="db_management_sources_summary">Die Datenbank wird aus den Quellen gebaut, in deren Reihenfolge</string>
+    <string name="db_management_category_keeping_it_current">Aktuell halten</string>
+    <string name="db_management_build">Neu bauen</string>
+    <string name="db_management_build_summary">Jede eingeschaltete Quelle holen und die Datenbank daraus bauen</string>
+    <string name="db_management_update">Nach Aktualisierungen sehen</string>
+    <string name="db_management_update_summary">Die Gemeinschaftsdatenbank fragen, was sich seit dem letzten Mal geändert hat</string>
+    <string name="db_management_category_moving_it">Auf ein anderes Telefon bringen</string>
+    <string name="db_management_export_summary">Das Heruntergeladene in eine Datei schreiben, damit das nächste Telefon es nicht laden muss</string>
+    <string name="db_management_import_summary">So eine Datei zurücklesen und das Vorhandene ersetzen</string>
+    <string name="db_management_category_starting_over">Von vorn anfangen</string>
+    <string name="db_management_reset_updates">Aktualisierungen vergessen</string>
+    <string name="db_management_reset_updates_summary">Alles wegwerfen, was nach dem Herunterladen dazukam; die nächste Aktualisierung holt es erneut</string>
+    <string name="db_management_reset_updates_message">Die Aktualisierungen, die seit dem Herunterladen dazukamen, werden weggeworfen. Die nächste Aktualisierung bringt sie zurück.</string>
+    <string name="db_management_reset_updates_done">Die Aktualisierungen wurden weggeworfen.</string>
+    <string name="db_management_delete">Datenbank löschen</string>
+    <string name="db_management_delete_summary">Ganz wegwerfen; aus den Quellen lässt sie sich neu bauen</string>
+    <string name="db_management_delete_message">Die Datenbank wird weggeworfen, die heruntergeladenen Dateien mit ihr. Ihre Listen und Einstellungen bleiben unberührt, und die Quellen können sie neu bauen.</string>
+    <string name="db_management_delete_done">Die Datenbank wurde gelöscht.</string>
+    <string name="db_management_technical">Technische Angaben</string>
+    <string name="db_management_technical_summary">Versionen, Größen und Zeiten, falls etwas nicht zusammenpasst</string>
     <string name="db_management_export_db">Datenbank exportieren</string>
     <string name="db_management_import_db">Datenbank importieren</string>
     <string name="db_management_exporting">Datenbank wird exportiert …</string>

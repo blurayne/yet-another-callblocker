@@ -132,8 +132,9 @@ public class AboutActivity extends AppCompatActivity {
         TaskService.start(this, TaskService.TASK_UPDATE_SECONDARY_DB);
     }
 
+    /** The database has a screen of its own in the settings now; this is the short way to it. */
     private boolean onDbInfoLongClicked(View view) {
-        startActivity(new Intent(this, DbManagementActivity.class));
+        startActivity(new Intent(this, SettingsActivity.class));
         finish();
         return true;
     }

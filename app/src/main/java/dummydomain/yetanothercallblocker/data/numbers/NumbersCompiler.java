@@ -1,6 +1,7 @@
 package dummydomain.yetanothercallblocker.data.numbers;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import org.slf4j.Logger;
@@ -54,6 +55,23 @@ public class NumbersCompiler {
     /** Where a build has got to, in files. */
     public interface ProgressListener {
         void onProgress(int current, int total);
+    }
+
+    /** One source, and how much of the table came from it. */
+    public static class SourceCount {
+
+        public final String name;
+        public final int type;
+        public final int layer;
+        public final long count;
+
+        SourceCount(String name, int type, int layer, long count) {
+            this.name = name;
+            this.type = type;
+            this.layer = layer;
+            this.count = count;
+        }
+
     }
 
     private static final String SLICE_PREFIX = "data_slice_";
@@ -154,6 +172,8 @@ public class NumbersCompiler {
 
             long numbers = NumbersDb.getCount(db);
             NumbersDb.setMeta(db, NumbersDb.META_COUNT, String.valueOf(numbers));
+
+            countSources(db);
 
             LOG.info("compile() {} numbers from {} sources in {} ms",
                     numbers, written, System.currentTimeMillis() - startTime);
@@ -278,6 +298,8 @@ public class NumbersCompiler {
             long after = NumbersDb.getCount(db);
             NumbersDb.setMeta(db, NumbersDb.META_COUNT, String.valueOf(after));
 
+            countSources(db);
+
             // the rows are gone, but the space they took is only given back here
             db.execSQL("VACUUM");
 
@@ -326,6 +348,72 @@ public class NumbersCompiler {
         } finally {
             helper.close();
         }
+    }
+
+    /**
+     * Writes down how many rows each source has left in the table.
+     *
+     * <p>Counted here, where a build or a filtering has just walked the whole table anyway,
+     * so that a screen can show it without counting anything.
+     */
+    private static void countSources(SQLiteDatabase db) {
+        db.execSQL("UPDATE sources SET count ="
+                + " (SELECT COUNT(*) FROM numbers WHERE numbers.source = sources.id)");
+    }
+
+    /** What each source contributed, in the order the table was built in. */
+    public List<SourceCount> getSourceCounts() {
+        List<SourceCount> counts = new ArrayList<>();
+
+        NumbersDb helper = new NumbersDb(context);
+
+        try (Cursor cursor = helper.getReadableDatabase().rawQuery(
+                "SELECT name, type, layer, count FROM sources ORDER BY layer", null)) {
+            while (cursor.moveToNext()) {
+                counts.add(new SourceCount(cursor.getString(0), cursor.getInt(1),
+                        cursor.getInt(2), cursor.getLong(3)));
+            }
+        } catch (Exception e) {
+            LOG.warn("getSourceCounts()", e);
+        } finally {
+            helper.close();
+        }
+
+        return counts;
+    }
+
+    /** When the table was last built, or 0 when it never was. */
+    public long getCompiledTime() {
+        NumbersDb helper = new NumbersDb(context);
+
+        try {
+            String value = NumbersDb.getMeta(helper.getReadableDatabase(),
+                    NumbersDb.META_COMPILED, null);
+
+            return value != null ? Long.parseLong(value) : 0;
+        } catch (Exception e) {
+            LOG.warn("getCompiledTime()", e);
+            return 0;
+        } finally {
+            helper.close();
+        }
+    }
+
+    /** How much room the table takes, and the copy beside it. */
+    public long getSize() {
+        return NumbersDb.getFile(context).length();
+    }
+
+    public long getShadowSize() {
+        return NumbersDb.getShadowFile(context).length();
+    }
+
+    /** Throws the table away; the sources are what it is built from, so nothing is lost. */
+    public void clear() {
+        dropShadowCopy();
+
+        File file = NumbersDb.getFile(context);
+        if (file.exists() && !file.delete()) LOG.warn("clear() couldn't delete {}", file);
     }
 
     private static List<File> listFiles(File dir, String prefix, String postfix) {

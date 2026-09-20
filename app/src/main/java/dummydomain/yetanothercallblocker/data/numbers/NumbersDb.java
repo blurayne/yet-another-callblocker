@@ -59,7 +59,9 @@ public class NumbersDb extends SQLiteOpenHelper {
                     + "uuid TEXT NOT NULL UNIQUE,"
                     + "name TEXT,"
                     + "type INTEGER NOT NULL,"
-                    + "layer INTEGER NOT NULL)",
+                    + "layer INTEGER NOT NULL,"
+                    // how many rows are left pointing at it, written down when that changes
+                    + "count INTEGER NOT NULL DEFAULT 0)",
 
             "CREATE TABLE numbers ("
                     + "number INTEGER PRIMARY KEY,"

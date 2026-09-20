@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:key="dbManagement"
+    app:title="@string/db_management">
+
+    <Preference
+        app:key="dbStatus"
+        app:persistent="false"
+        app:selectable="false"
+        app:title="@string/db_management_status" />
+
+    <Preference
+        app:key="dbSources"
+        app:persistent="false"
+        app:summary="@string/db_management_sources_summary"
+        app:title="@string/db_management_sources" />
+
+    <PreferenceCategory app:title="@string/db_management_category_keeping_it_current">
+
+        <Preference
+            app:key="dbBuild"
+            app:persistent="false"
+            app:summary="@string/db_management_build_summary"
+            app:title="@string/db_management_build" />
+
+        <Preference
+            app:key="dbUpdate"
+            app:persistent="false"
+            app:summary="@string/db_management_update_summary"
+            app:title="@string/db_management_update" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/db_management_category_moving_it">
+
+        <Preference
+            app:key="dbExport"
+            app:persistent="false"
+            app:summary="@string/db_management_export_summary"
+            app:title="@string/db_management_export_db" />
+
+        <Preference
+            app:key="dbImport"
+            app:persistent="false"
+            app:summary="@string/db_management_import_summary"
+            app:title="@string/db_management_import_db" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/db_management_category_starting_over">
+
+        <Preference
+            app:key="dbResetUpdates"
+            app:persistent="false"
+            app:summary="@string/db_management_reset_updates_summary"
+            app:title="@string/db_management_reset_updates" />
+
+        <Preference
+            app:key="dbDelete"
+            app:persistent="false"
+            app:summary="@string/db_management_delete_summary"
+            app:title="@string/db_management_delete" />
+
+        <Preference
+            app:key="dbTechnical"
+            app:persistent="false"
+            app:summary="@string/db_management_technical_summary"
+            app:title="@string/db_management_technical" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

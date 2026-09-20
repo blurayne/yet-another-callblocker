@@ -134,42 +134,6 @@
                 android:value=".MainActivity" />
         </activity>
         <activity
-            android:name=".DbManagementActivity"
-            android:label="@string/db_management_activity_label" />
-        <activity
-            android:name=".ReviewsActivity"
-            android:label="@string/title_activity_reviews"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".InfoDialogActivity"
-            android:autoRemoveFromRecents="true"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:theme="@style/DialogBackgroundTheme" />
-        <activity
-            android:name=".DummyDialerActivity"
-            android:autoRemoveFromRecents="true"
-            android:directBootAware="true"
-            android:excludeFromRecents="true"
-            android:exported="true"
-            android:noHistory="true"
-            android:theme="@style/DialogBackgroundTheme">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <action android:name="android.intent.action.DIAL" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="tel" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.DIAL" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        <activity
             android:name=".AboutActivity"
             android:label="@string/about_activity"
             android:parentActivityName=".MainActivity">

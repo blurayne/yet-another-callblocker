@@ -29,8 +29,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.text.NumberFormat;
 
 import dummydomain.yetanothercallblocker.data.BackupService;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.BlacklistService;
 import dummydomain.yetanothercallblocker.data.CallDecisionLog;
 import dummydomain.yetanothercallblocker.data.Whitelist;
@@ -681,6 +683,13 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private String getCommunityDbStatus() {
         CommunityDatabase communityDatabase = YacbHolder.getCommunityDatabase();
 
+        // what is in the database says more at a glance than what version it is
+        long count = new NumbersCompiler(requireContext()).getCount();
+        String numbers = count >= 0
+                ? getString(R.string.db_filtering_status_numbers,
+                        NumberFormat.getInstance().format(count)) + "\n"
+                : "";
+
         String version = communityDatabase != null && communityDatabase.isOperational()
                 ? String.valueOf(communityDatabase.getEffectiveDbVersion())
                 : getString(R.string.db_version_not_available);
@@ -690,7 +699,7 @@ public class RootSettingsFragment extends BaseSettingsFragment {
                 ? DateUtils.getRelativeTimeSpanString(lastCheck).toString()
                 : getString(R.string.db_last_update_check_never);
 
-        return getString(R.string.db_version, version)
+        return numbers + getString(R.string.db_version, version)
                 + "\n" + getString(R.string.db_last_update_check, lastCheckValue);
     }
 

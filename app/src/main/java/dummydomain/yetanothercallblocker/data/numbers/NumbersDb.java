@@ -63,7 +63,8 @@ public class NumbersDb extends SQLiteOpenHelper {
      */
     public static final String META_COUNT = "count";
 
-    private static final String[] SCHEMA = {
+    /** The tables themselves; what a build fills. */
+    private static final String[] TABLES_SQL = {
             "CREATE TABLE sources ("
                     + "id INTEGER PRIMARY KEY,"
                     + "uuid TEXT NOT NULL UNIQUE,"
@@ -80,16 +81,28 @@ public class NumbersDb extends SQLiteOpenHelper {
                     + "source INTEGER NOT NULL REFERENCES sources(id) ON DELETE CASCADE,"
                     + "updated INTEGER NOT NULL DEFAULT 0)",
 
-            "CREATE INDEX numbers_source ON numbers(source)",
-
             "CREATE TABLE names ("
                     + "number INTEGER PRIMARY KEY,"
                     + "name TEXT NOT NULL,"
                     + "source INTEGER NOT NULL REFERENCES sources(id) ON DELETE CASCADE)",
 
-            "CREATE INDEX names_source ON names(source)",
-
             "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)",
+    };
+
+    /**
+     * What is kept up to date beside the tables, made after they are filled rather than while.
+     *
+     * <p>An index that exists while nine million rows are written is nine million insertions
+     * into a second tree, in an order that has nothing to do with its own. Built afterwards
+     * it is one pass over rows that are already there, which is both faster and tidier.
+     *
+     * <p>Neither of them is used for looking a number up - the number is the table's own key
+     * - only for counting what each source contributed and for taking a source's rows out
+     * with it.
+     */
+    private static final String[] INDEXES_SQL = {
+            "CREATE INDEX IF NOT EXISTS numbers_source ON numbers(source)",
+            "CREATE INDEX IF NOT EXISTS names_source ON names(source)",
     };
 
     private static final String[] TABLES = {"names", "numbers", "sources", "meta"};
@@ -124,7 +137,19 @@ public class NumbersDb extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         LOG.info("onCreate() creating the tables");
 
-        for (String statement : SCHEMA) {
+        createTables(db);
+        createIndexes(db);
+    }
+
+    public static void createTables(SQLiteDatabase db) {
+        for (String statement : TABLES_SQL) {
+            db.execSQL(statement);
+        }
+    }
+
+    /** Made when the table is full; see {@link #INDEXES_SQL}. */
+    public static void createIndexes(SQLiteDatabase db) {
+        for (String statement : INDEXES_SQL) {
             db.execSQL(statement);
         }
     }
@@ -171,18 +196,40 @@ public class NumbersDb extends SQLiteOpenHelper {
          */
         try {
             db.execSQL("PRAGMA cache_size = -2000"); // negative: kibibytes rather than pages
+
+            /*
+             * The database a build assembles is written as fast as the phone can take it:
+             * no waiting for the flash to confirm every commit, and a journal that lives in
+             * memory rather than beside the file. Both are safe here for the same reason -
+             * this file is thrown away if anything goes wrong with it, and what it replaces
+             * stays untouched until it is finished.
+             */
+            if (BUILD_FILE_NAME.equals(getDatabaseName()) && !db.isReadOnly()) {
+                db.execSQL("PRAGMA synchronous = OFF");
+                db.execSQL("PRAGMA journal_mode = MEMORY");
+            }
         } catch (Exception e) {
-            LOG.warn("onOpen() couldn't set the cache size", e);
+            LOG.warn("onOpen() couldn't set the database up for writing", e);
         }
     }
 
-    /** Empties everything, which is how a compile starts. */
-    public void recreate(SQLiteDatabase db) {
+    /**
+     * Empties everything, which is how a compile starts.
+     *
+     * @param withIndexes whether the indexes are made now or left until the table is full
+     */
+    public void recreate(SQLiteDatabase db, boolean withIndexes) {
         for (String table : TABLES) {
             db.execSQL("DROP TABLE IF EXISTS " + table);
         }
 
-        onCreate(db);
+        createTables(db);
+
+        if (withIndexes) createIndexes(db);
+    }
+
+    public void recreate(SQLiteDatabase db) {
+        recreate(db, true);
     }
 
     public static String getMeta(SQLiteDatabase db, String key, String defaultValue) {

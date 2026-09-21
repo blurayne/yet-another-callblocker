@@ -220,7 +220,8 @@ public class NumbersCompiler {
         try {
             SQLiteDatabase db = helper.getWritableDatabase();
 
-            helper.recreate(db);
+            // the indexes come after the rows; keeping them up to date while writing is work
+            helper.recreate(db, false);
 
             List<String> baseFiles = listNames(baseDir, SLICE_PREFIX, SLICE_POSTFIX);
             List<String> secondaryFiles = listNames(secondaryDir, "", SECONDARY_POSTFIX);
@@ -246,11 +247,16 @@ public class NumbersCompiler {
                     int sourceId = writer.addSource(source.getId(), source.getName(),
                             source.getType().ordinal(), i);
 
-                    run.startSource(tag, log);
+                    run.startSource(sourceId, tag, log);
 
                     if (i == 0) {
-                        // the database itself, and then what the library fetched since
-                        run.readAll(baseDir, baseFiles, sourceId, false);
+                        /*
+                         * The database itself, read on as many threads as the phone has to
+                         * spare - a number is in exactly one of those files, so the order
+                         * they are read in changes nothing - and then, in order, what the
+                         * library has fetched since, which changes what is already there.
+                         */
+                        run.readBase(baseDir, baseFiles, sourceId);
                         run.readAll(secondaryDir, secondaryFiles, sourceId, false);
                     } else {
                         File file = new File(layersDir, source.getId() + SLICE_POSTFIX);
@@ -306,6 +312,15 @@ public class NumbersCompiler {
 
             long numbers = NumbersDb.getCount(db);
             NumbersDb.setMeta(db, NumbersDb.META_COUNT, String.valueOf(numbers));
+
+            /*
+             * Now that nothing more is going in: one pass over what is there, rather than a
+             * tree kept in order through nine million insertions that arrive in someone
+             * else's order. Counting per source below is what uses it.
+             */
+            if (log != null) log.line(BuildLog.MAIN, "Indexing\u2026");
+
+            NumbersDb.createIndexes(db);
 
             countSources(db);
 
@@ -377,6 +392,9 @@ public class NumbersCompiler {
         private String tag;
         private BuildLog log;
 
+        /** Which source's rows are being written; the same for a whole source. */
+        private int sourceId;
+
         /** When the log was last told how far this source has got. */
         private long lastLogged;
 
@@ -388,7 +406,8 @@ public class NumbersCompiler {
         }
 
         /** Starts counting again; what came before belonged to the source before. */
-        void startSource(String tag, BuildLog log) {
+        void startSource(int sourceId, String tag, BuildLog log) {
+            this.sourceId = sourceId;
             this.tag = tag;
             this.log = log;
 
@@ -413,6 +432,66 @@ public class NumbersCompiler {
 
         long sourceDeleted() {
             return writer.getDeletedRows() - sourceDeletedRows;
+        }
+
+        /**
+         * Reads the files that carry the database, several at a time where that is worth it.
+         *
+         * <p>The writing still happens here, on the one thread that owns the database: what
+         * is shared out is the opening, reading and filtering of a few hundred thousand
+         * files, which is what a build now spends its time on.
+         */
+        void readBase(File dir, List<String> names, int sourceId) {
+            int workers = SliceBatchReader.workerCount(names.size());
+
+            if (workers <= 1) {
+                readAll(dir, names, sourceId, false);
+                return;
+            }
+
+            NumbersFilter[] filters = new NumbersFilter[workers];
+            for (int i = 0; i < workers; i++) {
+                filters[i] = filter != null ? filter.forWorker() : null;
+            }
+
+            if (log != null) {
+                log.line(tag, "Ingesting " + names.size() + " files on " + workers + " threads");
+            }
+
+            SliceBatchReader.Result result;
+            try {
+                result = SliceBatchReader.read(dir, names, filters, this::write);
+            } catch (Exception e) {
+                LOG.error("readBase() reading the database failed", e);
+
+                throw new RuntimeException(e);
+            }
+
+            sourceNumbers += result.read - result.deletions;
+            sourceDeletions += result.deletions;
+            sourceSkipped += result.skipped;
+
+            entries += result.read;
+        }
+
+        /** One batch, written where everything else is written. */
+        private void write(SliceBatchReader.Batch batch) {
+            for (int i = 0; i < batch.size; i++) {
+                if (batch.flags[i] == SliceBatchReader.DELETED) {
+                    writer.delete(batch.numbers[i]);
+                } else {
+                    writer.put(batch.numbers[i], batch.flags[i], batch.scores[i], sourceId);
+                }
+            }
+
+            pending += batch.size;
+            files += batch.files;
+
+            commitIfDue();
+
+            for (int i = 0; i < batch.files; i++) {
+                step();
+            }
         }
 
         void readAll(File dir, List<String> names, int sourceId, boolean asLayer) {

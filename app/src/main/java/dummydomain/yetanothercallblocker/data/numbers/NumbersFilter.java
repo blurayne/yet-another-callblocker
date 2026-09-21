@@ -62,8 +62,12 @@ public class NumbersFilter {
         int shortNumberMaxLength = settings.getDbFilteringKeepShortNumbers()
                 ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0;
 
+        // a length test without the length: a number of n digits is smaller than 10^n
+        long shortNumberLimit = shortNumberMaxLength > 0 && shortNumberMaxLength < 18
+                ? pow10(shortNumberMaxLength) : 0;
+
         NumberPrefixSet prefixes = NumberPrefixSet.of(pattern);
-        if (prefixes != null) return new NumbersFilter(prefixes, null, shortNumberMaxLength);
+        if (prefixes != null) return new NumbersFilter(prefixes, null, shortNumberLimit);
 
         Pattern compiled = BlacklistUtils.compilePattern(
                 BlacklistUtils.patternFromHumanReadable(pattern));
@@ -71,17 +75,28 @@ public class NumbersFilter {
         // a pattern that can't be read filters nothing, rather than everything
         if (compiled == null) return null;
 
-        return new NumbersFilter(null, compiled, shortNumberMaxLength);
+        return new NumbersFilter(null, compiled, shortNumberLimit);
     }
 
-    private NumbersFilter(NumberPrefixSet prefixes, Pattern pattern, int shortNumberMaxLength) {
+    /**
+     * The same filter for another thread.
+     *
+     * <p>The pattern is the same object - it is read and never written - but the buffer and
+     * the matcher it is asked through are one thread's own. Several readers ask the same
+     * question at the same time; they may not ask it through the same matcher.
+     */
+    public NumbersFilter forWorker() {
+        return new NumbersFilter(prefixes, matcher != null ? matcher.pattern() : null,
+                shortNumberLimit);
+    }
+
+    private NumbersFilter(NumberPrefixSet prefixes, Pattern pattern, long shortNumberLimit) {
         this.prefixes = prefixes;
 
         this.matcher = pattern != null ? pattern.matcher("") : null;
         this.buffer = pattern != null ? new StringBuilder(24) : null;
 
-        this.shortNumberLimit = shortNumberMaxLength > 0 && shortNumberMaxLength < 18
-                ? pow10(shortNumberMaxLength) : 0;
+        this.shortNumberLimit = shortNumberLimit;
     }
 
     /**
@@ -94,7 +109,6 @@ public class NumbersFilter {
     public boolean keep(long number) {
         if (number <= 0) return false;
 
-        // a length test without the length: a number of n digits is smaller than 10^n
         if (shortNumberLimit != 0 && number < shortNumberLimit) return true;
 
         if (prefixes != null) return prefixes.matches(number);

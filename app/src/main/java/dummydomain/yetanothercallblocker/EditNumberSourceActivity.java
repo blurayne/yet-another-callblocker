@@ -17,7 +17,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -59,7 +58,6 @@ public class EditNumberSourceActivity extends AppCompatActivity {
 
     private TextInputLayout nameTextField, urlTextField, usernameTextField, secretTextField;
     private Spinner typeSpinner, roleSpinner, authSpinner, updatesSpinner;
-    private SwitchCompat enabledSwitch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +75,6 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         roleSpinner = findViewById(R.id.roleSpinner);
         authSpinner = findViewById(R.id.authSpinner);
         updatesSpinner = findViewById(R.id.updatesSpinner);
-        enabledSwitch = findViewById(R.id.enabledSwitch);
 
         setUpSpinner(typeSpinner, NumberSource.Type.values(),
                 type -> getString(NumberSourcesActivity.getTypeName(type)));
@@ -203,7 +200,8 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         target.setUsername(getString(usernameTextField));
         target.setUpdates(selected(updatesSpinner, NumberSource.Updates.values()));
         target.setRole(selected(roleSpinner, NumberSource.Role.values()));
-        target.setEnabled(enabledSwitch.isChecked());
+
+        // whether a source is used is decided in the list, where all of them are side by side
 
         return true;
     }
@@ -233,8 +231,6 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         select(roleSpinner, NumberSource.Role.values(), source.getRole());
         select(authSpinner, NumberSource.Auth.values(), source.getAuth());
         select(updatesSpinner, NumberSource.Updates.values(), source.getUpdates());
-
-        enabledSwitch.setChecked(source.isEnabled());
     }
 
     /** Whether a source carries the database or changes to it is only a database's question. */

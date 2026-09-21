@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.InputType;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.widget.Toast;
@@ -17,7 +16,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
 
@@ -65,6 +63,7 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_DB_MANAGEMENT = "dbManagement";
     private static final String PREF_NUMBER_SOURCES = "numberSources";
     private static final String PREF_PROVIDERS = "providersScreen";
+    private static final String PREF_CALLER_ID_TEMPLATE_SCREEN = "callerIdTemplateScreen";
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
     private static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
     private static final String PREF_BACKUP_NOW = "backupNow";
@@ -324,23 +323,6 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
                 return false; // enabled in updateCallerIdOverlayPreference() if granted
             }
-            return true;
-        });
-
-        /*
-         * What the phone app is told can be written by hand, and what is written is worth
-         * several lines: the first goes where the name goes, the rest next to it.
-         */
-        EditTextPreference callerIdTemplate = requirePreference(Settings.PREF_CALLER_ID_TEMPLATE);
-        callerIdTemplate.setOnBindEditTextListener(editText -> {
-            editText.setInputType(InputType.TYPE_CLASS_TEXT
-                    | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-            editText.setSingleLine(false);
-            editText.setMinLines(3);
-            editText.setHorizontallyScrolling(false);
-        });
-        setPrefChangeListener(Settings.PREF_CALLER_ID_TEMPLATE, (preference, newValue) -> {
-            requireView().post(this::updateCallerIdTemplatePreference);
             return true;
         });
 
@@ -764,19 +746,14 @@ public class RootSettingsFragment extends BaseSettingsFragment {
                 .setChecked(PermissionHelper.isCallScreeningHeld(requireContext()));
     }
 
-    /**
-     * Says what the phone app will show, which is either what was written or what the app does.
-     *
-     * <p>The placeholders are listed here rather than behind a help button: this is the one
-     * moment the user is looking for them.
-     */
+    /** Says what the phone app will show, without having to open the screen that sets it. */
     private void updateCallerIdTemplatePreference() {
         String template = App.getSettings().getCallerIdTemplate();
 
-        requirePreference(Settings.PREF_CALLER_ID_TEMPLATE).setSummary(
+        requirePreference(PREF_CALLER_ID_TEMPLATE_SCREEN).setSummary(
                 !TextUtils.isEmpty(template)
                         ? template
-                        : getString(R.string.caller_id_template_summary));
+                        : getString(R.string.caller_id_template_default));
     }
 
     private void updateCallerIdOverlayPreference() {

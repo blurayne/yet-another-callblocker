@@ -89,8 +89,10 @@
             app:key="callerIdOverlay"
             app:summary="@string/caller_id_overlay_summary"
             app:title="@string/caller_id_overlay" />
-        <EditTextPreference
-            app:key="callerIdTemplate"
+        <Preference
+            app:fragment="dummydomain.yetanothercallblocker.CallerIdTemplateSettingsFragment"
+            app:key="callerIdTemplateScreen"
+            app:persistent="false"
             app:title="@string/caller_id_template" />
         <SwitchPreferenceCompat
             app:key="useMonitoringService"

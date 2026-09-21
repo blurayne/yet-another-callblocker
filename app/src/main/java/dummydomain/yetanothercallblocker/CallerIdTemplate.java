@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dummydomain.yetanothercallblocker.data.NumberInfo;
+import dummydomain.yetanothercallblocker.data.PhoneBlockList;
 import dummydomain.yetanothercallblocker.data.SiaNumberCategoryUtils;
 import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseItem;
@@ -96,6 +97,48 @@ public class CallerIdTemplate {
         text = replace(text, PHONE_BLOCK, NumberInfoUtils.getPhoneBlockStatus(context, numberInfo));
 
         return tidy(text);
+    }
+
+    /**
+     * What a caller would look like with this template, for the screen that sets it.
+     *
+     * <p>Judging a template by its own text is guesswork - what {@code {category}} comes to
+     * depends on the number - so it is tried out on one that has something of everything:
+     * a number the community calls a telemarketer, rated by ten people, and known to
+     * PhoneBlock as advertising.
+     *
+     * @return {@code {name, label}}, the two things a phone app is handed; either may be null
+     */
+    public static String[] preview(Context context, String template) {
+        NumberInfo sample = sample();
+
+        String custom = render(context, sample, template);
+
+        if (custom != null) return new String[]{firstLine(custom), rest(custom)};
+
+        return new String[]{
+                NumberInfoUtils.getDefaultCallerIdName(context, sample),
+                NumberInfoUtils.getDefaultCallerIdLabel(context, sample)};
+    }
+
+    /** A number that has something of everything, so that a template shows what it does. */
+    private static NumberInfo sample() {
+        NumberInfo numberInfo = new NumberInfo();
+
+        numberInfo.number = "+493012345678";
+        numberInfo.normalizedNumber = numberInfo.number;
+        numberInfo.rating = NumberInfo.Rating.NEGATIVE;
+
+        CommunityDatabaseItem item = new CommunityDatabaseItem();
+        item.setCategory(NumberCategory.TELEMARKETER.getId());
+        item.setNegativeRatingsCount(7);
+        item.setPositiveRatingsCount(1);
+        item.setNeutralRatingsCount(2);
+
+        numberInfo.communityDatabaseItem = item;
+        numberInfo.phoneBlockRating = PhoneBlockList.Rating.ADVERTISING;
+
+        return numberInfo;
     }
 
     /** The first line of it, which is where a name goes. */

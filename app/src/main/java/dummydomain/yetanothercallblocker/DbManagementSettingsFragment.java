@@ -30,6 +30,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import dummydomain.yetanothercallblocker.data.DatabaseBackup;
 import dummydomain.yetanothercallblocker.data.DbImporterExporter;
 import dummydomain.yetanothercallblocker.data.SiaConstants;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
@@ -42,7 +43,6 @@ import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
 import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
-import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabase;
 import dummydomain.yetanothercallblocker.utils.FileUtils;
 import dummydomain.yetanothercallblocker.work.TaskService;
@@ -583,23 +583,12 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         task.execute();
     }
 
+    /** The same file the backup directory would get, for a phone that can't keep a directory. */
     private File writeExport() {
-        CommunityDatabase communityDatabase = YacbHolder.getCommunityDatabase();
-
-        DbImporterExporter.Versions versions = new DbImporterExporter.Versions(
-                communityDatabase.getBaseDbVersion(),
-                YacbHolder.getSiaSettings().getSecondaryDbVersion());
-
-        File file = new File(requireContext().getCacheDir(), "YetAnotherCallBlocker_db_"
-                + communityDatabase.getEffectiveDbVersion() + ".zip");
+        File file = new File(requireContext().getCacheDir(), BackupHelper.DB_FILE_NAME);
 
         try (OutputStream outputStream = new FileOutputStream(file)) {
-            if (new DbImporterExporter().export(
-                    getDbDir(SiaConstants.SIA_PATH_PREFIX),
-                    getDbDir(SiaConstants.SIA_SECONDARY_PATH_PREFIX),
-                    versions, outputStream)) {
-                return file;
-            }
+            if (new DatabaseBackup().write(requireContext(), outputStream)) return file;
         } catch (Exception e) {
             LOG.warn("writeExport()", e);
         }
@@ -634,7 +623,44 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         task.execute();
     }
 
+    /**
+     * Reads a database back, whichever of the two things it is.
+     *
+     * <p>What this app writes now is the built table. What it wrote before - and what another
+     * phone running an older version would hand over - is the downloaded files. Both are
+     * zips, so the one that arrived says which it is and is read accordingly; the stream is
+     * opened twice rather than held, because a content URI cannot be wound back.
+     */
     private boolean readImport(Uri uri) {
+        try (InputStream inputStream = requireContext().getContentResolver().openInputStream(uri)) {
+            if (inputStream != null && new DatabaseBackup().read(requireContext(), inputStream)) {
+                /*
+                 * The table is the database now: what is looked up comes out of it, and what
+                 * the app remembers about numbers it was asked before came out of the one
+                 * this just replaced.
+                 */
+                if (YacbHolder.getNumbersLookup() != null) {
+                    YacbHolder.getNumbersLookup().reload();
+                }
+
+                if (YacbHolder.getNumberInfoCache() != null) {
+                    YacbHolder.getNumberInfoCache().clear();
+                }
+
+                YacbHolder.getFeaturedDatabase().reload();
+                YacbHolder.getSiaMetadata().reload();
+
+                return true;
+            }
+        } catch (Exception e) {
+            LOG.warn("readImport() reading it as a database backup", e);
+        }
+
+        return readFilesImport(uri);
+    }
+
+    /** The older shape: the downloaded files, which take the place of the ones on the phone. */
+    private boolean readFilesImport(Uri uri) {
         DbImporterExporter.Versions versions;
 
         try (InputStream inputStream = requireContext().getContentResolver().openInputStream(uri)) {
@@ -664,10 +690,6 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         YacbHolder.getSiaMetadata().reload();
 
         return true;
-    }
-
-    private File getDbDir(String pathPrefix) {
-        return new File(YacbHolder.getStorage().getDataDirPath(), pathPrefix);
     }
 
     private static String getDbDirName(String pathPrefix) {

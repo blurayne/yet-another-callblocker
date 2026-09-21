@@ -119,6 +119,7 @@
     <string name="build_log_run">Datenbank wird gebaut</string>
     <string name="build_log_downloading">Wird heruntergeladen\u2026</string>
     <string name="build_log_failed">Fehlgeschlagen: %s</string>
+    <string name="build_log_files_dropped">Die Dateien wurden verworfen; sie stehen jetzt in der Datenbank</string>
     <string name="build_log_read">Gelesene Einträge:</string>
     <string name="build_log_inserted">Eingefügte Einträge:</string>
     <string name="build_log_updated">Aktualisierte Einträge:</string>
@@ -352,6 +353,8 @@
     <string name="source_secret">Passwort oder Token</string>
     <string name="source_secret_token">API-Token</string>
     <string name="source_secret_notice">Bleibt auf diesem Telefon: Eine Sicherung enthält die Quelle, aber nie ihr Passwort.</string>
+    <string name="source_drop_files">Dateien nach dem Bauen verwerfen</string>
+    <string name="source_drop_files_summary">Was diese Quelle geliefert hat, wegwerfen, sobald ihre Nummern in der Datenbank stehen, um den Platz zurückzubekommen. Der nächste Aufbau holt es erneut \u2013 bleibt dies aus, werden die Dateien wieder gelesen statt neu geladen.</string>
     <string name="source_updates">Automatisch holen</string>
     <string name="source_updates_manual">Nur auf Zuruf</string>
     <string name="source_updates_daily">Täglich</string>
@@ -398,7 +401,7 @@
     <string name="backup_secrets">Passwörter und Tokens mitsichern</string>
     <string name="backup_secrets_summary">Den PhoneBlock-Token und die Passwörter der Quellen mit in die Sicherung schreiben. Die Datei enthält sie dann im Klartext: Bewahren Sie sie dort auf, wo Sie auch die Passwörter selbst aufbewahren würden</string>
     <string name="backup_database">Datenbank mitsichern</string>
-    <string name="backup_database_summary">Die heruntergeladene Datenbank mit in das Sicherungsverzeichnis schreiben, damit ein aus der Sicherung eingerichtetes Telefon sofort blockieren kann, ohne sie erst zu laden. Sie wird nur geschrieben, wenn sie sich geändert hat</string>
+    <string name="backup_database_summary">Die gebaute Datenbank mit in das Sicherungsverzeichnis schreiben, damit ein aus der Sicherung eingerichtetes Telefon sofort blockieren kann, ohne erst zu laden und zu bauen. Sie wird erst nach einem neuen Aufbau wieder geschrieben</string>
     <string name="backup_message_with_secrets">Die Datei enthält Ihre Einstellungen, beide Listen – also Ihre eigenen Nummern – und, weil Sie es so eingestellt haben, Ihre Tokens und Passwörter im Klartext.\n\nBewahren Sie sie dort auf, wo Sie auch die Passwörter selbst aufbewahren würden.</string>
     <string name="backup_now_confirmation">Sichern</string>
     <string name="backup_done">Sicherung geschrieben</string>
@@ -638,7 +641,7 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_management_update">Nach Aktualisierungen sehen</string>
     <string name="db_management_update_summary">Die Gemeinschaftsdatenbank fragen, was sich seit dem letzten Mal geändert hat</string>
     <string name="db_management_category_moving_it">Sichern</string>
-    <string name="db_management_export_summary">Das Heruntergeladene in das Sicherungsverzeichnis schreiben, damit das nächste Telefon es nicht laden muss</string>
+    <string name="db_management_export_summary">Die gebaute Datenbank in das Sicherungsverzeichnis schreiben, damit das nächste Telefon blockieren kann, ohne erst eine zu bauen</string>
     <string name="db_management_import_summary">Sie von dort zurücklesen und das Vorhandene ersetzen</string>
     <string name="db_management_category_starting_over">Von vorn anfangen</string>
     <string name="db_management_delete">Datenbank löschen</string>

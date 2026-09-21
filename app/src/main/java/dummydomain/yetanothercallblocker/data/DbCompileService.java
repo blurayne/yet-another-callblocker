@@ -265,9 +265,70 @@ public class DbCompileService {
 
         LOG.info("compile() built the database from {} of {} sources", total - failed, total);
 
+        dropFilesOfSourcesThatSaidSo(sources, primary);
+
         logSummary(totals[0], total - failed, total, startTime);
 
         return new Result(Status.COMPILED, total - failed, failed);
+    }
+
+    /**
+     * Throws away what the sources that asked for it handed over, now that it is in the table.
+     *
+     * <p>A source's files are read by every build, so keeping them is what spares the next
+     * one a download - which is why this is off unless the source says otherwise. When it
+     * does say so, the numbers are in the table and what goes is only the copy they were
+     * read out of.
+     *
+     * <p>For the source whose files the library keeps, that is its slices and the index over
+     * them, and nothing else: the business names and the country data live in the same
+     * directory, are read on every call, and are not this source's numbers.
+     */
+    private void dropFilesOfSourcesThatSaidSo(List<NumberSource> sources, NumberSource primary) {
+        for (NumberSource source : sources) {
+            if (!source.getDropFilesAfterBuild() || !source.hasFiles()) continue;
+
+            LOG.info("dropFilesOfSourcesThatSaidSo() dropping the files of {}", tagOf(source));
+
+            if (source == primary) {
+                dropSlices();
+            } else {
+                FileUtils.delete(getSourceDir(source));
+            }
+
+            buildLog.line(tagOf(source), context.getString(R.string.build_log_files_dropped));
+        }
+    }
+
+    /**
+     * Removes the community slices the library holds, and the index over them.
+     *
+     * <p>The index goes with them on purpose: while it is there the app takes the database to
+     * be present, so it would neither fetch it again nor find anything in it - and the next
+     * build would read an empty directory over a table that was fine.
+     */
+    private static void dropSlices() {
+        File dir = new File(YacbHolder.getStorage().getDataDirPath(),
+                SiaConstants.SIA_PATH_PREFIX);
+
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            String name = file.getName();
+
+            if (!file.isFile() || !name.startsWith("data_slice_")) continue;
+
+            if (!file.delete()) LOG.warn("dropSlices() couldn't delete {}", file);
+        }
+
+        // what the library fetched on top of them says nothing without them
+        FileUtils.delete(new File(YacbHolder.getStorage().getDataDirPath(),
+                SiaConstants.SIA_SECONDARY_PATH_PREFIX));
+
+        YacbHolder.getSiaSettings().setSecondaryDbVersion(0);
+
+        reloadDatabases();
     }
 
     /**

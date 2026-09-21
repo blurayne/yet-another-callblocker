@@ -60,6 +60,7 @@ public class NumberSource {
     private static final String KEY_VERSION = "version";
     private static final String KEY_FETCHED_URL = "fetchedUrl";
     private static final String KEY_ENTRIES = "entries";
+    private static final String KEY_DROP_FILES = "dropFiles";
 
     /** Stays the same for the life of the source: its files and its password hang off it. */
     private final String id;
@@ -71,6 +72,19 @@ public class NumberSource {
     private String username;
     private Updates updates = Updates.DAILY;
     private boolean enabled = true;
+
+    /**
+     * Whether what this source handed over is thrown away once it is in the table.
+     *
+     * <p>Off, because the files are what a build reads: keeping them means the next build -
+     * after a changed filter, a new source, a different order - reads them again instead of
+     * downloading them again. Whoever would rather have the room back than the download
+     * spared says so here, per source, because it is the source's own data.
+     *
+     * <p>The numbers themselves are in the table either way. What goes is only the copy they
+     * were read out of.
+     */
+    private boolean dropFilesAfterBuild;
 
     private long lastUpdate;
     private long lastCheck;
@@ -149,6 +163,20 @@ public class NumberSource {
 
     public void setUpdates(Updates updates) {
         this.updates = updates != null ? updates : Updates.MANUAL;
+    }
+
+    /** Whether the files this source handed over are thrown away once they are in the table. */
+    public boolean getDropFilesAfterBuild() {
+        return dropFilesAfterBuild;
+    }
+
+    public void setDropFilesAfterBuild(boolean drop) {
+        this.dropFilesAfterBuild = drop;
+    }
+
+    /** Whether this source hands over files at all, which is what there would be to drop. */
+    public boolean hasFiles() {
+        return type == Type.DATABASE;
     }
 
     public boolean isEnabled() {
@@ -259,6 +287,7 @@ public class NumberSource {
         json.put(KEY_VERSION, version);
         json.put(KEY_FETCHED_URL, fetchedUrl);
         json.put(KEY_ENTRIES, entries);
+        json.put(KEY_DROP_FILES, dropFilesAfterBuild);
 
         return json;
     }
@@ -279,6 +308,7 @@ public class NumberSource {
         source.version = json.optInt(KEY_VERSION);
         source.fetchedUrl = json.optString(KEY_FETCHED_URL, null);
         source.entries = json.optLong(KEY_ENTRIES);
+        source.dropFilesAfterBuild = json.optBoolean(KEY_DROP_FILES, false);
 
         return source;
     }

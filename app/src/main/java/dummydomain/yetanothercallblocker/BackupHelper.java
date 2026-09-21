@@ -12,15 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 import dummydomain.yetanothercallblocker.data.BackupService;
-import dummydomain.yetanothercallblocker.data.DbImporterExporter;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
-import dummydomain.yetanothercallblocker.data.SiaConstants;
 
 /**
  * The backup file in the directory the user picked.
@@ -183,8 +180,14 @@ public class BackupHelper {
         Uri treeUri = getDirectory();
         if (treeUri == null) return false;
 
-        int version = YacbHolder.getCommunityDatabase().getEffectiveDbVersion();
-        if (version <= 0) {
+        /*
+         * What is written is the table, so it is the table that decides whether the one in
+         * the directory is still the current one. When it was built is the whole answer: a
+         * build is the only thing that changes it.
+         */
+        long built = new NumbersCompiler(context).getCompiledTime();
+
+        if (built <= 0) {
             LOG.info("backupDatabase() there is no database to write");
             return false;
         }
@@ -204,7 +207,7 @@ public class BackupHelper {
 
         DocumentFile file = directory.findFile(DB_FILE_NAME);
 
-        if (!force && file != null && App.getSettings().getLastBackupDbVersion() == version) {
+        if (!force && file != null && App.getSettings().getLastBackupDbBuild() == built) {
             LOG.debug("backupDatabase() the database in the directory is the current one");
             return true;
         }
@@ -218,24 +221,14 @@ public class BackupHelper {
             }
         }
 
-        String dataDir = YacbHolder.getStorage().getDataDirPath();
-
-        DbImporterExporter.Versions versions = new DbImporterExporter.Versions(
-                YacbHolder.getCommunityDatabase().getBaseDbVersion(),
-                YacbHolder.getSiaSettings().getSecondaryDbVersion());
-
         /*
-         * Straight into the directory rather than through a file of our own first: the zip
-         * is as big as the database, and a phone that has room for it twice is not one to
-         * count on.
+         * Straight into the directory rather than through a file of our own first: a phone
+         * with room for the database twice is not one to count on.
          */
         try (OutputStream out = context.getContentResolver().openOutputStream(file.getUri(), "wt")) {
             if (out == null) return false;
 
-            if (!new DbImporterExporter().export(
-                    new File(dataDir, SiaConstants.SIA_PATH_PREFIX),
-                    new File(dataDir, SiaConstants.SIA_SECONDARY_PATH_PREFIX),
-                    versions, out)) {
+            if (!new DatabaseBackup().write(context, out)) {
                 LOG.warn("backupDatabase() the database couldn't be written");
                 return false;
             }
@@ -244,9 +237,9 @@ public class BackupHelper {
             return false;
         }
 
-        App.getSettings().setLastBackupDbVersion(version);
+        App.getSettings().setLastBackupDbBuild(built);
 
-        LOG.info("backupDatabase() version {} written", version);
+        LOG.info("backupDatabase() the database built at {} was written", built);
 
         return true;
     }

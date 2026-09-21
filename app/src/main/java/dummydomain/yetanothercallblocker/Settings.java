@@ -48,7 +48,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_AUTO_BACKUP = "autoBackup";
     public static final String PREF_LAST_BACKUP_TIME = "lastBackupTime";
     public static final String PREF_BACKUP_DATABASE = "backupDatabase";
-    public static final String PREF_LAST_BACKUP_DB_VERSION = "lastBackupDbVersion";
+    public static final String PREF_LAST_BACKUP_DB_BUILD = "lastBackupDbBuild";
     public static final String PREF_UI_MODE = "uiMode";
     public static final String PREF_CALL_LOG_GROUPING = "callLogGrouping";
     public static final String PREF_USE_MONITORING_SERVICE = "useMonitoringService";
@@ -507,13 +507,13 @@ public class Settings extends GenericSettings {
         setBoolean(PREF_BACKUP_DATABASE, backup);
     }
 
-    /** Which version of the database the one in the backup directory is. */
-    public int getLastBackupDbVersion() {
-        return getInt(PREF_LAST_BACKUP_DB_VERSION, 0);
+    /** When the database in the backup directory was built, which says whether it is current. */
+    public long getLastBackupDbBuild() {
+        return getLong(PREF_LAST_BACKUP_DB_BUILD, 0);
     }
 
-    public void setLastBackupDbVersion(int version) {
-        setInt(PREF_LAST_BACKUP_DB_VERSION, version);
+    public void setLastBackupDbBuild(long built) {
+        setLong(PREF_LAST_BACKUP_DB_BUILD, built);
     }
 
     /** Whether the app writes the backup by itself. Off until the user says otherwise. */

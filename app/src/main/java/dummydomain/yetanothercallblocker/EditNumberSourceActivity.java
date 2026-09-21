@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputLayout;
@@ -59,6 +60,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
 
     private TextInputLayout nameTextField, urlTextField, usernameTextField, secretTextField;
     private Spinner typeSpinner, authSpinner, updatesSpinner;
+    private SwitchCompat dropFilesSwitch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +77,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         typeSpinner = findViewById(R.id.typeSpinner);
         authSpinner = findViewById(R.id.authSpinner);
         updatesSpinner = findViewById(R.id.updatesSpinner);
+        dropFilesSwitch = findViewById(R.id.dropFilesSwitch);
 
         setUpSpinner(typeSpinner, NumberSource.Type.values(),
                 type -> getString(NumberSourcesActivity.getTypeName(type)));
@@ -221,6 +224,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
                 : selected(authSpinner, NumberSource.Auth.values()));
         target.setUsername(getString(usernameTextField));
         target.setUpdates(selected(updatesSpinner, NumberSource.Updates.values()));
+        target.setDropFilesAfterBuild(dropFilesSwitch.isChecked());
 
         // whether a source is used is decided in the list, where all of them are side by side
 
@@ -280,6 +284,8 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         select(typeSpinner, NumberSource.Type.values(), source.getType());
         select(authSpinner, NumberSource.Auth.values(), source.getAuth());
         select(updatesSpinner, NumberSource.Updates.values(), source.getUpdates());
+
+        dropFilesSwitch.setChecked(source.getDropFilesAfterBuild());
     }
 
     /** Only the fields the chosen way of logging in needs are shown. */
@@ -295,6 +301,16 @@ public class EditNumberSourceActivity extends AppCompatActivity {
 
         findViewById(R.id.authLabel).setVisibility(phoneBlock ? View.GONE : View.VISIBLE);
         authSpinner.setVisibility(phoneBlock ? View.GONE : View.VISIBLE);
+
+        /*
+         * Only a source that hands over files has any to drop. A PhoneBlock account keeps its
+         * list itself, and there is nothing of it lying about for this to be about.
+         */
+        boolean files = selected(typeSpinner, NumberSource.Type.values())
+                == NumberSource.Type.DATABASE;
+
+        dropFilesSwitch.setVisibility(files ? View.VISIBLE : View.GONE);
+        findViewById(R.id.dropFilesNotice).setVisibility(files ? View.VISIBLE : View.GONE);
 
         NumberSource.Auth auth = selected(authSpinner, NumberSource.Auth.values());
 

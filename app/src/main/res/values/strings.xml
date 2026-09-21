@@ -157,6 +157,8 @@
     <string name="source_secret">Password or token</string>
     <string name="source_secret_token">API token</string>
     <string name="source_secret_notice">Kept on this phone only: a backup holds the source but never its password.</string>
+    <string name="source_drop_files">Drop the files after building</string>
+    <string name="source_drop_files_summary">Throw away what this source handed over once its numbers are in the database, to get the room back. The next build fetches it again \u2013 leave this off and the files are read again instead of downloaded.</string>
     <string name="source_updates">Fetch by itself</string>
     <string name="source_updates_manual">Only when I say so</string>
     <string name="source_updates_daily">Daily</string>
@@ -203,7 +205,7 @@
     <string name="backup_secrets">Include passwords and tokens</string>
     <string name="backup_secrets_summary">Write the PhoneBlock token and the passwords of the sources into the backup as well. The file then holds them in plain text: keep it where you would keep the passwords themselves</string>
     <string name="backup_database">Include the database</string>
-    <string name="backup_database_summary">Write the downloaded database into the backup directory as well, so that a phone set up from the backup can block a call without downloading it first. It is only written when it has changed</string>
+    <string name="backup_database_summary">Write the built database into the backup directory as well, so that a phone set up from the backup can block a call without downloading and building one first. It is only written again after a build</string>
     <string name="backup_message_with_secrets">The file holds your settings, both lists - your own numbers, in other words - and, because you asked for it, your tokens and passwords in plain text.\n\nKeep it where you would keep the passwords themselves.</string>
     <string name="backup_now_confirmation">Back up</string>
     <string name="backup_done">Backup written</string>
@@ -457,6 +459,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="build_log_run">Building the database</string>
     <string name="build_log_downloading">Downloading\u2026</string>
     <string name="build_log_failed">Failed: %s</string>
+    <string name="build_log_files_dropped">The files were dropped; they are in the database now</string>
     <string name="build_log_read">Read records:</string>
     <string name="build_log_inserted">Inserted records:</string>
     <string name="build_log_updated">Updated records:</string>
@@ -603,7 +606,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_management_update">Look for updates</string>
     <string name="db_management_update_summary">Ask the community database for what has changed since the last time</string>
     <string name="db_management_category_moving_it">Backing it up</string>
-    <string name="db_management_export_summary">Write what was downloaded into the backup directory, so that the next phone doesn\'t have to download it</string>
+    <string name="db_management_export_summary">Write the built database into the backup directory, so that the next phone can block a call without building one first</string>
     <string name="db_management_import_summary">Read it back from there, replacing what is here</string>
     <string name="db_management_category_starting_over">Starting over</string>
     <string name="db_management_delete">Delete the database</string>

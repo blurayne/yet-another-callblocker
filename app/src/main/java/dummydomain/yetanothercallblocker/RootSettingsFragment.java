@@ -696,31 +696,51 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     }
 
     /** What the three rows about numbers hold, said in one line each. */
+    @SuppressLint("StaticFieldLeak") // a short read, and the screen is checked afterwards
     private void updateSourcePreferences() {
-        requirePreference(PREF_DB_MANAGEMENT).setSummary(getDatabaseStatus());
         requirePreference(PREF_NUMBER_SOURCES).setSummary(getSourcesStatus());
 
         // the list can only block while it is fetched at all, which the sources decide
         requirePreference(Settings.PREF_BLOCK_PHONE_BLOCK)
                 .setEnabled(App.getSettings().getUsePhoneBlock());
+
+        /*
+         * What the database holds is asked of the database, and while a build is running it
+         * answers when it gets round to it - which is not something the main thread can wait
+         * for without the app looking like it has stopped.
+         */
+        NumbersCompiler compiler = new NumbersCompiler(requireContext());
+
+        AsyncTask<Void, Void, NumbersCompiler.Info> task
+                = new AsyncTask<Void, Void, NumbersCompiler.Info>() {
+            @Override
+            protected NumbersCompiler.Info doInBackground(Void... voids) {
+                return compiler.getInfo();
+            }
+
+            @Override
+            protected void onPostExecute(NumbersCompiler.Info info) {
+                if (isAdded()) {
+                    requirePreference(PREF_DB_MANAGEMENT).setSummary(getDatabaseStatus(info));
+                }
+            }
+        };
+
+        task.execute();
     }
 
     /** How many numbers the built database holds, and when it was built. */
-    private String getDatabaseStatus() {
-        NumbersCompiler compiler = new NumbersCompiler(requireContext());
-
-        long count = compiler.getCount();
-        if (count <= 0) return getString(R.string.db_management_status_empty);
+    private String getDatabaseStatus(NumbersCompiler.Info info) {
+        if (info.count <= 0) return getString(R.string.db_management_status_empty);
 
         String numbers = getString(R.string.db_filtering_status_numbers,
-                NumberFormat.getInstance().format(count));
+                NumberFormat.getInstance().format(info.count));
 
-        long compiled = compiler.getCompiledTime();
-        if (compiled <= 0) return numbers;
+        if (info.compiledTime <= 0) return numbers;
 
         return numbers + " \u00b7 " + getString(R.string.db_management_status_built,
-                DateUtils.getRelativeTimeSpanString(compiled, System.currentTimeMillis(),
-                        DateUtils.MINUTE_IN_MILLIS));
+                DateUtils.getRelativeTimeSpanString(info.compiledTime,
+                        System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS));
     }
 
     /** How many of the sources are switched on, which is what the database is built from. */

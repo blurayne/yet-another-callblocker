@@ -266,9 +266,33 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
     }
 
     /** What the database is right now, in a line: filtered or not, and whether a copy is kept. */
+    @SuppressLint("StaticFieldLeak") // a short read, and the screen is checked afterwards
     private void updateStatusPreference() {
         if (!isAdded()) return;
 
+        /*
+         * How many numbers are in there is asked of the table, and while a build is running
+         * the table answers when it can - which the main thread cannot wait for without the
+         * app looking like it has stopped.
+         */
+        NumbersCompiler compiler = new NumbersCompiler(requireContext());
+
+        AsyncTask<Void, Void, Long> task = new AsyncTask<Void, Void, Long>() {
+            @Override
+            protected Long doInBackground(Void... voids) {
+                return compiler.getCount();
+            }
+
+            @Override
+            protected void onPostExecute(Long count) {
+                if (isAdded()) showStatus(count != null ? count : -1);
+            }
+        };
+
+        task.execute();
+    }
+
+    private void showStatus(long count) {
         String state;
         if (settings.isDbFiltered()) {
             state = getString(R.string.db_filtering_status_filtered, DbFilteringUtils
@@ -287,7 +311,6 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
         StringBuilder summary = new StringBuilder(state);
 
         // how many numbers are actually in there, which is what filtering is about
-        long count = new NumbersCompiler(requireContext()).getCount();
         if (count >= 0) {
             summary.append(" \u00b7 ").append(getString(R.string.db_filtering_status_numbers,
                     NumberFormat.getInstance().format(count)));

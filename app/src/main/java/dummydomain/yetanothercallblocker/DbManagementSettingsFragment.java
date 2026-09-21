@@ -178,35 +178,58 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         updateStatus();
     }
 
-    /** What the database is right now: how big, how old, and where it came from. */
+    /**
+     * What the database is right now: how big, how old, and where it came from.
+     *
+     * <p>Read on a background thread, because reading it can take a while: while a build is
+     * running the table is being written to, and a question put to it waits until it can be
+     * answered. On the main thread that wait is the app not responding.
+     */
+    @SuppressLint("StaticFieldLeak") // the task is short and the screen is checked afterwards
     private void updateStatus() {
         if (!isAdded()) return;
 
+        updateSources(); // the sources say what they say without asking the table
+
         NumbersCompiler compiler = new NumbersCompiler(requireContext());
 
-        long count = compiler.getCount();
-        long compiled = compiler.getCompiledTime();
+        AsyncTask<Void, Void, NumbersCompiler.Info> task
+                = new AsyncTask<Void, Void, NumbersCompiler.Info>() {
+            @Override
+            protected NumbersCompiler.Info doInBackground(Void... voids) {
+                return compiler.getInfo();
+            }
 
+            @Override
+            protected void onPostExecute(NumbersCompiler.Info info) {
+                if (isAdded()) showStatus(info);
+            }
+        };
+
+        task.execute();
+    }
+
+    private void showStatus(NumbersCompiler.Info info) {
         List<String> parts = new ArrayList<>(3);
 
-        if (count > 0) {
+        if (info.count > 0) {
             parts.add(getString(R.string.db_filtering_status_numbers,
-                    NumberFormat.getInstance().format(count)));
+                    NumberFormat.getInstance().format(info.count)));
 
             // the file exists either way; its size only says something once it holds numbers
-            long size = compiler.getSize() + compiler.getShadowSize();
+            long size = info.size + info.shadowSize;
             if (size > 0) parts.add(Formatter.formatShortFileSize(requireContext(), size));
 
-            if (compiled > 0) {
+            if (info.compiledTime > 0) {
                 parts.add(getString(R.string.db_management_status_built,
-                        DateUtils.getRelativeTimeSpanString(compiled, System.currentTimeMillis(),
-                                DateUtils.MINUTE_IN_MILLIS)));
+                        DateUtils.getRelativeTimeSpanString(info.compiledTime,
+                                System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)));
             }
         } else {
             parts.add(getString(R.string.db_management_status_empty));
         }
 
-        String status = TextUtils.join(" · ", parts);
+        String status = TextUtils.join(" \u00b7 ", parts);
 
         /*
          * A build that went wrong is the first thing this screen should say: it ran in a
@@ -226,15 +249,14 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
 
         requirePreference(PREF_STATUS).setSummary(status);
 
-        updateSources();
-        updateFiltering(compiler);
+        updateFiltering(info);
     }
 
     /** What the filter is doing right now, said where the filter lives. */
-    private void updateFiltering(NumbersCompiler compiler) {
+    private void updateFiltering(NumbersCompiler.Info info) {
         List<String> prefixes = DbFilteringUtils.getPrefixesToKeep(App.getSettings());
 
-        requirePreference(PREF_FILTERING).setSummary(compiler.isFiltered() && !prefixes.isEmpty()
+        requirePreference(PREF_FILTERING).setSummary(info.filtered && !prefixes.isEmpty()
                 ? getString(R.string.db_filtering_status_filtered,
                         DbFilteringUtils.formatPrefixes(prefixes))
                 : getString(R.string.db_filtering_status_not_filtered));

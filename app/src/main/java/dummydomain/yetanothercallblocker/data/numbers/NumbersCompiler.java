@@ -86,11 +86,21 @@ public class NumbersCompiler {
     private static final String SLICE_POSTFIX = ".dat";
     private static final String SECONDARY_POSTFIX = ".sia";
 
-    /** How many entries are written before the work so far is made permanent. */
-    private static final int COMMIT_EVERY = 200_000;
+    /**
+     * How many entries are written before the work so far is made permanent.
+     *
+     * <p>Kept small on purpose. Everything an open transaction has changed is held - as
+     * pages waiting to be written and as a journal to undo them with - and a phone that is
+     * asked to keep a million rows in that state gets its app killed rather than an error.
+     * Committing costs a fraction of a second and hands all of it back.
+     */
+    private static final int COMMIT_EVERY = 25_000;
 
     /** And how many files, for a database whose files hold a handful of numbers each. */
-    private static final int COMMIT_EVERY_FILES = 5_000;
+    private static final int COMMIT_EVERY_FILES = 1_000;
+
+    /** How often the log says where the build is and what it is holding. */
+    private static final int LOG_EVERY_FILES = 10_000;
 
     private final Context context;
 
@@ -243,6 +253,19 @@ public class NumbersCompiler {
         /** Says how far along it is; one file further. */
         void step() {
             report(listener, ++done, total);
+
+            /*
+             * Left in the log on purpose: when a build disappears rather than fails, the
+             * last of these lines is the only thing that says how far it got and how much it
+             * was holding at the time.
+             */
+            if (done % LOG_EVERY_FILES == 0) {
+                Runtime runtime = Runtime.getRuntime();
+
+                LOG.info("compile() {}/{} files, heap {} MB of {} MB", done, total,
+                        (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024),
+                        runtime.maxMemory() / (1024 * 1024));
+            }
         }
 
         /*
@@ -384,6 +407,56 @@ public class NumbersCompiler {
         } catch (Exception e) {
             LOG.error("filter() failed", e);
             return -1;
+        } finally {
+            helper.close();
+        }
+    }
+
+    /** Everything a screen says about the table, read in one go. */
+    public static class Info {
+
+        public final long count;
+        public final long compiledTime;
+        public final boolean filtered;
+        public final long size;
+        public final long shadowSize;
+
+        Info(long count, long compiledTime, boolean filtered, long size, long shadowSize) {
+            this.count = count;
+            this.compiledTime = compiledTime;
+            this.filtered = filtered;
+            this.size = size;
+            this.shadowSize = shadowSize;
+        }
+
+    }
+
+    /**
+     * What the table is: how much is in it, when it was built, whether it has been narrowed.
+     *
+     * <p>One open and three reads, rather than one open each. It still belongs on a
+     * background thread: while a build is running the table is being written to, and asking
+     * it anything waits for that to reach a point where it can answer.
+     */
+    public Info getInfo() {
+        NumbersDb helper = new NumbersDb(context);
+
+        try {
+            SQLiteDatabase db = helper.getReadableDatabase();
+
+            String count = NumbersDb.getMeta(db, NumbersDb.META_COUNT, null);
+
+            String compiled = NumbersDb.getMeta(db, NumbersDb.META_COMPILED, null);
+
+            boolean filtered = "1".equals(NumbersDb.getMeta(db, NumbersDb.META_FILTERED, "0"));
+
+            return new Info(count != null ? Long.parseLong(count) : -1,
+                    compiled != null ? Long.parseLong(compiled) : 0,
+                    filtered, getSize(), getShadowSize());
+        } catch (Exception e) {
+            LOG.warn("getInfo()", e);
+
+            return new Info(-1, 0, false, 0, 0);
         } finally {
             helper.close();
         }

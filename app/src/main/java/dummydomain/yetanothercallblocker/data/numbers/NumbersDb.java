@@ -138,6 +138,19 @@ public class NumbersDb extends SQLiteOpenHelper {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN && !db.isReadOnly()) {
             db.execSQL("PRAGMA foreign_keys = ON");
         }
+
+        /*
+         * A small cache on purpose. Every page SQLite keeps is memory the app is holding
+         * outside its heap, where nothing warns about it and nothing can be caught: a phone
+         * that runs low kills the app instead. Two megabytes is plenty for looking a number
+         * up, and a build is bounded by how often it commits rather than by how much it can
+         * keep.
+         */
+        try {
+            db.execSQL("PRAGMA cache_size = -2000"); // negative: kibibytes rather than pages
+        } catch (Exception e) {
+            LOG.warn("onOpen() couldn't set the cache size", e);
+        }
     }
 
     /** Empties everything, which is how a compile starts. */

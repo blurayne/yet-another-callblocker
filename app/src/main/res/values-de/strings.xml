@@ -106,6 +106,7 @@
     <string name="auto_updates_notify">Bei automatischen Läufen benachrichtigen</string>
     <string name="auto_updates_notify_summary">Zeigt eine Benachrichtigung, solange ein selbsttätiger Abgleich läuft. Was Sie selbst anstoßen, zeigt immer eine.</string>
     <string name="source_result_database">die Datenbank</string>
+    <string name="source_result_kept">schon da, behalten</string>
     <string name="source_result_numbers">%d Nummern</string>
     <string name="source_result_no_address">keine Adresse</string>
     <string name="source_result_failed">nicht abrufbar</string>

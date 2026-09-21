@@ -45,6 +45,9 @@ public class TaskService extends IntentService {
     public static final String TASK_REVERT_DB_FILTER = "revert_db_filter";
     public static final String TASK_UPDATE_PHONE_BLOCK = "update_phone_block";
 
+    /** Fetch the database again even if the one on the phone would have done. */
+    private static final String EXTRA_FORCE = "force";
+
     private static final Logger LOG = LoggerFactory.getLogger(TaskService.class);
 
     /** How often the notification is allowed to say how far along something is. */
@@ -57,8 +60,17 @@ public class TaskService extends IntentService {
     private int phaseTitleResId = R.string.sources_compiling;
 
     public static void start(Context context, String task) {
+        start(context, task, false);
+    }
+
+    /**
+     * @param force for "fetch this source now": what is on the phone is fetched again rather
+     *              than kept because it is there
+     */
+    public static void start(Context context, String task, boolean force) {
         Intent intent = new Intent(context, TaskService.class);
         intent.setAction(task);
+        intent.putExtra(EXTRA_FORCE, force);
 
         try {
             ContextCompat.startForegroundService(context, intent);
@@ -84,7 +96,7 @@ public class TaskService extends IntentService {
                 switch (action) {
                     case TASK_DOWNLOAD_MAIN_DB:
                         updateNotification(getString(R.string.main_db_downloading));
-                        downloadMainDb();
+                        downloadMainDb(intent.getBooleanExtra(EXTRA_FORCE, false));
                         break;
 
                     case TASK_UPDATE_SECONDARY_DB:
@@ -154,7 +166,7 @@ public class TaskService extends IntentService {
     }
 
     /** Builds the database from the sources: the first one, then every layer on top. */
-    private void downloadMainDb() {
+    private void downloadMainDb(boolean force) {
         MainDbDownloadingEvent sticky = new MainDbDownloadingEvent();
 
         DbCompileService.Result result = null;
@@ -166,7 +178,7 @@ public class TaskService extends IntentService {
         postStickyEvent(sticky);
         try {
             result = new DbCompileService(this, App.getSettings())
-                    .compile(new DbCompileService.ProgressListener() {
+                    .compile(force, new DbCompileService.ProgressListener() {
                         @Override
                         public void onPhase(int titleResId) {
                             // there are four of them in a build; each one is worth saying

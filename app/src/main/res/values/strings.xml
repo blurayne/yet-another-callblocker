@@ -463,6 +463,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="auto_updates_notify">Say when they run</string>
     <string name="auto_updates_notify_summary">Show a notification while an update that runs on its own is working. What you start by hand always shows one.</string>
     <string name="source_result_database">the database</string>
+    <string name="source_result_kept">already here, kept</string>
     <string name="source_result_numbers">%d numbers</string>
     <string name="source_result_no_address">no address</string>
     <string name="source_result_failed">couldn\'t be fetched</string>

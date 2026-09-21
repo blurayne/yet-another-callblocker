@@ -446,8 +446,15 @@ public class NumberSourcesActivity extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
                 }
 
+                /*
+                 * Asked for by hand, so it is fetched by hand: the database is otherwise
+                 * left alone while it is there and not due, which is the right thing for a
+                 * build and the wrong thing for someone pressing "fetch now".
+                 */
                 TaskService.start(NumberSourcesActivity.this, database
-                        ? TaskService.TASK_DOWNLOAD_MAIN_DB : TaskService.TASK_UPDATE_PHONE_BLOCK);
+                                ? TaskService.TASK_DOWNLOAD_MAIN_DB
+                                : TaskService.TASK_UPDATE_PHONE_BLOCK,
+                        database);
             }
 
             /**

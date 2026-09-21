@@ -147,6 +147,14 @@ public class DbCompileService {
      * @param listener notified as the sources are fetched, may be null
      */
     public Result compile(ProgressListener listener) {
+        return compile(false, listener);
+    }
+
+    /**
+     * @param force fetches the database again even when the one on the phone would do; what
+     *              "fetch this source now" means when the user asks for it by hand
+     */
+    public Result compile(boolean force, ProgressListener listener) {
         LOG.debug("compile() started");
 
         List<NumberSource> sources = getSources();
@@ -178,7 +186,7 @@ public class DbCompileService {
          * database is downloaded when there is none, and after that only when its own
          * schedule says so. What changes in between is what the other sources carry.
          */
-        if (needsDownload(base)) {
+        if (force || needsDownload(base)) {
             phase(listener, R.string.main_db_downloading);
 
             String failure = downloadBase(base, listener);
@@ -190,8 +198,14 @@ public class DbCompileService {
         } else {
             LOG.debug("compile() the database is there and not due");
 
+            /*
+             * Said out loud in the source's row: a build that keeps the database it already
+             * has looks exactly like one that fetched it, and the difference matters when
+             * someone is waiting to see a source they just changed take effect.
+             */
             base.setLastCheck(System.currentTimeMillis());
-            if (sourceService != null) sourceService.save(base);
+
+            note(base, context.getString(R.string.source_result_kept));
         }
 
         reloadDatabases(); // the layers go on top of what was just downloaded
@@ -259,12 +273,25 @@ public class DbCompileService {
                 : new ArrayList<>();
     }
 
-    /** Whether the database has to be fetched: there is none, or its schedule says so. */
+    /**
+     * Whether the database has to be fetched.
+     *
+     * <p>When there is none; when the source has been pointed somewhere else since, because
+     * then what is on the phone is the old address's database and building from it would
+     * quietly ignore the change; and when its own schedule says so.
+     */
     private boolean needsDownload(NumberSource source) {
         File info = new File(new File(YacbHolder.getStorage().getDataDirPath(),
                 SiaConstants.SIA_PATH_PREFIX), "data_slice_info.dat");
 
-        return !info.exists() || source.isDue(System.currentTimeMillis());
+        if (!info.exists()) return true;
+
+        if (source.hasMoved()) {
+            LOG.info("needsDownload() the source points somewhere else than what is here");
+            return true;
+        }
+
+        return source.isDue(System.currentTimeMillis());
     }
 
     /**
@@ -333,6 +360,9 @@ public class DbCompileService {
             note(source, context.getString(R.string.source_result_not_a_database));
             return context.getString(R.string.db_build_not_readable);
         }
+
+        // what is on the phone now came from here, which is how a changed address is noticed
+        source.setFetchedUrl(source.getUrl());
 
         note(source, context.getString(R.string.source_result_database));
 

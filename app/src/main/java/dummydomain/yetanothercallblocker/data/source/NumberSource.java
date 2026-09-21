@@ -73,6 +73,7 @@ public class NumberSource {
     private static final String KEY_LAST_CHECK = "lastCheck";
     private static final String KEY_LAST_RESULT = "lastResult";
     private static final String KEY_VERSION = "version";
+    private static final String KEY_FETCHED_URL = "fetchedUrl";
     private static final String KEY_ENTRIES = "entries";
 
     /** Stays the same for the life of the source: its files and its password hang off it. */
@@ -93,6 +94,15 @@ public class NumberSource {
 
     /** What the source said its data was, the last time it handed any over. */
     private int version;
+
+    /**
+     * The address the database that is lying on the phone actually came from.
+     *
+     * <p>A source that is pointed somewhere else has to be fetched again, whatever its
+     * schedule says: what is on the phone came from the old address and is not what the
+     * source stands for any more. Without this a changed address quietly changed nothing.
+     */
+    private String fetchedUrl;
 
     /** How many numbers of the built database came from here. */
     private long entries;
@@ -183,6 +193,19 @@ public class NumberSource {
     }
 
     /** What came of the last attempt, in the user's words, or null when it went fine. */
+    public String getFetchedUrl() {
+        return fetchedUrl;
+    }
+
+    public void setFetchedUrl(String fetchedUrl) {
+        this.fetchedUrl = fetchedUrl;
+    }
+
+    /** Whether what is on the phone came from somewhere else than this source now points. */
+    public boolean hasMoved() {
+        return !TextUtils.equals(url, fetchedUrl);
+    }
+
     public String getLastResult() {
         return lastResult;
     }
@@ -261,6 +284,7 @@ public class NumberSource {
         json.put(KEY_LAST_CHECK, lastCheck);
         json.put(KEY_LAST_RESULT, lastResult);
         json.put(KEY_VERSION, version);
+        json.put(KEY_FETCHED_URL, fetchedUrl);
         json.put(KEY_ENTRIES, entries);
 
         return json;
@@ -281,6 +305,7 @@ public class NumberSource {
         source.lastCheck = json.optLong(KEY_LAST_CHECK);
         source.lastResult = json.optString(KEY_LAST_RESULT, null);
         source.version = json.optInt(KEY_VERSION);
+        source.fetchedUrl = json.optString(KEY_FETCHED_URL, null);
         source.entries = json.optLong(KEY_ENTRIES);
 
         return source;

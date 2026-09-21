@@ -160,6 +160,26 @@ jobs:
           grep -q 'android.content.ContactDirectory' "${manifest}"
           echo 'the caller ID directory provider is registered'
 
+      # an activity that isn't declared doesn't fail the build: it throws when it's opened
+      - name: Check that every activity is declared
+        run: |
+          manifest=$(find app/build/intermediates -name AndroidManifest.xml \
+              -path '*merged_manifest*' | head -1)
+          echo "checking ${manifest}"
+
+          missing=""
+          for file in app/src/main/java/dummydomain/yetanothercallblocker/*Activity.java; do
+            name=$(basename "${file}" .java)
+            grep -q "${name}" "${manifest}" || missing="${missing} ${name}"
+          done
+
+          if [ -n "${missing}" ]; then
+            echo "::error::activities missing from the manifest:${missing}"
+            exit 1
+          fi
+
+          echo 'every activity is declared'
+
       - name: Collect the APKs
         id: apks
         run: |

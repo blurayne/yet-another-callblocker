@@ -16,6 +16,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 import dummydomain.yetanothercallblocker.data.YacbHolder;
@@ -24,6 +27,8 @@ import dummydomain.yetanothercallblocker.sia.model.CommunityReview;
 import static dummydomain.yetanothercallblocker.IntentHelper.clearTop;
 
 public class ReviewsActivity extends AppCompatActivity {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ReviewsActivity.class);
 
     private static final String PARAM_NUMBER = "param_number";
 
@@ -100,8 +105,20 @@ public class ReviewsActivity extends AppCompatActivity {
                 = new AsyncTask<String, Void, List<CommunityReview>>() {
             @Override
             protected List<CommunityReview> doInBackground(String... params) {
-                return YacbHolder.getCommunityReviewsLoader()
-                        .loadReviews(params[0], App.getSettings().getCountryCodeForReviews());
+                /*
+                 * Anything thrown in here comes back out on the main thread as a crash, and
+                 * loading reviews asks a web service about a number with whatever the
+                 * database happens to know about itself - which is nothing at all before the
+                 * database has been built once. A screen that says it couldn't load them is
+                 * the right answer to that; a dead app is not.
+                 */
+                try {
+                    return YacbHolder.getCommunityReviewsLoader()
+                            .loadReviews(params[0], App.getSettings().getCountryCodeForReviews());
+                } catch (Throwable t) {
+                    LOG.error("loadReviews() failed", t);
+                    return null;
+                }
             }
 
             @Override

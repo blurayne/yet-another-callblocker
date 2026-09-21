@@ -202,7 +202,14 @@ public class DbCompileService {
 
             boolean isPrimary = source == primary;
 
-            if (isPrimary && !force && !needsDownload(source)) {
+            /*
+             * A PhoneBlock account keeps its own account of when it was last asked, so it is
+             * asked every time and decides for itself; the sources that hand over files are
+             * asked here.
+             */
+            boolean files = source.getType() != NumberSource.Type.PHONE_BLOCK;
+
+            if (files && !force && !needsDownload(source, isPrimary)) {
                 LOG.debug("compile() {} is there and not due", tagOf(source));
 
                 /*
@@ -390,7 +397,7 @@ public class DbCompileService {
 
             source.setFetchedUrl(source.getUrl());
 
-            note(source, context.getString(R.string.source_result_files, files));
+            noteFetched(source, context.getString(R.string.source_result_files, files));
 
             return null;
         } catch (Exception e) {
@@ -407,17 +414,45 @@ public class DbCompileService {
     }
 
     /**
-     * Whether the database has to be fetched.
+     * Brings the PhoneBlock list up to date, which is what fetching that source means.
      *
-     * <p>When there is none; when the source has been pointed somewhere else since, because
-     * then what is on the phone is the old address's database and building from it would
-     * quietly ignore the change; and when its own schedule says so.
+     * <p>The list is kept where the account screen keeps it - the same one an incoming call
+     * is held against - and the build reads it from there rather than downloading a second
+     * copy of it.
      */
-    private boolean needsDownload(NumberSource source) {
-        File info = new File(new File(YacbHolder.getStorage().getDataDirPath(),
-                SiaConstants.SIA_PATH_PREFIX), "data_slice_info.dat");
+    private boolean updatePhoneBlock(NumberSource source) {
+        PhoneBlockService.Result result = new PhoneBlockService(settings,
+                YacbHolder.getPhoneBlockList(), YacbHolder.getPhoneBlockPersonalLists())
+                .update(false);
 
-        if (!info.exists()) return true;
+        boolean ok = result.status != PhoneBlockService.Status.FAILED
+                && result.status != PhoneBlockService.Status.NOT_CONFIGURED;
+
+        if (ok) {
+            noteFetched(source, context.getString(R.string.source_result_numbers, result.size));
+        } else {
+            note(source, context.getString(R.string.source_result_failed));
+        }
+
+        return ok;
+    }
+
+    /**
+     * Whether a source has to be fetched again.
+     *
+     * <p>When nothing of it is on the phone; when it has been pointed somewhere else since,
+     * because then what is here is the old address's and building from it would quietly
+     * ignore the change; and when its own schedule says so. Every source is asked this, not
+     * only the one the library keeps: any of them can be tens of megabytes, and none of them
+     * is worth fetching again because a build was started.
+     */
+    private boolean needsDownload(NumberSource source, boolean primary) {
+        File here = primary
+                ? new File(new File(YacbHolder.getStorage().getDataDirPath(),
+                        SiaConstants.SIA_PATH_PREFIX), "data_slice_info.dat")
+                : getSourceDir(source);
+
+        if (!here.exists()) return true;
 
         if (source.hasMoved()) {
             LOG.info("needsDownload() the source points somewhere else than what is here");
@@ -498,7 +533,7 @@ public class DbCompileService {
         // what is on the phone now came from here, which is how a changed address is noticed
         source.setFetchedUrl(source.getUrl());
 
-        note(source, context.getString(R.string.source_result_database));
+        noteFetched(source, context.getString(R.string.source_result_database));
 
         return null;
     }
@@ -933,7 +968,12 @@ public class DbCompileService {
         if (sourceService == null) return;
 
         source.setEntries(counts.read);
-        source.setLastUpdate(System.currentTimeMillis());
+
+        /*
+         * What it brought to this build, without touching when it was last fetched: it was
+         * read, which every build does to every source, and moving that date every time
+         * would mean a source with a schedule is never due again.
+         */
         source.setLastResult(context.getString(R.string.source_result_numbers,
                 (int) counts.read));
 
@@ -1003,12 +1043,26 @@ public class DbCompileService {
         }
     }
 
-    /** Writes down how the source went, which is what its row in the list says. */
+    /**
+     * Writes down how the source went, which is what its row in the list says.
+     *
+     * <p>When it was asked, not when it last handed anything over: a source that failed, or
+     * that was left as it is because it isn't due, has been looked at and nothing more. Only
+     * {@link #noteFetched} moves the date the schedule counts from - otherwise every build
+     * would push it forward and a source with a weekly schedule would never come round.
+     */
     private void note(NumberSource source, String result) {
         source.setLastResult(result);
-        source.setLastUpdate(System.currentTimeMillis());
+        source.setLastCheck(System.currentTimeMillis());
 
         if (sourceService != null) sourceService.save(source);
+    }
+
+    /** The same, for a source that has just handed something over. */
+    private void noteFetched(NumberSource source, String result) {
+        source.setLastUpdate(System.currentTimeMillis());
+
+        note(source, result);
     }
 
     private static void createDir(File dir) {

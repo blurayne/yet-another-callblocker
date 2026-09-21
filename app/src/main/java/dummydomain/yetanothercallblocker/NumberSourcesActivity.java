@@ -196,14 +196,19 @@ public class NumberSourcesActivity extends AppCompatActivity {
         if (source.getType() == NumberSource.Type.PHONE_BLOCK) {
             // the list keeps its own account of when it was fetched and how big it is
             parts.add(PhoneBlockHelper.getListStatus(this));
-        } else if (!TextUtils.isEmpty(source.getLastResult())) {
-            parts.add(source.getLastResult());
-        } else if (source.getLastUpdate() > 0) {
-            parts.add(getString(R.string.source_last_update, DateUtils.getRelativeTimeSpanString(
-                    source.getLastUpdate(), System.currentTimeMillis(),
-                    DateUtils.MINUTE_IN_MILLIS)));
         } else {
-            parts.add(getString(R.string.source_never_fetched));
+            if (!TextUtils.isEmpty(source.getLastResult())) parts.add(source.getLastResult());
+
+            /*
+             * What came of it and when, rather than one or the other: a source that says
+             * "the database" and nothing else leaves the question of whether that was today
+             * or in March, which is the question being asked when someone presses fetch.
+             */
+            parts.add(source.getLastUpdate() > 0
+                    ? getString(R.string.source_last_update, DateUtils.getRelativeTimeSpanString(
+                            source.getLastUpdate(), System.currentTimeMillis(),
+                            DateUtils.MINUTE_IN_MILLIS))
+                    : getString(R.string.source_never_fetched));
         }
 
         if (!source.isEnabled()) parts.add(getString(R.string.source_off));

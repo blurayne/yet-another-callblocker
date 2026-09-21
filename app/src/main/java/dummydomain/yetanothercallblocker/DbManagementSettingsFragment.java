@@ -38,6 +38,7 @@ import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
 import dummydomain.yetanothercallblocker.event.DbCompileProgressEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
+import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabase;
@@ -258,6 +259,12 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onSecondaryDbUpdateFinished(SecondaryDbUpdateFinished event) {
+        updateStatus();
+    }
+
+    /** A list fetched on its own is a source that has just said something about itself. */
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onPhoneBlockUpdateFinished(PhoneBlockUpdateFinishedEvent event) {
         updateStatus();
     }
 

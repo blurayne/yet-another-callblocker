@@ -24,6 +24,8 @@ import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.data.source.NumberSource;
+import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.event.DbCompileProgressEvent;
 import dummydomain.yetanothercallblocker.event.DbFilterRevertedEvent;
 import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
@@ -325,7 +327,43 @@ public class TaskService extends IntentService {
         // the update may have run into a token that isn't accepted any more
         PhoneBlockHelper.checkTokenIfDue(getApplicationContext(), App.getSettings());
 
+        noteSources(result);
+
         postEvent(new PhoneBlockUpdateFinishedEvent(result));
+    }
+
+    /**
+     * Writes down on the source what the fetch did.
+     *
+     * <p>The list keeps its own account of itself, which is what the account screen shows -
+     * but the source in the list is a source like any other, and every other one says when it
+     * was last fetched and what came of it. Without this it said "never fetched" for as long
+     * as it existed, however often it had been.
+     */
+    private void noteSources(PhoneBlockService.Result result) {
+        SourceService sourceService = YacbHolder.getSourceService();
+        if (sourceService == null) return;
+
+        boolean ok = result.status != PhoneBlockService.Status.FAILED
+                && result.status != PhoneBlockService.Status.NOT_CONFIGURED;
+
+        long now = System.currentTimeMillis();
+
+        for (NumberSource source : sourceService.getSources()) {
+            if (source.getType() != NumberSource.Type.PHONE_BLOCK) continue;
+
+            source.setLastCheck(now);
+
+            if (ok) {
+                source.setEntries(result.size);
+                source.setLastUpdate(now);
+                source.setLastResult(getString(R.string.source_result_numbers, result.size));
+            } else {
+                source.setLastResult(getString(R.string.source_result_failed));
+            }
+
+            sourceService.save(source);
+        }
     }
 
     private void revertDbFilter() {

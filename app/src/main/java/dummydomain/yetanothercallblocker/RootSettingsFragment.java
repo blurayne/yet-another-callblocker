@@ -43,7 +43,9 @@ import dummydomain.yetanothercallblocker.data.CallDecisionLog;
 import dummydomain.yetanothercallblocker.data.Whitelist;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
+import dummydomain.yetanothercallblocker.event.DbCompileProgressEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
+import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.utils.FileUtils;
@@ -64,6 +66,9 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_NUMBER_SOURCES = "numberSources";
     private static final String PREF_PROVIDERS = "providersScreen";
     private static final String PREF_CALLER_ID_TEMPLATE_SCREEN = "callerIdTemplateScreen";
+
+    /** Whether a build is running right now, in which case it is what the row says. */
+    private boolean building;
     private static final String PREF_NOTIFICATIONS_BLOCKED_NON_PERSISTENT = "showNotificationsForBlockedCallsNonPersistent";
     private static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
     private static final String PREF_BACKUP_NOW = "backupNow";
@@ -180,6 +185,12 @@ public class RootSettingsFragment extends BaseSettingsFragment {
          * has just changed.
          */
         EventUtils.register(this);
+
+        building = EventUtils.bus().getStickyEvent(MainDbDownloadingEvent.class) != null;
+
+        if (building) {
+            requirePreference(PREF_DB_MANAGEMENT).setSummary(R.string.sources_compiling);
+        }
     }
 
     @Override
@@ -191,7 +202,27 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onMainDbDownloadFinished(MainDbDownloadFinishedEvent event) {
+        building = false;
+
         if (isAdded()) updateSourcePreferences();
+    }
+
+    /** While a build runs, the row about the database says what it is doing. */
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onDbCompileProgress(DbCompileProgressEvent event) {
+        building = true;
+
+        if (!isAdded()) return;
+
+        String text = getString(event.titleResId);
+
+        if (event.total > 0) {
+            NumberFormat format = NumberFormat.getInstance();
+
+            text += " \u00b7 " + format.format(event.current) + " / " + format.format(event.total);
+        }
+
+        requirePreference(PREF_DB_MANAGEMENT).setSummary(text);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
@@ -720,7 +751,8 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
             @Override
             protected void onPostExecute(NumbersCompiler.Info info) {
-                if (isAdded()) {
+                // while a build runs, what it is doing is the more useful answer
+                if (isAdded() && !building) {
                     requirePreference(PREF_DB_MANAGEMENT).setSummary(getDatabaseStatus(info));
                 }
             }
@@ -731,6 +763,8 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
     /** How many numbers the built database holds, and when it was built. */
     private String getDatabaseStatus(NumbersCompiler.Info info) {
+        if (!info.readable) return getString(R.string.db_management_status_unreadable);
+
         if (info.count <= 0) return getString(R.string.db_management_status_empty);
 
         String numbers = getString(R.string.db_filtering_status_numbers,

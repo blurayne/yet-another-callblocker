@@ -420,13 +420,21 @@ public class NumbersCompiler {
         public final boolean filtered;
         public final long size;
         public final long shadowSize;
+        /** Whether the table could be read at all; it can't while it is being written. */
+        public final boolean readable;
 
         Info(long count, long compiledTime, boolean filtered, long size, long shadowSize) {
+            this(count, compiledTime, filtered, size, shadowSize, true);
+        }
+
+        Info(long count, long compiledTime, boolean filtered, long size, long shadowSize,
+             boolean readable) {
             this.count = count;
             this.compiledTime = compiledTime;
             this.filtered = filtered;
             this.size = size;
             this.shadowSize = shadowSize;
+            this.readable = readable;
         }
 
     }
@@ -454,9 +462,14 @@ public class NumbersCompiler {
                     compiled != null ? Long.parseLong(compiled) : 0,
                     filtered, getSize(), getShadowSize());
         } catch (Exception e) {
+            /*
+             * Most likely because a build has the table open and hasn't reached a point where
+             * it can answer. "Couldn't ask" and "there is nothing in it" are different things
+             * and the screen says which.
+             */
             LOG.warn("getInfo()", e);
 
-            return new Info(-1, 0, false, 0, 0);
+            return new Info(-1, 0, false, 0, 0, false);
         } finally {
             helper.close();
         }

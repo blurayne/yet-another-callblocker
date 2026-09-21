@@ -580,6 +580,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_management_status_failed">The last build failed %1$s: %2$s</string>
     <string name="db_management_status_failed_when_unknown">recently</string>
     <string name="db_management_status_empty">Nothing built yet</string>
+    <string name="db_management_status_unreadable">Can\'t be read right now</string>
     <string name="db_management_status_built">built %s</string>
     <string name="db_management_sources">Sources</string>
     <string name="db_management_sources_summary">The database is built from the sources, in the order they are in</string>

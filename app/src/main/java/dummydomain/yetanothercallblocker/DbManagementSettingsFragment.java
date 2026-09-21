@@ -35,7 +35,9 @@ import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
+import dummydomain.yetanothercallblocker.event.DbCompileProgressEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
+import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabase;
@@ -70,6 +72,9 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
 
     // 128-133 are taken by the permission helpers and the backup
     private static final int REQUEST_CODE_IMPORT_DB = 140;
+
+    /** Whether a build is running right now, in which case it is what this screen says. */
+    private boolean building;
 
     @Override
     protected String getScreenKey() {
@@ -163,6 +168,13 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
 
         EventUtils.register(this);
 
+        // a build may have been started from here and be running still
+        building = EventUtils.bus().getStickyEvent(MainDbDownloadingEvent.class) != null;
+
+        if (building) {
+            requirePreference(PREF_STATUS).setSummary(R.string.sources_compiling);
+        }
+
         updateStatus();
 
         // it is changed in the system settings, which is somewhere this screen has just been
@@ -204,7 +216,38 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onMainDbDownloadFinished(MainDbDownloadFinishedEvent event) {
+        building = false;
+
         updateStatus();
+    }
+
+    /**
+     * What the build is doing, while it does it.
+     *
+     * <p>It takes minutes, and every source writes down how it went as it is fetched, so this
+     * screen has something new to say every few seconds. Saying "nothing built yet" for all
+     * of that is the same as saying nothing is happening.
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onDbCompileProgress(DbCompileProgressEvent event) {
+        building = true;
+
+        if (!isAdded()) return;
+
+        showProgress(event);
+        updateSources();
+    }
+
+    private void showProgress(DbCompileProgressEvent event) {
+        String text = getString(event.titleResId);
+
+        if (event.total > 0) {
+            NumberFormat format = NumberFormat.getInstance();
+
+            text += " \u00b7 " + format.format(event.current) + " / " + format.format(event.total);
+        }
+
+        requirePreference(PREF_STATUS).setSummary(text);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
@@ -244,6 +287,11 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     }
 
     private void showStatus(NumbersCompiler.Info info) {
+        updateFiltering(info);
+
+        // a build says what it is doing; what the table held before it started is old news
+        if (building) return;
+
         List<String> parts = new ArrayList<>(3);
 
         if (info.count > 0) {
@@ -260,7 +308,9 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
                                 System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)));
             }
         } else {
-            parts.add(getString(R.string.db_management_status_empty));
+            parts.add(getString(info.readable
+                    ? R.string.db_management_status_empty
+                    : R.string.db_management_status_unreadable));
         }
 
         String status = TextUtils.join(" \u00b7 ", parts);
@@ -282,8 +332,6 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         }
 
         requirePreference(PREF_STATUS).setSummary(status);
-
-        updateFiltering(info);
     }
 
     /** What the filter is doing right now, said where the filter lives. */

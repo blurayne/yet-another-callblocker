@@ -24,6 +24,7 @@ import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.event.DbCompileProgressEvent;
 import dummydomain.yetanothercallblocker.event.DbFilterRevertedEvent;
 import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
 import dummydomain.yetanothercallblocker.event.DbFilteringInProgressEvent;
@@ -51,6 +52,9 @@ public class TaskService extends IntentService {
 
     /** When it last did. */
     private long lastProgressTime;
+
+    /** What the build is doing, so that a count can say what it is counting. */
+    private int phaseTitleResId = R.string.sources_compiling;
 
     public static void start(Context context, String task) {
         Intent intent = new Intent(context, TaskService.class);
@@ -167,7 +171,11 @@ public class TaskService extends IntentService {
                         public void onPhase(int titleResId) {
                             // there are four of them in a build; each one is worth saying
                             lastProgressTime = 0;
+                            phaseTitleResId = titleResId;
+
                             updateNotification(getString(titleResId));
+
+                            postEvent(new DbCompileProgressEvent(titleResId, -1, -1));
                         }
 
                         @Override
@@ -176,6 +184,10 @@ public class TaskService extends IntentService {
 
                             updateNotification(getString(R.string.compiling_db, current, total),
                                     current, total);
+
+                            // the same thing, for the screens that are about the database
+                            postEvent(new DbCompileProgressEvent(
+                                    phaseTitleResId, current, total));
                         }
                     });
 

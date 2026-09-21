@@ -255,7 +255,9 @@ public class DbCompileService {
 
         phase(listener, R.string.reading_sources);
 
-        String tableFailure = buildNumbersTable(sources, primary, listener);
+        NumbersCompiler.Counts[] totals = new NumbersCompiler.Counts[1];
+
+        String tableFailure = buildNumbersTable(sources, primary, listener, totals);
 
         if (tableFailure != null) {
             return new Result(Status.FAILED, total - failed, failed, tableFailure);
@@ -263,16 +265,49 @@ public class DbCompileService {
 
         LOG.info("compile() built the database from {} of {} sources", total - failed, total);
 
+        logSummary(totals[0], total - failed, total, startTime);
+
+        return new Result(Status.COMPILED, total - failed, failed);
+    }
+
+    /**
+     * What the whole run came to, at the end of the run.
+     *
+     * <p>Each source says what it did as it finishes, which is what someone watching reads;
+     * this is the same question asked of the build - how much was handed over altogether,
+     * what became of it, and whether it is over. Someone who opens the log the next morning
+     * reads these lines and nothing else.
+     */
+    private void logSummary(NumbersCompiler.Counts totals, int ok, int total, long startTime) {
+        NumberFormat format = NumberFormat.getInstance();
+
+        if (totals != null) {
+            buildLog.line(BuildLog.MAIN, context.getString(R.string.build_log_total_read),
+                    totals.read);
+            buildLog.line(BuildLog.MAIN, context.getString(R.string.build_log_total_inserted),
+                    totals.inserted);
+            buildLog.line(BuildLog.MAIN, context.getString(R.string.build_log_total_updated),
+                    totals.updated);
+            buildLog.line(BuildLog.MAIN, context.getString(R.string.build_log_total_deleted),
+                    totals.deleted);
+
+            if (totals.skipped > 0) {
+                buildLog.line(BuildLog.MAIN,
+                        context.getString(R.string.build_log_total_filtered), totals.skipped);
+            }
+        }
+
+        buildLog.line(BuildLog.MAIN, context.getString(R.string.build_log_total_sources,
+                ok, total));
+
         /*
          * The line someone reads first: what came out of the whole thing, and when it was
          * over - which is also the answer to "did that build I started ever finish".
          */
         buildLog.line(BuildLog.MAIN, context.getString(R.string.build_log_finished,
-                NumberFormat.getInstance().format(new NumbersCompiler(context).getCount()),
+                format.format(new NumbersCompiler(context).getCount()),
                 DateFormat.getTimeInstance(DateFormat.MEDIUM).format(new Date()),
                 (System.currentTimeMillis() - startTime) / 1000));
-
-        return new Result(Status.COMPILED, total - failed, failed);
     }
 
     /**
@@ -819,7 +854,8 @@ public class DbCompileService {
      * one the app reads only once it is whole.
      */
     private String buildNumbersTable(List<NumberSource> sources, NumberSource primary,
-                                     ProgressListener listener) {
+                                     ProgressListener listener,
+                                     NumbersCompiler.Counts[] totals) {
         /*
          * Everything happens beside the database the app is reading, and what comes out takes
          * its place only when it is whole. Nothing waits for the build, nothing is locked by
@@ -864,6 +900,8 @@ public class DbCompileService {
                     ? context.getString(R.string.db_build_table_failed_reason, result.error)
                     : context.getString(R.string.db_build_table_failed);
         }
+
+        totals[0] = result.totals;
 
         noteSourceMeta(compiler, sources);
 

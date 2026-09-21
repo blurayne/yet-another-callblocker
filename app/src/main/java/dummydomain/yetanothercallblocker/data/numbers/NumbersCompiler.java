@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import dummydomain.yetanothercallblocker.R;
 import dummydomain.yetanothercallblocker.data.BuildLog;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 
@@ -29,9 +30,9 @@ import dummydomain.yetanothercallblocker.data.source.NumberSource;
  * changes what it knows about and leaves the rest alone. A layer can also take a number out
  * again, which is a row that goes away rather than a row that says "no".
  *
- * <p>When it is complete a copy is put aside, and only then is the filter applied - so
- * "unfiltered" is a file that exists rather than a download that would have to happen again,
- * exactly as it was with the database of files.
+ * <p>Nothing that doesn't belong is ever written: the filter is asked about each number as
+ * it arrives, so the table holds what was wanted rather than being freed of the rest
+ * afterwards.
  *
  * <p>A build works on a database of its own ({@link #forBuild}) and takes the place of the
  * one in use at the end, whole. The number is the key of the table, so however many sources
@@ -49,16 +50,23 @@ public class NumbersCompiler {
         public final int sources;
         /** What went wrong, for whoever has to read it, or null. */
         public final String error;
+        /** Every source's counts added up, or null when the build didn't get that far. */
+        public final Counts totals;
 
-        Result(boolean ok, long numbers, int sources) {
-            this(ok, numbers, sources, null);
+        Result(boolean ok, long numbers, int sources, Counts totals) {
+            this(ok, numbers, sources, null, totals);
         }
 
         Result(boolean ok, long numbers, int sources, String error) {
+            this(ok, numbers, sources, error, null);
+        }
+
+        Result(boolean ok, long numbers, int sources, String error, Counts totals) {
             this.ok = ok;
             this.numbers = numbers;
             this.sources = sources;
             this.error = error;
+            this.totals = totals;
         }
 
     }
@@ -90,6 +98,14 @@ public class NumbersCompiler {
             this.updated = updated;
             this.deleted = deleted;
             this.skipped = skipped;
+        }
+
+        /** The two of them together, which is what a run adds up to over its sources. */
+        Counts plus(Counts other) {
+            if (other == null) return this;
+
+            return new Counts(read + other.read, inserted + other.inserted,
+                    updated + other.updated, deleted + other.deleted, skipped + other.skipped);
         }
 
     }
@@ -312,6 +328,8 @@ public class NumbersCompiler {
 
             int written = 0;
 
+            Counts totals = new Counts(0, 0, 0, 0, 0);
+
             Run run = null;
 
             db.beginTransaction();
@@ -327,7 +345,10 @@ public class NumbersCompiler {
                     int sourceId = writer.addSource(source.getId(), source.getName(),
                             source.getType().ordinal(), i);
 
-                    run.startSource(sourceId, input.tag, log);
+                    List<String> names = files.get(i);
+
+                    run.startSource(sourceId, input.tag, log,
+                            names != null ? names.size() : 1);
 
                     /*
                      * The first source writes into an empty table and has nothing to merge
@@ -336,8 +357,6 @@ public class NumbersCompiler {
                      * row first. That is the only difference being first makes.
                      */
                     boolean asLayer = i != 0;
-
-                    List<String> names = files.get(i);
 
                     if (names != null && !names.isEmpty()) {
                         run.readFiles(input, names, sourceId, asLayer);
@@ -365,17 +384,23 @@ public class NumbersCompiler {
                             run.sourceSkipped());
 
                     if (log != null) {
-                        log.line(input.tag, "Read records:", counts.read);
-                        log.line(input.tag, "Inserted records:", counts.inserted);
-                        log.line(input.tag, "Updated records:", counts.updated);
-                        log.line(input.tag, "Deleted records:", counts.deleted);
+                        log.line(input.tag, context.getString(R.string.build_log_read), counts.read);
+                        log.line(input.tag, context.getString(R.string.build_log_inserted),
+                                counts.inserted);
+                        log.line(input.tag, context.getString(R.string.build_log_updated),
+                                counts.updated);
+                        log.line(input.tag, context.getString(R.string.build_log_deleted),
+                                counts.deleted);
 
                         if (counts.skipped > 0) {
-                            log.line(input.tag, "Filtered out:", counts.skipped);
+                            log.line(input.tag, context.getString(R.string.build_log_filtered),
+                                    counts.skipped);
                         }
                     }
 
                     if (sourceListener != null) sourceListener.onSourceFinished(source, counts);
+
+                    totals = totals.plus(counts);
 
                     written++;
                 }
@@ -398,7 +423,7 @@ public class NumbersCompiler {
              * tree kept in order through nine million insertions that arrive in someone
              * else's order. Counting per source below is what uses it.
              */
-            if (log != null) log.line(BuildLog.MAIN, "Indexing\u2026");
+            if (log != null) log.line(BuildLog.MAIN, context.getString(R.string.build_log_indexing));
 
             NumbersDb.createIndexes(db);
 
@@ -413,7 +438,7 @@ public class NumbersCompiler {
                     numbers, run != null ? run.entries : 0, written,
                     System.currentTimeMillis() - startTime);
 
-            return new Result(true, numbers, written);
+            return new Result(true, numbers, written, totals);
         } catch (OutOfMemoryError e) {
             /*
              * Caught rather than left to kill the app: a database of a few hundred thousand
@@ -475,6 +500,10 @@ public class NumbersCompiler {
         /** Which source's rows are being written; the same for a whole source. */
         private int sourceId;
 
+        /** How far this source has got, and how far it has to go. */
+        private int sourceDone;
+        private int sourceTotal;
+
         /** When the log was last told how far this source has got. */
         private long lastLogged;
 
@@ -486,11 +515,13 @@ public class NumbersCompiler {
         }
 
         /** Starts counting again; what came before belonged to the source before. */
-        void startSource(int sourceId, String tag, BuildLog log) {
+        void startSource(int sourceId, String tag, BuildLog log, int sourceTotal) {
             this.sourceId = sourceId;
             this.tag = tag;
             this.log = log;
+            this.sourceTotal = sourceTotal;
 
+            sourceDone = 0;
             sourceNumbers = 0;
             sourceDeletions = 0;
             sourceSkipped = 0;
@@ -527,6 +558,12 @@ public class NumbersCompiler {
             if (!asLayer && SliceBatchReader.workerCount(names.size()) > 1) {
                 readInParallel(input, names, sourceId);
                 return;
+            }
+
+            // said once, so that a source that takes a while says what it is working through
+            if (log != null && names.size() > 1) {
+                log.line(tag, context.getString(R.string.build_log_ingesting_files,
+                        names.size()));
             }
 
             for (String name : names) {
@@ -571,7 +608,8 @@ public class NumbersCompiler {
             }
 
             if (log != null) {
-                log.line(tag, "Ingesting " + names.size() + " files on " + workers + " threads");
+                log.line(tag, context.getString(R.string.build_log_ingesting_threads,
+                        names.size(), workers));
             }
 
             SliceBatchReader.Result result;
@@ -677,16 +715,21 @@ public class NumbersCompiler {
         void step() {
             report(listener, ++done, total);
 
+            sourceDone++;
+
             /*
              * The log gets a line now and then rather than one per file: a few hundred
-             * thousand of them would say nothing that the first and the last don't.
+             * thousand of them would say nothing that the first and the last don't. Counted
+             * within the source, because that is what the line is about - and not at all for
+             * a source that is one thing, where "1 of 1" says nothing twice.
              */
             long now = System.currentTimeMillis();
 
-            if (log != null && now - lastLogged >= LOG_INTERVAL_MS) {
+            if (log != null && sourceTotal > 1 && now - lastLogged >= LOG_INTERVAL_MS) {
                 lastLogged = now;
 
-                log.line(tag, "Ingesting record " + done + " of " + total);
+                log.line(tag, context.getString(R.string.build_log_ingesting,
+                        sourceDone, sourceTotal));
             }
 
             /*

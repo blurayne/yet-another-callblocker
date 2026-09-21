@@ -108,6 +108,16 @@ public class EditNumberSourceActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) fill();
 
+        typeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateAuthFields();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
         authSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -205,7 +215,10 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         target.setName(name);
         target.setUrl(url);
         target.setType(selected(typeSpinner, NumberSource.Type.values()));
-        target.setAuth(selected(authSpinner, NumberSource.Auth.values()));
+        target.setAuth(selected(typeSpinner, NumberSource.Type.values())
+                == NumberSource.Type.PHONE_BLOCK
+                ? NumberSource.Auth.BEARER
+                : selected(authSpinner, NumberSource.Auth.values()));
         target.setUsername(getString(usernameTextField));
         target.setUpdates(selected(updatesSpinner, NumberSource.Updates.values()));
 
@@ -271,14 +284,29 @@ public class EditNumberSourceActivity extends AppCompatActivity {
 
     /** Only the fields the chosen way of logging in needs are shown. */
     private void updateAuthFields() {
+        /*
+         * A PhoneBlock account has one way of logging in and it isn't a choice: the token is
+         * sent as a bearer token, which is what that API takes. Offering the three ways here
+         * would be offering two that cannot work - so the token is asked for and nothing
+         * else. It is the account's token, the same one the PhoneBlock screen asks for.
+         */
+        boolean phoneBlock = selected(typeSpinner, NumberSource.Type.values())
+                == NumberSource.Type.PHONE_BLOCK;
+
+        findViewById(R.id.authLabel).setVisibility(phoneBlock ? View.GONE : View.VISIBLE);
+        authSpinner.setVisibility(phoneBlock ? View.GONE : View.VISIBLE);
+
         NumberSource.Auth auth = selected(authSpinner, NumberSource.Auth.values());
 
-        usernameTextField.setVisibility(auth == NumberSource.Auth.BASIC
+        usernameTextField.setVisibility(!phoneBlock && auth == NumberSource.Auth.BASIC
                 ? View.VISIBLE : View.GONE);
 
-        boolean needsSecret = auth != NumberSource.Auth.NONE;
+        boolean needsSecret = phoneBlock || auth != NumberSource.Auth.NONE;
         secretTextField.setVisibility(needsSecret ? View.VISIBLE : View.GONE);
         findViewById(R.id.secretNotice).setVisibility(needsSecret ? View.VISIBLE : View.GONE);
+
+        secretTextField.setHint(getString(phoneBlock
+                ? R.string.source_secret_token : R.string.source_secret));
     }
 
     /**

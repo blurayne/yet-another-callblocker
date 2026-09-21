@@ -2,6 +2,7 @@ package dummydomain.yetanothercallblocker.data.numbers;
 
 import android.text.TextUtils;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import dummydomain.yetanothercallblocker.Settings;
@@ -16,20 +17,35 @@ import dummydomain.yetanothercallblocker.data.BlacklistUtils;
  * work and a few hundred megabytes, for numbers nobody was going to look up.
  *
  * <p>So it is asked here instead, of each number as its source hands it over, and the ones
- * that don't match are never written at all. The same pattern applies to every source: what
+ * that don't match are never written at all. The same filter applies to every source: what
  * the database is for doesn't change from one source to the next.
+ *
+ * <p>Nine million times is often enough that how it is asked matters. Nearly every pattern
+ * is a set of prefixes - {@code +49*}, {@code +{31,43,41,49}*} - and that question is
+ * answered with a division and a comparison, without a string or a matcher in sight. A
+ * pattern that says something else falls back to a regular expression, and even then nothing
+ * is allocated per number: one buffer and one matcher are filled again and again.
+ *
+ * <p>Not thread-safe, for that reason. A build is one thread and asks in a loop.
  */
 public class NumbersFilter {
 
-    /** The pattern every number is held against, as a regular expression. */
-    private final Pattern pattern;
+    /** The fast answer, for the patterns that are a set of prefixes. Null when it isn't one. */
+    private final NumberPrefixSet prefixes;
+
+    /** The general answer, for everything else. Null when the fast one covers it. */
+    private final Matcher matcher;
+
+    /** What the number is written into for the matcher, reused rather than made each time. */
+    private final StringBuilder buffer;
 
     /**
-     * Short numbers are kept whatever the pattern says, up to this many digits, or 0 when
-     * they are not. They are the emergency and service numbers, which have no country code to
-     * match and are worth knowing about wherever one is.
+     * Numbers below this are kept whatever the pattern says, or 0 when they are not.
+     *
+     * <p>Short numbers are the emergency and service numbers. They have no country code to
+     * match on, so a pattern about country codes would throw all of them away.
      */
-    private final int shortNumberMaxLength;
+    private final long shortNumberLimit;
 
     /**
      * The filter the settings describe, or null when nothing is being filtered.
@@ -40,18 +56,32 @@ public class NumbersFilter {
     public static NumbersFilter of(Settings settings) {
         if (settings == null || !settings.isDbFilteringEnabled()) return null;
 
-        Pattern pattern = BlacklistUtils.compilePattern(BlacklistUtils.patternFromHumanReadable(
-                settings.getDbFilteringPattern()));
+        String pattern = settings.getDbFilteringPattern();
+        if (TextUtils.isEmpty(pattern)) return null;
 
-        if (pattern == null) return null; // a pattern that can't be read filters nothing
+        int shortNumberMaxLength = settings.getDbFilteringKeepShortNumbers()
+                ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0;
 
-        return new NumbersFilter(pattern, settings.getDbFilteringKeepShortNumbers()
-                ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0);
+        NumberPrefixSet prefixes = NumberPrefixSet.of(pattern);
+        if (prefixes != null) return new NumbersFilter(prefixes, null, shortNumberMaxLength);
+
+        Pattern compiled = BlacklistUtils.compilePattern(
+                BlacklistUtils.patternFromHumanReadable(pattern));
+
+        // a pattern that can't be read filters nothing, rather than everything
+        if (compiled == null) return null;
+
+        return new NumbersFilter(null, compiled, shortNumberMaxLength);
     }
 
-    public NumbersFilter(Pattern pattern, int shortNumberMaxLength) {
-        this.pattern = pattern;
-        this.shortNumberMaxLength = shortNumberMaxLength;
+    private NumbersFilter(NumberPrefixSet prefixes, Pattern pattern, int shortNumberMaxLength) {
+        this.prefixes = prefixes;
+
+        this.matcher = pattern != null ? pattern.matcher("") : null;
+        this.buffer = pattern != null ? new StringBuilder(24) : null;
+
+        this.shortNumberLimit = shortNumberMaxLength > 0 && shortNumberMaxLength < 18
+                ? pow10(shortNumberMaxLength) : 0;
     }
 
     /**
@@ -64,11 +94,27 @@ public class NumbersFilter {
     public boolean keep(long number) {
         if (number <= 0) return false;
 
-        String digits = Long.toString(number);
+        // a length test without the length: a number of n digits is smaller than 10^n
+        if (shortNumberLimit != 0 && number < shortNumberLimit) return true;
 
-        if (shortNumberMaxLength > 0 && digits.length() <= shortNumberMaxLength) return true;
+        if (prefixes != null) return prefixes.matches(number);
 
-        return pattern.matcher("+" + digits).matches();
+        buffer.setLength(0);
+        buffer.append('+').append(number);
+
+        matcher.reset(buffer);
+
+        return matcher.matches();
+    }
+
+    private static long pow10(int exponent) {
+        long value = 1;
+
+        for (int i = 0; i < exponent; i++) {
+            value *= 10;
+        }
+
+        return value;
     }
 
     /** What it is, for the log and for the screen that sets it. */

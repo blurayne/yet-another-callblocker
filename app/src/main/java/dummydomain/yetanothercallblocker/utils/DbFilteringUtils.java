@@ -15,6 +15,7 @@ import dummydomain.yetanothercallblocker.data.CallLogHelper;
 import dummydomain.yetanothercallblocker.data.CallLogItem;
 import dummydomain.yetanothercallblocker.data.NumberFilter;
 import dummydomain.yetanothercallblocker.data.NumberUtils;
+import dummydomain.yetanothercallblocker.data.numbers.NumberPrefixSet;
 
 public class DbFilteringUtils {
 
@@ -53,32 +54,9 @@ public class DbFilteringUtils {
 
     /** The prefixes a {@code +49*} or {@code +{49,43}*} pattern amounts to, or nothing. */
     public static List<String> parsePattern(String pattern) {
-        if (TextUtils.isEmpty(pattern)) return Collections.emptyList();
+        List<String> prefixes = NumberPrefixSet.prefixesOf(pattern);
 
-        String rest = pattern.trim();
-
-        if (!rest.startsWith("+")) return Collections.emptyList();
-        rest = rest.substring(1);
-
-        if (!rest.endsWith("*")) return Collections.emptyList();
-        rest = rest.substring(0, rest.length() - 1);
-
-        if (rest.startsWith("{") && rest.endsWith("}")) {
-            rest = rest.substring(1, rest.length() - 1);
-        }
-
-        List<String> prefixes = new ArrayList<>();
-
-        for (String prefix : rest.split(",")) {
-            prefix = prefix.trim();
-
-            // anything else in it - another wildcard, a digit placeholder - and this can't say
-            if (prefix.isEmpty() || !prefix.matches("[0-9]+")) return Collections.emptyList();
-
-            if (!prefixes.contains(prefix)) prefixes.add(prefix);
-        }
-
-        return prefixes;
+        return prefixes != null ? prefixes : Collections.<String>emptyList();
     }
 
     public static List<String> parsePrefixes(String prefixesString) {

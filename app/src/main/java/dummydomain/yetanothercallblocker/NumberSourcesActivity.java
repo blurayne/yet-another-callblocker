@@ -190,7 +190,7 @@ public class NumberSourcesActivity extends AppCompatActivity {
     private String getStatus(NumberSource source) {
         List<String> parts = new ArrayList<>(3);
 
-        parts.add(getRole(source));
+        parts.add(getPosition(source));
         parts.add(getString(getUpdatesName(source.getUpdates())));
 
         if (source.getType() == NumberSource.Type.PHONE_BLOCK) {
@@ -217,28 +217,26 @@ public class NumberSourcesActivity extends AppCompatActivity {
     }
 
     /**
-     * What the source is in the database: the one it is built on, or which layer on top.
+     * When the source is read, which is the only thing its place in the list decides.
      *
-     * <p>Only the sources that are switched on are counted, because only they are asked -
-     * switching one off moves everything below it up.
+     * <p>No source is the database and the others additions to it: each of them can hand
+     * over a whole one, and the later a source is read the more it has the last word about a
+     * number two of them know. Only the sources that are switched on are counted, because
+     * only they are asked - switching one off moves everything below it up.
      */
-    private String getRole(NumberSource source) {
-        if (source.getType() != NumberSource.Type.DATABASE || !source.isEnabled()) {
-            return getString(getTypeName(source.getType()));
-        }
+    private String getPosition(NumberSource source) {
+        if (!source.isEnabled()) return getString(getTypeName(source.getType()));
 
-        int layer = 0;
+        int position = 0;
         for (NumberSource other : sources) {
-            if (!other.isEnabled() || other.getType() != NumberSource.Type.DATABASE) continue;
+            if (!other.isEnabled()) continue;
+
+            position++;
 
             if (other.getId().equals(source.getId())) break;
-
-            layer++;
         }
 
-        return layer == 0
-                ? getString(R.string.source_role_base)
-                : getString(R.string.source_role_layer, layer);
+        return getString(R.string.source_position, position);
     }
 
     static int getTypeName(NumberSource.Type type) {

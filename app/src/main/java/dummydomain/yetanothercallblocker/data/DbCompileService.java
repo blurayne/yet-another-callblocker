@@ -31,7 +31,6 @@ import dummydomain.yetanothercallblocker.data.source.SourceHttp;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.numbers.NumberFlags;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersFilter;
-import dummydomain.yetanothercallblocker.data.numbers.SliceReader;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.NumberFilter;
@@ -46,29 +45,30 @@ import okhttp3.ResponseBody;
 /**
  * Builds the number database out of the sources, in the order the user put them in.
  *
- * <p>The first source carries the database itself - the whole archive, the way it has always
- * been downloaded. Every source after it is a layer on top: a file of numbers that are added
- * to what is already there, replacing what an earlier layer said about the same number. A
- * layer can also carry numbers to take out again, which is how a source says "this one is
- * not spam" about an entry another source brought.
+ * <p>No source is the database that the others are added to. Every source can hand over a
+ * whole database - one file or a few hundred thousand, packed or plain - and the order alone
+ * decides what happens to a number two of them know: the first source writes into an empty
+ * table, every one after it changes what is already there, and the last one to say something
+ * about a number is the one that is believed. A source can also carry numbers to take out
+ * again, which is how it says "this one is not spam" about an entry an earlier one brought.
  *
- * <p>Layers are put where the library keeps the updates it fetches itself, which is the same
- * question asked in the same order: the layer is looked at first, the database underneath
- * second. An entry with no ratings counts as not found, and that is what a number to delete
- * is written as.
+ * <p>One source is still the one whose files the library keeps: it reads a single directory
+ * for the featured names and what the app knows about countries, and that is the first
+ * database source in the list, for that reason and no other. Every other source is unpacked
+ * into a place of its own and read in its turn.
  *
- * <p>The fetched layers are kept, so that they can be put back without asking their sources
- * again - which has to happen after the library's own update, because that update is merged
- * into the same place and would otherwise bury them.
+ * <p>The database is built beside the one in use and put in its place only once it is whole,
+ * so a build that fails leaves the one that worked exactly where it was.
  */
 public class DbCompileService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DbCompileService.class);
 
-    /** Where the fetched layers are kept between compiles. */
+    /** Where an older version kept one file per source; emptied when one is found. */
     private static final String LAYERS_DIR_NAME = "sia-layers";
 
-    private static final String LAYER_POSTFIX = ".dat";
+    /** And where each source keeps what it handed over, one directory each. */
+    private static final String SOURCES_DIR_NAME = "sources";
 
     private static final int CONNECT_TIMEOUT_SECONDS = 30;
     private static final int READ_TIMEOUT_SECONDS = 120;
@@ -182,65 +182,60 @@ public class DbCompileService {
         int failed = 0;
 
         /*
-         * The source that carries the database itself: the first one marked as such, or, when
-         * none is, the first of them - which is what every list looked like before there was
-         * a mark to set.
+         * The one whose files the library keeps - the featured names and what the app knows
+         * about countries are read from there, and there is one such place. It is the first
+         * database source in the list and nothing else: no source is marked as carrying the
+         * database, because every one of them can.
          */
-        NumberSource base = getBase(sources);
+        NumberSource primary = getPrimary(sources);
 
-        if (base == null) {
-            LOG.warn("compile() no source carries the database");
+        for (int i = 0; i < sources.size(); i++) {
+            NumberSource source = sources.get(i);
 
-            buildLog.line(BuildLog.MAIN, context.getString(R.string.db_build_no_base_text));
+            if (listener != null) listener.onProgress(i + 1, total);
 
-            return new Result(Status.NO_BASE, 0, sources.size(),
-                    context.getString(R.string.db_build_no_base_text));
-        }
+            phase(listener, source.getType() == NumberSource.Type.DATABASE
+                    ? R.string.main_db_downloading : R.string.source_fetching);
 
-        if (listener != null) listener.onProgress(1, total);
+            boolean isPrimary = source == primary;
 
-        /*
-         * Tens of megabytes are not fetched again because someone pressed a button: the
-         * database is downloaded when there is none, and after that only when its own
-         * schedule says so. What changes in between is what the other sources carry.
-         */
-        if (force || needsDownload(base)) {
-            phase(listener, R.string.main_db_downloading);
+            if (isPrimary && !force && !needsDownload(source)) {
+                LOG.debug("compile() {} is there and not due", tagOf(source));
 
-            buildLog.line(tagOf(base), context.getString(R.string.build_log_downloading));
+                /*
+                 * Said out loud in the source's row: a build that keeps what it already has
+                 * looks exactly like one that fetched it, and the difference matters when
+                 * someone is waiting to see a source they just changed take effect.
+                 */
+                source.setLastCheck(System.currentTimeMillis());
 
-            String failure = downloadBase(base, listener);
+                buildLog.line(tagOf(source), context.getString(R.string.source_result_kept));
+
+                note(source, context.getString(R.string.source_result_kept));
+                continue;
+            }
+
+            buildLog.line(tagOf(source), context.getString(R.string.build_log_downloading));
+
+            String failure = fetch(source, isPrimary, listener);
 
             if (failure != null) {
-                LOG.error("compile() the database itself couldn't be fetched: {}", failure);
+                failed++;
 
-                buildLog.line(tagOf(base), context.getString(R.string.build_log_failed, failure));
+                LOG.warn("compile() {} couldn't be fetched: {}", tagOf(source), failure);
 
-                return new Result(Status.NO_BASE, 0, 1, failure);
+                buildLog.line(tagOf(source),
+                        context.getString(R.string.build_log_failed, failure));
+
+                /*
+                 * The first source fills the empty table, so without it there is nothing for
+                 * the rest to change. The others are worth carrying on without.
+                 */
+                if (i == 0) return new Result(Status.NO_BASE, 0, total, failure);
             }
-        } else {
-            LOG.debug("compile() the database is there and not due");
-
-            buildLog.line(tagOf(base), context.getString(R.string.source_result_kept));
-
-            /*
-             * Said out loud in the source's row: a build that keeps the database it already
-             * has looks exactly like one that fetched it, and the difference matters when
-             * someone is waiting to see a source they just changed take effect.
-             */
-            base.setLastCheck(System.currentTimeMillis());
-
-            note(base, context.getString(R.string.source_result_kept));
         }
 
-        reloadDatabases(); // the layers go on top of what was just downloaded
-
-        // the base goes into the table first, whatever place it has in the list
-        List<NumberSource> ordered = new ArrayList<>(sources.size());
-        ordered.add(base);
-        for (NumberSource source : sources) {
-            if (!source.getId().equals(base.getId())) ordered.add(source);
-        }
+        reloadDatabases();
 
         /*
          * A compile is the whole database, not an addition to the last one: what an earlier
@@ -250,33 +245,13 @@ public class DbCompileService {
          */
         YacbHolder.getCommunityDatabase().resetSecondaryDatabase();
 
-        if (ordered.size() > 1) phase(listener, R.string.source_fetching);
+        dropDirsOfGoneSources(sources);
 
-        for (int i = 1; i < ordered.size(); i++) {
-            if (listener != null) listener.onProgress(i + 1, total);
-
-            NumberSource layer = ordered.get(i);
-
-            buildLog.line(tagOf(layer), context.getString(R.string.build_log_downloading));
-
-            if (!downloadLayer(layer)) {
-                failed++;
-
-                buildLog.line(tagOf(layer), context.getString(R.string.build_log_failed,
-                        layer.getLastResult() != null ? layer.getLastResult() : ""));
-            }
-        }
-
-        dropLayersOfGoneSources(ordered);
-
-        if (!applyLayers(ordered)) {
-            return new Result(Status.FAILED, total - failed, failed,
-                    context.getString(R.string.db_build_not_readable));
-        }
+        applyLayers(sources, primary);
 
         phase(listener, R.string.reading_sources);
 
-        String tableFailure = buildNumbersTable(ordered, listener);
+        String tableFailure = buildNumbersTable(sources, primary, listener);
 
         if (tableFailure != null) {
             return new Result(Status.FAILED, total - failed, failed, tableFailure);
@@ -297,16 +272,17 @@ public class DbCompileService {
     }
 
     /**
-     * Puts the layers back on top of the database, from what was fetched last time.
+     * Puts the other sources back on top of the library's database, from what was fetched
+     * last time.
      *
      * <p>Wanted after the library updates itself: that update is merged into the same place
-     * the layers live, so without this the numbers a layer added - and the ones it took out -
-     * would quietly go back to what the update says about them.
+     * the other sources were merged into, so without this the numbers one of them added -
+     * and the ones it took out - would quietly go back to what the update says about them.
      */
-    public boolean reapplyLayers() {
+    public void reapplyLayers() {
         List<NumberSource> sources = getSources();
 
-        return sources.size() <= 1 || applyLayers(sources);
+        if (sources.size() > 1) applyLayers(sources, getPrimary(sources));
     }
 
     /**
@@ -324,19 +300,107 @@ public class DbCompileService {
                 : new ArrayList<>();
     }
 
-    /** The one that carries the database itself, or null when none of them does. */
-    private NumberSource getBase(List<NumberSource> sources) {
-        NumberSource first = null;
-
+    /**
+     * The source whose files the library keeps, or null when there is no such source.
+     *
+     * <p>Not a role and not a rank: the library reads one directory for the featured names
+     * and what the app knows about countries, so one source's files go there, and that is
+     * the first database source in the list. Every other source is unpacked into a place of
+     * its own and read in its turn.
+     */
+    private NumberSource getPrimary(List<NumberSource> sources) {
         for (NumberSource source : sources) {
-            if (source.getType() != NumberSource.Type.DATABASE) continue;
-
-            if (source.getRole() == NumberSource.Role.BASE) return source;
-
-            if (first == null) first = source;
+            if (source.getType() == NumberSource.Type.DATABASE) return source;
         }
 
-        return first;
+        return null;
+    }
+
+    /** Where a source that isn't the primary one keeps what it handed over. */
+    private static File getSourceDir(NumberSource source) {
+        return new File(new File(YacbHolder.getStorage().getDataDirPath(), SOURCES_DIR_NAME),
+                source.getId());
+    }
+
+    /**
+     * Fetches one source, wherever its kind of source keeps what it brings.
+     *
+     * @return null when it worked, otherwise what went wrong
+     */
+    private String fetch(NumberSource source, boolean primary, ProgressListener listener) {
+        if (source.getType() == NumberSource.Type.PHONE_BLOCK) {
+            return updatePhoneBlock(source) ? null
+                    : context.getString(R.string.source_result_failed);
+        }
+
+        if (primary) return downloadBase(source, listener);
+
+        return downloadIntoDir(source, getSourceDir(source));
+    }
+
+    /**
+     * Fetches a source into a directory of its own, whatever it hands over.
+     *
+     * <p>One file or a few hundred thousand, packed or plain: every source can be a whole
+     * database, and what decides what it does to the table is where it stands in the list,
+     * not how much it brought.
+     */
+    private String downloadIntoDir(NumberSource source, File dir) {
+        if (TextUtils.isEmpty(source.getUrl())) {
+            note(source, context.getString(R.string.source_result_no_address));
+            return context.getString(R.string.source_result_no_address);
+        }
+
+        source.setLastCheck(System.currentTimeMillis());
+
+        File archive = new File(dir.getParentFile(), source.getId() + ".part");
+        File tempDir = new File(dir.getParentFile(), source.getId() + "-tmp");
+
+        try {
+            if (!download(source, archive, false)) {
+                note(source, context.getString(R.string.source_result_failed));
+                return context.getString(R.string.source_result_failed);
+            }
+
+            FileUtils.delete(tempDir);
+            createDir(tempDir);
+
+            int files;
+            try (InputStream inputStream
+                         = new BufferedInputStream(new FileInputStream(archive))) {
+                files = ArchiveUtils.unpackAll(inputStream, tempDir, "data_slice_0.dat");
+            }
+
+            if (files == 0) {
+                note(source, context.getString(R.string.source_result_not_a_database));
+                return context.getString(R.string.source_result_not_a_database);
+            }
+
+            FileUtils.delete(dir);
+
+            if (!tempDir.renameTo(dir)) {
+                LOG.warn("downloadIntoDir() couldn't put {} in place", dir);
+
+                note(source, context.getString(R.string.source_result_failed));
+                return context.getString(R.string.source_result_failed);
+            }
+
+            source.setFetchedUrl(source.getUrl());
+
+            note(source, context.getString(R.string.source_result_files, files));
+
+            return null;
+        } catch (Exception e) {
+            LOG.error("downloadIntoDir() failed", e);
+
+            note(source, context.getString(R.string.source_result_failed));
+
+            return e.getClass().getSimpleName()
+                    + (e.getLocalizedMessage() != null ? ": " + e.getLocalizedMessage() : "");
+        } finally {
+            FileUtils.delete(archive);
+            FileUtils.delete(tempDir);
+        }
     }
 
     /**
@@ -361,7 +425,7 @@ public class DbCompileService {
     }
 
     /**
-     * Downloads the database itself, which is what the rest is layered onto.
+     * Fetches the source whose files the library keeps, into the place the library reads.
      *
      * @return null when it worked, otherwise what went wrong
      */
@@ -408,7 +472,8 @@ public class DbCompileService {
 
         if (!downloaded) {
             note(source, context.getString(R.string.source_result_failed));
-            return error != null ? error : context.getString(R.string.db_build_no_base_text);
+            return error != null ? error
+                    : context.getString(R.string.source_result_failed);
         }
 
         /*
@@ -596,92 +661,12 @@ public class DbCompileService {
         }
     }
 
-    /** Fetches one layer and keeps it, replacing what was fetched from that source before. */
-    private boolean downloadLayer(NumberSource source) {
-        LOG.debug("downloadLayer() {}", source.getUrl());
-
-        // a PhoneBlock account keeps its list itself; asking it is what fetching means here
-        if (source.getType() == NumberSource.Type.PHONE_BLOCK) return updatePhoneBlock(source);
-
-        if (TextUtils.isEmpty(source.getUrl())) {
-            note(source, context.getString(R.string.source_result_no_address));
-            return false;
-        }
-
-        source.setLastCheck(System.currentTimeMillis());
-
-        File file = getLayerFile(source);
-        File tempFile = new File(file.getPath() + ".part");
-
-        try {
-            if (!download(source, tempFile)) {
-                note(source, context.getString(R.string.source_result_failed));
-                return false;
-            }
-
-            long[] read = readSlice(tempFile);
-            if (read == null) {
-                note(source, context.getString(R.string.source_result_not_a_database));
-                return false;
-            }
-
-            source.setVersion((int) read[1]);
-
-            if (file.exists() && !file.delete()) {
-                LOG.warn("downloadLayer() couldn't replace {}", file);
-                return false;
-            }
-
-            if (!tempFile.renameTo(file)) {
-                LOG.warn("downloadLayer() couldn't move {}", tempFile);
-                return false;
-            }
-
-            note(source, context.getString(R.string.source_result_numbers, (int) read[0]));
-
-            return true;
-        } finally {
-            if (tempFile.exists() && !tempFile.delete()) {
-                LOG.warn("downloadLayer() couldn't clean up {}", tempFile);
-            }
-        }
-    }
-
-    /**
-     * Brings the PhoneBlock list up to date, which is what fetching that source means.
-     *
-     * <p>The list is kept where the account screen keeps it - the same one an incoming call
-     * is held against - and the build reads it from there rather than downloading a second
-     * copy of it.
-     */
-    private boolean updatePhoneBlock(NumberSource source) {
-        source.setLastCheck(System.currentTimeMillis());
-
-        PhoneBlockService.Result result = new PhoneBlockService(settings,
-                YacbHolder.getPhoneBlockList(), YacbHolder.getPhoneBlockPersonalLists())
-                .update(false);
-
-        boolean ok = result.status != PhoneBlockService.Status.FAILED
-                && result.status != PhoneBlockService.Status.NOT_CONFIGURED;
-
-        note(source, ok
-                ? context.getString(R.string.source_result_numbers, result.size)
-                : context.getString(R.string.source_result_failed));
-
-        return ok;
-    }
-
-    /** Fetches the source into a file, unpacked on the way if it arrives packed. */
-    private boolean download(NumberSource source, File target) {
-        return download(source, target, true);
-    }
-
     /**
      * Fetches the source into a file.
      *
-     * @param unpack whether a packed answer is unpacked on the way. A layer is one file and
-     *               is read as one, so it is; the database is a few thousand and is unpacked
-     *               into a directory afterwards, so it isn't.
+     * @param unpack whether a packed answer is unpacked on the way. What a source hands over
+     *               is unpacked into a directory of its own afterwards, whether it is one
+     *               file or a few hundred thousand, so it isn't.
      */
     private boolean download(NumberSource source, File target, boolean unpack) {
         DeferredInit.initNetwork();
@@ -725,36 +710,44 @@ public class DbCompileService {
         }
     }
 
-    /** Merges every layer into the database, in the order of the sources. */
-    private boolean applyLayers(List<NumberSource> sources) {
+    /**
+     * Puts what the other sources brought into the library's database as well.
+     *
+     * <p>Numbers are looked up in the library's own files, not yet in the table this build
+     * fills, so a source whose numbers are only in the table would be built and then not
+     * asked. The library takes one slice file at a time, so this is what it can be given:
+     * the sources that handed over a single file. A source that handed over a whole
+     * directory of them is in the table and will be looked up there when lookups move.
+     */
+    private void applyLayers(List<NumberSource> sources, NumberSource primary) {
         CommunityDatabase communityDatabase = YacbHolder.getCommunityDatabase();
 
         if (!communityDatabase.isOperational()) {
-            LOG.warn("applyLayers() there's no database to put the layers on");
-            return false;
+            LOG.warn("applyLayers() there's no database to put the others on");
+            return;
         }
 
         NumberFilter numberFilter = DbFilteringUtils.getNumberFilter(settings);
 
         boolean applied = false;
 
-        for (int i = 1; i < sources.size(); i++) {
-            File file = getLayerFile(sources.get(i));
-            if (!file.exists()) continue;
+        for (NumberSource source : sources) {
+            if (source == primary || source.getType() != NumberSource.Type.DATABASE) continue;
 
-            if (applyLayer(file, numberFilter)) applied = true;
+            File[] files = getSourceDir(source).listFiles();
+            if (files == null || files.length != 1 || !files[0].isFile()) continue;
+
+            if (applyLayer(files[0], numberFilter)) applied = true;
         }
 
         if (applied) reloadDatabases();
-
-        return true;
     }
 
     /**
-     * Merges one layer in.
+     * Merges one file in.
      *
      * <p>The version the library keeps is put back afterwards: it says which update was
-     * fetched last and is what the next one is asked for, and a layer is not one of those.
+     * fetched last and is what the next one is asked for, and this is not one of those.
      */
     private boolean applyLayer(File file, NumberFilter numberFilter) {
         LOG.debug("applyLayer() {}", file.getName());
@@ -776,64 +769,48 @@ public class DbCompileService {
     }
 
     /** Forgets what was fetched from sources that are gone or switched off. */
-    private void dropLayersOfGoneSources(List<NumberSource> sources) {
+    private void dropDirsOfGoneSources(List<NumberSource> sources) {
         Set<String> names = new HashSet<>();
         for (NumberSource source : sources) {
-            names.add(getLayerFile(source).getName());
+            names.add(source.getId());
         }
 
-        File[] files = getLayersDir().listFiles();
-        if (files == null) return;
+        File[] dirs = new File(YacbHolder.getStorage().getDataDirPath(), SOURCES_DIR_NAME)
+                .listFiles();
 
-        for (File file : files) {
-            if (names.contains(file.getName())) continue;
+        if (dirs == null) return;
 
-            if (!file.delete()) LOG.warn("dropLayersOfGoneSources() couldn't delete {}", file);
+        for (File dir : dirs) {
+            if (names.contains(dir.getName())) continue;
+
+            LOG.info("dropDirsOfGoneSources() removing {}", dir);
+
+            FileUtils.delete(dir);
         }
-    }
 
-    /**
-     * Looks at what was fetched: how many numbers it holds and what version it says it is.
-     *
-     * @return {@code {numbers, version}}, or null when the file isn't a database file at all
-     */
-    private static long[] readSlice(File file) {
-        long[] count = {0};
+        // what an older version kept: one file per source, in a directory of its own
+        File[] layers = getLayersDir().listFiles();
+        if (layers == null) return;
 
-        try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
-            int version = SliceReader.read(inputStream, new SliceReader.Visitor() {
-                @Override
-                public void onNumber(long number, int positive, int negative,
-                                     int neutral, int category) {
-                    count[0]++;
-                }
-
-                @Override
-                public void onDeleted(long number) {
-                    count[0]++;
-                }
-            });
-
-            return new long[]{count[0], version};
-        } catch (Exception e) {
-            LOG.warn("readSlice() couldn't read {}", file, e);
-            return null;
+        for (File file : layers) {
+            if (!file.delete()) LOG.warn("dropDirsOfGoneSources() couldn't delete {}", file);
         }
     }
 
     /**
      * Writes what every source brought into one table, beside the one in use.
      *
-     * <p>This is where the sources stop being files in three formats and become rows: the
-     * database fills the empty table, the updates and the layers go on top of it, and what
-     * comes out is one file with the number as its key - so a number that several sources
-     * know is one row, whatever they each say about it.
+     * <p>This is where the sources stop being files in three formats and become rows. They
+     * are read in the order the user put them in and nothing else: the first one writes into
+     * an empty table, every one after it changes what is already there, and the number is
+     * the key - so a number that several sources know is one row, with the last of them
+     * having the say. No source is the database that the rest are added to.
      *
-     * <p>All of it happens in a database of its own: built, then filtered, and only then put
-     * in the place of the one the app reads. The copy that a filter can be taken back to is
-     * made in between, while the table is still whole.
+     * <p>All of it happens in a database of its own: filled here and put in the place of the
+     * one the app reads only once it is whole.
      */
-    private String buildNumbersTable(List<NumberSource> sources, ProgressListener listener) {
+    private String buildNumbersTable(List<NumberSource> sources, NumberSource primary,
+                                     ProgressListener listener) {
         /*
          * Everything happens beside the database the app is reading, and what comes out takes
          * its place only when it is whole. Nothing waits for the build, nothing is locked by
@@ -858,19 +835,9 @@ public class DbCompileService {
                         NumbersFilter.describe(settings))
                 : context.getString(R.string.build_log_no_filter));
 
-        String dataDir = YacbHolder.getStorage().getDataDirPath();
-
-        List<String> tags = new ArrayList<>(sources.size());
-        for (NumberSource source : sources) {
-            tags.add(tagOf(source));
-        }
-
-        NumbersCompiler.Result result = compiler.compile(sources,
-                new File(dataDir, SiaConstants.SIA_PATH_PREFIX),
-                new File(dataDir, SiaConstants.SIA_SECONDARY_PATH_PREFIX),
-                getLayersDir(),
+        NumbersCompiler.Result result = compiler.compile(toInputs(sources, primary),
                 listener != null ? listener::onProgress : null,
-                this::noteSourceCounts, buildLog, tags, new PhoneBlockSource());
+                this::noteSourceCounts, buildLog, new PhoneBlockSource());
 
         /*
          * The library keeps what it read in memory - the slices it was asked about, and the
@@ -899,6 +866,39 @@ public class DbCompileService {
         }
 
         return null;
+    }
+
+    /**
+     * Where each source's numbers are lying, in the order they are read.
+     *
+     * <p>One place per source: the source whose files the library keeps reads those, and what
+     * the library has fetched for itself since goes with them; every other source reads the
+     * directory it was unpacked into; a source that isn't files at all has none and hands its
+     * numbers over another way.
+     */
+    private List<NumbersCompiler.Input> toInputs(List<NumberSource> sources,
+                                                 NumberSource primary) {
+        String dataDir = YacbHolder.getStorage().getDataDirPath();
+
+        List<NumbersCompiler.Input> inputs = new ArrayList<>(sources.size());
+
+        for (NumberSource source : sources) {
+            File dir = null;
+            File updatesDir = null;
+
+            if (source.getType() == NumberSource.Type.DATABASE) {
+                if (source == primary) {
+                    dir = new File(dataDir, SiaConstants.SIA_PATH_PREFIX);
+                    updatesDir = new File(dataDir, SiaConstants.SIA_SECONDARY_PATH_PREFIX);
+                } else {
+                    dir = getSourceDir(source);
+                }
+            }
+
+            inputs.add(new NumbersCompiler.Input(source, tagOf(source), dir, updatesDir));
+        }
+
+        return inputs;
     }
 
     /**
@@ -958,7 +958,8 @@ public class DbCompileService {
 
     /**
      * Keeps with each source what the build found out about it: how much of the database
-     * came from there, and - for the one that carries the database - which version it is.
+     * came from there, and - for the source whose files the library keeps - which version
+     * it says it is.
      */
     private void noteSourceMeta(NumbersCompiler compiler, List<NumberSource> sources) {
         if (sourceService == null) return;
@@ -971,7 +972,7 @@ public class DbCompileService {
 
                 source.setEntries(count.count);
 
-                // the database's version is the library's; a layer said its own when it arrived
+                // the first source's files are the library's, so its version is the one it says
                 if (count.layer == 0) source.setVersion(version);
 
                 sourceService.save(source);
@@ -986,10 +987,6 @@ public class DbCompileService {
         source.setLastUpdate(System.currentTimeMillis());
 
         if (sourceService != null) sourceService.save(source);
-    }
-
-    private File getLayerFile(NumberSource source) {
-        return new File(getLayersDir(), source.getId() + LAYER_POSTFIX);
     }
 
     private static File getLayersDir() {

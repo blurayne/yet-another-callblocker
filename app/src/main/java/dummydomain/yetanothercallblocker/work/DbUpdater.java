@@ -33,7 +33,7 @@ public class DbUpdater {
                 updated = true;
 
                 /*
-                 * The update is merged where the layers of the other sources live, so it can
+                 * The update is merged where the other sources were merged into, so it can
                  * bury what they added - and bring back what they took out. They go on top
                  * again, from what was fetched last time, without asking them again.
                  */

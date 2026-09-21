@@ -93,7 +93,7 @@
     <string name="db_build_done_text_plain">Aus %d Quellen gebaut</string>
     <string name="db_build_failed">Die Datenbank wurde nicht gebaut</string>
     <string name="db_build_failed_text">Unterwegs ist etwas schiefgegangen. Was, steht bei den Quellen, jeweils in ihrer Zeile.</string>
-    <string name="db_build_no_base_text">Die Quelle, welche die Datenbank selbst trägt, war nicht abrufbar.</string>
+    <string name="db_build_no_base_text">Die erste Quelle war nicht abrufbar, und die folgenden haben nichts, worauf sie aufbauen können.</string>
     <string name="db_update_done">Die Datenbank wurde aktualisiert</string>
     <string name="db_update_nothing_new">Die Datenbank ist aktuell</string>
     <string name="db_build_not_readable">Was angekommen ist, lässt sich nicht als Datenbank lesen. Prüfen Sie die Adresse der Quelle, welche sie trägt.</string>
@@ -127,6 +127,7 @@
     <string name="source_result_no_address">keine Adresse</string>
     <string name="source_result_failed">nicht abrufbar</string>
     <string name="source_result_not_a_database">keine Datenbankdatei</string>
+    <string name="source_result_files">%d Dateien</string>
     <string name="notification_background_operation">Vorgang läuft im Hintergrund …</string>
     <string name="db_version">Datenbankversion: %s</string>
     <string name="db_version_not_available">k. A.</string>
@@ -346,16 +347,12 @@
     <string name="source_last_update">zuletzt: %s</string>
     <string name="source_last_check">zuletzt geprüft: %s</string>
     <string name="source_version">Version %d</string>
-    <string name="source_carries">Was die Quelle liefert</string>
-    <string name="source_carries_base">Die Datenbank selbst</string>
-    <string name="source_carries_updates">Änderungen daran</string>
     <string name="source_never_fetched">noch nie geholt</string>
     <string name="source_delete">Löschen</string>
     <string name="source_delete_message">Diese Quelle entfernen? Die Nummern, die sie mitgebracht hat, verschwinden mit ihr; selbst Eingetragenes bleibt unberührt.</string>
     <string name="source_reorder">Verschieben</string>
     <string name="sources_order_hint">In dieser Reihenfolge wird die Datenbank gebaut: Die erste eingeschaltete Quelle bringt die Datenbank selbst, jede darunter legt ihre Nummern darüber und kann auch Nummern wieder herausnehmen. Zum Verschieben am Griff ziehen.</string>
-    <string name="source_role_base">die Datenbank</string>
-    <string name="source_role_layer">Ebene %d</string>
+    <string name="source_position">%d. gelesen</string>
     <string name="source_test">Verbindung testen</string>
     <string name="source_test_running">Wird getestet\u2026</string>
     <string name="source_test_result">Test: %s</string>

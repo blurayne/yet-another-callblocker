@@ -58,7 +58,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
     private NumberSource source;
 
     private TextInputLayout nameTextField, urlTextField, usernameTextField, secretTextField;
-    private Spinner typeSpinner, roleSpinner, authSpinner, updatesSpinner;
+    private Spinner typeSpinner, authSpinner, updatesSpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,13 +73,11 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         usernameTextField = findViewById(R.id.usernameTextField);
         secretTextField = findViewById(R.id.secretTextField);
         typeSpinner = findViewById(R.id.typeSpinner);
-        roleSpinner = findViewById(R.id.roleSpinner);
         authSpinner = findViewById(R.id.authSpinner);
         updatesSpinner = findViewById(R.id.updatesSpinner);
 
         setUpSpinner(typeSpinner, NumberSource.Type.values(),
                 type -> getString(NumberSourcesActivity.getTypeName(type)));
-        setUpSpinner(roleSpinner, NumberSource.Role.values(), this::getRoleName);
         setUpSpinner(authSpinner, NumberSource.Auth.values(), this::getAuthName);
         setUpSpinner(updatesSpinner, NumberSource.Updates.values(),
                 updates -> getString(NumberSourcesActivity.getUpdatesName(updates)));
@@ -110,16 +108,6 @@ public class EditNumberSourceActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) fill();
 
-        typeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                updateRoleFields();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
         authSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -131,7 +119,6 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         });
 
         updateAuthFields();
-        updateRoleFields();
         updateStatus();
     }
 
@@ -221,7 +208,6 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         target.setAuth(selected(authSpinner, NumberSource.Auth.values()));
         target.setUsername(getString(usernameTextField));
         target.setUpdates(selected(updatesSpinner, NumberSource.Updates.values()));
-        target.setRole(selected(roleSpinner, NumberSource.Role.values()));
 
         // whether a source is used is decided in the list, where all of them are side by side
 
@@ -279,23 +265,8 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         }
 
         select(typeSpinner, NumberSource.Type.values(), source.getType());
-        select(roleSpinner, NumberSource.Role.values(), source.getRole());
         select(authSpinner, NumberSource.Auth.values(), source.getAuth());
         select(updatesSpinner, NumberSource.Updates.values(), source.getUpdates());
-    }
-
-    /** Whether a source carries the database or changes to it is only a database's question. */
-    private void updateRoleFields() {
-        boolean database = selected(typeSpinner, NumberSource.Type.values())
-                == NumberSource.Type.DATABASE;
-
-        findViewById(R.id.roleLabel).setVisibility(database ? View.VISIBLE : View.GONE);
-        roleSpinner.setVisibility(database ? View.VISIBLE : View.GONE);
-    }
-
-    private String getRoleName(NumberSource.Role role) {
-        return getString(role == NumberSource.Role.UPDATES
-                ? R.string.source_carries_updates : R.string.source_carries_base);
     }
 
     /** Only the fields the chosen way of logging in needs are shown. */

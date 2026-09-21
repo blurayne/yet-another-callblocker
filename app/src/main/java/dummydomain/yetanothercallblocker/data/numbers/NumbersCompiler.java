@@ -94,6 +94,35 @@ public class NumbersCompiler {
 
     }
 
+    /**
+     * One source, and where what it brought is lying.
+     *
+     * <p>A build is a list of these, read in the order the user put their sources in. The
+     * first one fills an empty table and every one after it changes what is already there -
+     * that is all "first" means. No source is the database and the others additions to it.
+     */
+    public static class Input {
+
+        public final NumberSource source;
+
+        /** What it is called in the log. */
+        public final String tag;
+
+        /** Where its files are, or null when it isn't files at all. */
+        public final File dir;
+
+        /** What the library has fetched since, for the source whose files it keeps. */
+        public final File updatesDir;
+
+        public Input(NumberSource source, String tag, File dir, File updatesDir) {
+            this.source = source;
+            this.tag = tag;
+            this.dir = dir;
+            this.updatesDir = updatesDir;
+        }
+
+    }
+
     /** Told what each source did, as it finishes. */
     public interface SourceListener {
         void onSourceFinished(NumberSource source, Counts counts);
@@ -232,26 +261,22 @@ public class NumbersCompiler {
     /**
      * Empties the table and fills it again.
      *
-     * @param sources the sources that are switched on, in the order they are asked
-     * @param baseDir where the downloaded database lies
-     * @param secondaryDir where the library keeps the updates it fetched itself
-     * @param layersDir where the layers of the other sources were kept
+     * @param inputs the sources that are switched on, in the order they are asked
      */
-    public Result compile(List<NumberSource> sources, File baseDir, File secondaryDir,
-                          File layersDir, ProgressListener listener) {
-        return compile(sources, baseDir, secondaryDir, layersDir, listener, null, null, null, null);
+    public Result compile(List<Input> inputs, ProgressListener listener) {
+        return compile(inputs, listener, null, null, null);
     }
 
     /**
+     * Empties the table and fills it again, source by source, in the order they are given.
+     *
      * @param sourceListener told what each source did as it finishes, may be null
      * @param log written to as the work happens, may be null
-     * @param tags what each source is called in the log, in the same order as {@code sources}
+     * @param extra where a source that isn't files hands its numbers over, may be null
      */
-    public Result compile(List<NumberSource> sources, File baseDir, File secondaryDir,
-                          File layersDir, ProgressListener listener,
-                          SourceListener sourceListener, BuildLog log, List<String> tags,
-                          ExtraSource extra) {
-        LOG.info("compile() started with {} sources", sources.size());
+    public Result compile(List<Input> inputs, ProgressListener listener,
+                          SourceListener sourceListener, BuildLog log, ExtraSource extra) {
+        LOG.info("compile() started with {} sources", inputs.size());
 
         long startTime = System.currentTimeMillis();
 
@@ -263,11 +288,27 @@ public class NumbersCompiler {
             // the indexes come after the rows; keeping them up to date while writing is work
             helper.recreate(db, false);
 
-            List<String> baseFiles = listNames(baseDir, SLICE_PREFIX, SLICE_POSTFIX);
-            List<String> secondaryFiles = listNames(secondaryDir, "", SECONDARY_POSTFIX);
+            /*
+             * What each of them holds, counted first so that the progress has something to
+             * count towards. Listing a directory of a few hundred thousand files is a second
+             * or two; the reading afterwards is minutes.
+             */
+            List<List<String>> files = new ArrayList<>(inputs.size());
 
-            int total = baseFiles.size() + secondaryFiles.size()
-                    + Math.max(0, sources.size() - 1);
+            int total = 0;
+
+            for (Input input : inputs) {
+                List<String> names = input.dir != null ? listSlices(input.dir) : null;
+
+                if (names != null && input.updatesDir != null) {
+                    names = new ArrayList<>(names);
+                    names.addAll(listNames(input.updatesDir, "", SECONDARY_POSTFIX));
+                }
+
+                files.add(names);
+
+                total += names != null ? Math.max(1, names.size()) : 1;
+            }
 
             int written = 0;
 
@@ -279,36 +320,32 @@ public class NumbersCompiler {
 
                 long countBefore = 0;
 
-                for (int i = 0; i < sources.size(); i++) {
-                    NumberSource source = sources.get(i);
-
-                    String tag = tags != null && i < tags.size() ? tags.get(i) : null;
+                for (int i = 0; i < inputs.size(); i++) {
+                    Input input = inputs.get(i);
+                    NumberSource source = input.source;
 
                     int sourceId = writer.addSource(source.getId(), source.getName(),
                             source.getType().ordinal(), i);
 
-                    run.startSource(sourceId, tag, log);
+                    run.startSource(sourceId, input.tag, log);
 
-                    if (i == 0) {
-                        /*
-                         * The database itself, read on as many threads as the phone has to
-                         * spare - a number is in exactly one of those files, so the order
-                         * they are read in changes nothing - and then, in order, what the
-                         * library has fetched since, which changes what is already there.
-                         */
-                        run.readBase(baseDir, baseFiles, sourceId);
-                        run.readAll(secondaryDir, secondaryFiles, sourceId, false);
+                    /*
+                     * The first source writes into an empty table and has nothing to merge
+                     * with, so it goes in with one statement per row and no read at all.
+                     * Every source after it changes what is there, which means reading the
+                     * row first. That is the only difference being first makes.
+                     */
+                    boolean asLayer = i != 0;
+
+                    List<String> names = files.get(i);
+
+                    if (names != null && !names.isEmpty()) {
+                        run.readFiles(input, names, sourceId, asLayer);
                     } else if (extra != null && extra.canRead(source)) {
                         // a source the app holds itself, handed over the same way
                         run.readFrom(source, sourceId, extra);
                     } else {
-                        File file = new File(layersDir, source.getId() + SLICE_POSTFIX);
-
-                        if (file.exists()) {
-                            run.read(file, sourceId, true);
-                        } else {
-                            run.step();
-                        }
+                        run.step();
                     }
 
                     /*
@@ -328,13 +365,13 @@ public class NumbersCompiler {
                             run.sourceSkipped());
 
                     if (log != null) {
-                        log.line(tag, "Read records:", counts.read);
-                        log.line(tag, "Inserted records:", counts.inserted);
-                        log.line(tag, "Updated records:", counts.updated);
-                        log.line(tag, "Deleted records:", counts.deleted);
+                        log.line(input.tag, "Read records:", counts.read);
+                        log.line(input.tag, "Inserted records:", counts.inserted);
+                        log.line(input.tag, "Updated records:", counts.updated);
+                        log.line(input.tag, "Deleted records:", counts.deleted);
 
                         if (counts.skipped > 0) {
-                            log.line(tag, "Filtered out:", counts.skipped);
+                            log.line(input.tag, "Filtered out:", counts.skipped);
                         }
                     }
 
@@ -478,13 +515,49 @@ public class NumbersCompiler {
         }
 
         /**
-         * Reads the files that carry the database, several at a time where that is worth it.
+         * Reads one source's files into the table.
          *
-         * <p>The writing still happens here, on the one thread that owns the database: what
-         * is shared out is the opening, reading and filtering of a few hundred thousand
-         * files, which is what a build now spends its time on.
+         * <p>The first source is read on several threads where there are enough files to pay
+         * for it: it writes into an empty table, so nothing it writes depends on anything
+         * else it writes, and the opening and parsing of a few hundred thousand files is what
+         * a build spends its time on. The sources after it change what is already there, so
+         * they are read one file at a time, in their order.
          */
-        void readBase(File dir, List<String> names, int sourceId) {
+        void readFiles(Input input, List<String> names, int sourceId, boolean asLayer) {
+            if (!asLayer && SliceBatchReader.workerCount(names.size()) > 1) {
+                readInParallel(input, names, sourceId);
+                return;
+            }
+
+            for (String name : names) {
+                File file = new File(name.endsWith(SECONDARY_POSTFIX) && input.updatesDir != null
+                        ? input.updatesDir : input.dir, name);
+
+                read(file, sourceId, asLayer);
+            }
+        }
+
+        private void readInParallel(Input input, List<String> names, int sourceId) {
+            List<String> slices = new ArrayList<>(names.size());
+            List<String> updates = new ArrayList<>();
+
+            for (String name : names) {
+                if (name.endsWith(SECONDARY_POSTFIX) && input.updatesDir != null) {
+                    updates.add(name);
+                } else {
+                    slices.add(name);
+                }
+            }
+
+            readBase(input.dir, slices, sourceId);
+
+            // what the library has fetched since changes what those files said, so it follows
+            for (String name : updates) {
+                read(new File(input.updatesDir, name), sourceId, false);
+            }
+        }
+
+        private void readBase(File dir, List<String> names, int sourceId) {
             int workers = SliceBatchReader.workerCount(names.size());
 
             if (workers <= 1) {
@@ -926,6 +999,32 @@ public class NumbersCompiler {
      * each of them is tens of megabytes of paths held at once - on a phone that is the
      * difference between a build and no app. The file is made when it is read.
      */
+    /**
+     * The slice files in a source's directory.
+     *
+     * <p>The ones named the way the community database names them, when there are any - the
+     * directory the database is unpacked into holds other things as well - and otherwise
+     * whatever is there, because a source that hands over its own archive names its files
+     * whatever it likes.
+     */
+    private static List<String> listSlices(File dir) {
+        List<String> named = listNames(dir, SLICE_PREFIX, SLICE_POSTFIX);
+        if (!named.isEmpty()) return named;
+
+        String[] names = dir != null ? dir.list() : null;
+        if (names == null) return new ArrayList<>();
+
+        List<String> list = new ArrayList<>(names.length);
+
+        for (String name : names) {
+            if (!new File(dir, name).isDirectory()) list.add(name);
+        }
+
+        Collections.sort(list);
+
+        return list;
+    }
+
     private static List<String> listNames(File dir, String prefix, String postfix) {
         String[] names = dir != null ? dir.list() : null;
 

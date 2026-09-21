@@ -737,15 +737,25 @@ public class DbCompileService {
 
         noteSourceMeta(compiler, sources);
 
-        compiler.makeShadowCopy();
+        boolean filtering = settings.isDbFilteringEnabled();
 
-        if (settings.isDbFilteringEnabled()) {
+        /*
+         * The copy is what a filter can be taken back to, so it is only made when there is
+         * going to be something to take back and the user wants to be able to: it is as big
+         * as the table itself, and a phone that has just written a few hundred megabytes has
+         * no business writing them a second time for nothing. Without filtering the table is
+         * the unfiltered one, and switching filtering on later copies it then.
+         */
+        if (filtering && settings.getDbFilteringKeepMaster()) {
+            compiler.makeShadowCopy();
+        } else {
+            compiler.dropShadowCopy(); // an older one would be a copy of an older database
+        }
+
+        if (filtering) {
             compiler.filter(DbFilteringUtils.getPrefixesToKeep(settings),
                     settings.getDbFilteringKeepShortNumbers()
                             ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0);
-
-            // the copy is what the filtering can be taken back to; not everyone wants to pay
-            if (!settings.getDbFilteringKeepMaster()) compiler.dropShadowCopy();
         }
 
         return null;

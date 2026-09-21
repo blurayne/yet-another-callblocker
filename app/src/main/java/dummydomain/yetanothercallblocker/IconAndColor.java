@@ -41,6 +41,9 @@ class IconAndColor {
     }
 
     static IconAndColor forReviewRating(CommunityReview.Rating rating) {
+        // the service is free to invent a rating the app has no name for; then it has none
+        if (rating == null) return of(R.drawable.ic_thumbs_up_down_24dp, R.color.notFound);
+
         switch (rating) {
             case NEUTRAL:
                 return of(R.drawable.ic_thumbs_up_down_24dp, R.color.rateNeutral);

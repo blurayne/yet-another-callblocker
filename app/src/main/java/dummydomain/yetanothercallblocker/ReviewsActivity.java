@@ -162,6 +162,8 @@ public class ReviewsActivity extends AppCompatActivity {
                 R.id.summary_text_positive
         };
         for (CommunityReview review : reviews) {
+            if (review == null || review.getRating() == null) continue; // counted as nothing
+
             switch (review.getRating()) {
                 case NEGATIVE:
                     ratings[0]++;

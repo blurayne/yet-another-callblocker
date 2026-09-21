@@ -107,6 +107,44 @@ public class PhoneBlockList {
         return index >= 0 ? Rating.values()[ratings[index]] : null;
     }
 
+    /**
+     * The whole list as it is right now, for reading it through.
+     *
+     * <p>A copy, because reading it through takes a while - it goes into the number database
+     * when that is built - and holding the list against lookups for that long would mean an
+     * incoming call waiting for a build.
+     */
+    public synchronized Snapshot snapshot() {
+        checkLoaded();
+
+        return new Snapshot(numbers.clone(), ratings.clone());
+    }
+
+    /** The numbers and what the community says about each of them, in the same order. */
+    public static final class Snapshot {
+
+        private final long[] numbers;
+        private final byte[] ratings;
+
+        Snapshot(long[] numbers, byte[] ratings) {
+            this.numbers = numbers;
+            this.ratings = ratings;
+        }
+
+        public int size() {
+            return numbers.length;
+        }
+
+        public long getNumber(int index) {
+            return numbers[index];
+        }
+
+        public Rating getRating(int index) {
+            return Rating.values()[ratings[index]];
+        }
+
+    }
+
     /** The version of the list, which the next update continues from. */
     public synchronized int getListVersion() {
         checkLoaded();

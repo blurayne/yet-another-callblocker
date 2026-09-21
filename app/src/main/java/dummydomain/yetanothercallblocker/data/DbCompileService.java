@@ -29,6 +29,7 @@ import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceNames;
 import dummydomain.yetanothercallblocker.data.source.SourceHttp;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
+import dummydomain.yetanothercallblocker.data.numbers.NumberFlags;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersFilter;
 import dummydomain.yetanothercallblocker.data.numbers.SliceReader;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
@@ -185,12 +186,15 @@ public class DbCompileService {
          * none is, the first of them - which is what every list looked like before there was
          * a mark to set.
          */
-        NumberSource base = sources.get(0);
-        for (NumberSource source : sources) {
-            if (source.getRole() == NumberSource.Role.BASE) {
-                base = source;
-                break;
-            }
+        NumberSource base = getBase(sources);
+
+        if (base == null) {
+            LOG.warn("compile() no source carries the database");
+
+            buildLog.line(BuildLog.MAIN, context.getString(R.string.db_build_no_base_text));
+
+            return new Result(Status.NO_BASE, 0, sources.size(),
+                    context.getString(R.string.db_build_no_base_text));
         }
 
         if (listener != null) listener.onProgress(1, total);
@@ -305,11 +309,34 @@ public class DbCompileService {
         return sources.size() <= 1 || applyLayers(sources);
     }
 
-    /** The sources the database is built from, in the order they are asked. */
+    /**
+     * The sources the database is built from, in the order they are asked.
+     *
+     * <p>Not only the ones that hand over a database file: a PhoneBlock account is a source
+     * like any other - it is in the same list, switched on the same way - and what it knows
+     * belongs in the same table. CardDAV is in that list too and has nothing to fetch it
+     * with yet, so it is left out rather than counted as a source that brought nothing.
+     */
     private List<NumberSource> getSources() {
         return sourceService != null
-                ? sourceService.getEnabledSources(NumberSource.Type.DATABASE)
+                ? sourceService.getEnabledSources(
+                        NumberSource.Type.DATABASE, NumberSource.Type.PHONE_BLOCK)
                 : new ArrayList<>();
+    }
+
+    /** The one that carries the database itself, or null when none of them does. */
+    private NumberSource getBase(List<NumberSource> sources) {
+        NumberSource first = null;
+
+        for (NumberSource source : sources) {
+            if (source.getType() != NumberSource.Type.DATABASE) continue;
+
+            if (source.getRole() == NumberSource.Role.BASE) return source;
+
+            if (first == null) first = source;
+        }
+
+        return first;
     }
 
     /**
@@ -573,6 +600,9 @@ public class DbCompileService {
     private boolean downloadLayer(NumberSource source) {
         LOG.debug("downloadLayer() {}", source.getUrl());
 
+        // a PhoneBlock account keeps its list itself; asking it is what fetching means here
+        if (source.getType() == NumberSource.Type.PHONE_BLOCK) return updatePhoneBlock(source);
+
         if (TextUtils.isEmpty(source.getUrl())) {
             note(source, context.getString(R.string.source_result_no_address));
             return false;
@@ -615,6 +645,30 @@ public class DbCompileService {
                 LOG.warn("downloadLayer() couldn't clean up {}", tempFile);
             }
         }
+    }
+
+    /**
+     * Brings the PhoneBlock list up to date, which is what fetching that source means.
+     *
+     * <p>The list is kept where the account screen keeps it - the same one an incoming call
+     * is held against - and the build reads it from there rather than downloading a second
+     * copy of it.
+     */
+    private boolean updatePhoneBlock(NumberSource source) {
+        source.setLastCheck(System.currentTimeMillis());
+
+        PhoneBlockService.Result result = new PhoneBlockService(settings,
+                YacbHolder.getPhoneBlockList(), YacbHolder.getPhoneBlockPersonalLists())
+                .update(false);
+
+        boolean ok = result.status != PhoneBlockService.Status.FAILED
+                && result.status != PhoneBlockService.Status.NOT_CONFIGURED;
+
+        note(source, ok
+                ? context.getString(R.string.source_result_numbers, result.size)
+                : context.getString(R.string.source_result_failed));
+
+        return ok;
     }
 
     /** Fetches the source into a file, unpacked on the way if it arrives packed. */
@@ -816,7 +870,7 @@ public class DbCompileService {
                 new File(dataDir, SiaConstants.SIA_SECONDARY_PATH_PREFIX),
                 getLayersDir(),
                 listener != null ? listener::onProgress : null,
-                this::noteSourceCounts, buildLog, tags);
+                this::noteSourceCounts, buildLog, tags, new PhoneBlockSource());
 
         /*
          * The library keeps what it read in memory - the slices it was asked about, and the
@@ -862,6 +916,39 @@ public class DbCompileService {
                 (int) counts.read));
 
         sourceService.save(source);
+    }
+
+    /**
+     * The PhoneBlock list, handed to the table the way a slice file would be.
+     *
+     * <p>Everything on it is a number the community warns about - the ones it has cleared are
+     * not kept - so each of them goes in as one negative rating, which is what a rating of
+     * "spam" amounts to in a table that counts ratings.
+     */
+    private static class PhoneBlockSource implements NumbersCompiler.ExtraSource {
+
+        @Override
+        public boolean canRead(NumberSource source) {
+            return source.getType() == NumberSource.Type.PHONE_BLOCK;
+        }
+
+        @Override
+        public void read(NumberSource source, NumbersCompiler.Entries entries) {
+            PhoneBlockList list = YacbHolder.getPhoneBlockList();
+            if (list == null) return;
+
+            PhoneBlockList.Snapshot snapshot = list.snapshot();
+
+            for (int i = 0; i < snapshot.size(); i++) {
+                /*
+                 * The rating and nothing else: the list says a number is worth warning about,
+                 * not what it is used for or how many people said so. A category or a count
+                 * from the database underneath is worth more than a zero from here.
+                 */
+                entries.number(snapshot.getNumber(i), NumberFlags.RATING_NEGATIVE, null, null);
+            }
+        }
+
     }
 
     /** What a source is called in the log and in what it says about itself. */

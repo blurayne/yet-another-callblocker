@@ -99,6 +99,45 @@ public class NumbersCompiler {
         void onSourceFinished(NumberSource source, Counts counts);
     }
 
+    /**
+     * A source whose numbers don't come out of a slice file.
+     *
+     * <p>Most of them do: a source hands over a file in the format the community database is
+     * written in, and it is read. A list held somewhere else in the app - the one fetched
+     * from a PhoneBlock account, say - is just as much a source, and this is how it hands its
+     * numbers over to the same machinery: the same filter, the same counting, the same table.
+     */
+    public interface ExtraSource {
+
+        /** Whether this source's numbers come from here rather than from a file. */
+        boolean canRead(NumberSource source);
+
+        /** Hands every number over, one call each. */
+        void read(NumberSource source, Entries entries);
+
+    }
+
+    /**
+     * What a source that isn't a file hands over.
+     *
+     * <p>A source says what it knows and nothing more: a list of numbers to warn about knows
+     * that they are worth warning about, and null for the rest means the row keeps whatever
+     * an earlier source put there rather than having it overwritten with nothing.
+     */
+    public interface Entries {
+
+        /**
+         * @param rating what this source makes of the number, or null when it doesn't judge
+         * @param category what it is used for, or null when this source doesn't say
+         * @param score how strongly, or null when this source has no measure of it
+         */
+        void number(long number, Integer rating, Integer category, Integer score);
+
+        /** A number this source takes out of what is underneath it. */
+        void deleted(long number);
+
+    }
+
     /** One source, and how much of the table came from it. */
     public static class SourceCount {
 
@@ -200,7 +239,7 @@ public class NumbersCompiler {
      */
     public Result compile(List<NumberSource> sources, File baseDir, File secondaryDir,
                           File layersDir, ProgressListener listener) {
-        return compile(sources, baseDir, secondaryDir, layersDir, listener, null, null, null);
+        return compile(sources, baseDir, secondaryDir, layersDir, listener, null, null, null, null);
     }
 
     /**
@@ -210,7 +249,8 @@ public class NumbersCompiler {
      */
     public Result compile(List<NumberSource> sources, File baseDir, File secondaryDir,
                           File layersDir, ProgressListener listener,
-                          SourceListener sourceListener, BuildLog log, List<String> tags) {
+                          SourceListener sourceListener, BuildLog log, List<String> tags,
+                          ExtraSource extra) {
         LOG.info("compile() started with {} sources", sources.size());
 
         long startTime = System.currentTimeMillis();
@@ -258,6 +298,9 @@ public class NumbersCompiler {
                          */
                         run.readBase(baseDir, baseFiles, sourceId);
                         run.readAll(secondaryDir, secondaryFiles, sourceId, false);
+                    } else if (extra != null && extra.canRead(source)) {
+                        // a source the app holds itself, handed over the same way
+                        run.readFrom(source, sourceId, extra);
                     } else {
                         File file = new File(layersDir, source.getId() + SLICE_POSTFIX);
 
@@ -492,6 +535,45 @@ public class NumbersCompiler {
             for (int i = 0; i < batch.files; i++) {
                 step();
             }
+        }
+
+        /** Reads a source the app holds itself, as a layer over what is already there. */
+        void readFrom(NumberSource source, int sourceId, ExtraSource extra) {
+            long[] count = {0, 0, 0};
+
+            extra.read(source, new Entries() {
+                @Override
+                public void number(long number, Integer rating, Integer category,
+                                   Integer score) {
+                    count[0]++;
+
+                    if (filter != null && !filter.keep(number)) {
+                        count[2]++;
+                        return;
+                    }
+
+                    writer.merge(number, rating, category, score, false, sourceId);
+                }
+
+                @Override
+                public void deleted(long number) {
+                    count[1]++;
+
+                    writer.delete(number);
+                }
+            });
+
+            sourceNumbers += count[0];
+            sourceDeletions += count[1];
+            sourceSkipped += count[2];
+
+            pending += count[0] + count[1];
+            entries += count[0] + count[1];
+            files++;
+
+            commitIfDue();
+
+            step();
         }
 
         void readAll(File dir, List<String> names, int sourceId, boolean asLayer) {

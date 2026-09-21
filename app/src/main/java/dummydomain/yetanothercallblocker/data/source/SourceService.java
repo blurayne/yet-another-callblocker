@@ -40,6 +40,29 @@ public class SourceService {
     }
 
     /** The sources that are asked for numbers, in order. */
+    /**
+     * Every source that is switched on and usable, of any of these kinds, in their own order.
+     *
+     * <p>Order matters: the database is built by reading them one after another, each one
+     * changing what the ones before it left.
+     */
+    public List<NumberSource> getEnabledSources(NumberSource.Type... types) {
+        List<NumberSource> sources = new ArrayList<>();
+
+        for (NumberSource source : getSources()) {
+            if (!source.isEnabled() || !source.isValid()) continue;
+
+            for (NumberSource.Type type : types) {
+                if (source.getType() == type) {
+                    sources.add(source);
+                    break;
+                }
+            }
+        }
+
+        return sources;
+    }
+
     public List<NumberSource> getEnabledSources(NumberSource.Type type) {
         List<NumberSource> sources = new ArrayList<>();
 

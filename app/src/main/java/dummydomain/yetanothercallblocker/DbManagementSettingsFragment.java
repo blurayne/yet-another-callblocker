@@ -412,6 +412,10 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     private void deleteDb() {
         new NumbersCompiler(requireContext()).clear();
 
+        // the table it was looking numbers up in is the one that was just deleted
+        if (YacbHolder.getNumbersLookup() != null) YacbHolder.getNumbersLookup().reload();
+        if (YacbHolder.getNumberInfoCache() != null) YacbHolder.getNumberInfoCache().clear();
+
         YacbHolder.getCommunityDatabase().resetSecondaryDatabase();
         YacbHolder.getDbManager().removeMainDb();
 

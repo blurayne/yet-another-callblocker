@@ -722,6 +722,75 @@ public class NumbersCompiler {
     }
 
     /**
+     * Writes the library's own update into the table that is already in use.
+     *
+     * <p>Between builds the library fetches what has changed since the database it holds was
+     * made, and those files are read at the next build - which may be days away. Until then
+     * the table would answer out of what the update supersedes, and it is the table that is
+     * asked. So the update goes in now: a handful of files merged over what is there, not a
+     * database read again.
+     *
+     * <p>As a layer, and written down as the source whose files it belongs to: the library
+     * fetches these for the source it keeps, so they change what that source said and take
+     * the same place in the order it has.
+     *
+     * @return how many entries went in, or -1 when there was nothing to do
+     */
+    public long mergeUpdates(File dir, String sourceUuid) {
+        List<String> names = listNames(dir, "", SECONDARY_POSTFIX);
+        if (names.isEmpty()) return -1;
+
+        LOG.info("mergeUpdates() {} files from {}", names.size(), dir);
+
+        NumbersDb helper = openDb();
+
+        try {
+            SQLiteDatabase db = helper.getWritableDatabase();
+
+            long entries = 0;
+
+            db.beginTransaction();
+            try (NumbersWriter writer = new NumbersWriter(db)) {
+                int sourceId = writer.findSource(sourceUuid);
+
+                /*
+                 * No row for it means no table built from it, and an update on its own is
+                 * not a database - it says what changed, not what there is.
+                 */
+                if (sourceId < 0) {
+                    LOG.info("mergeUpdates() the table holds nothing from {}", sourceUuid);
+                    return -1;
+                }
+
+                for (String name : names) {
+                    long[] read = read(new File(dir, name), writer, sourceId, true);
+
+                    entries += read[0] + read[1];
+                }
+
+                db.setTransactionSuccessful();
+            } finally {
+                if (db.inTransaction()) db.endTransaction();
+            }
+
+            // the size is written down rather than counted, so it has to be written again
+            NumbersDb.setMeta(db, NumbersDb.META_COUNT,
+                    String.valueOf(NumbersDb.getCount(db)));
+
+            countSources(db);
+
+            LOG.info("mergeUpdates() {} entries went in", entries);
+
+            return entries;
+        } catch (Exception e) {
+            LOG.error("mergeUpdates() failed", e);
+            return -1;
+        } finally {
+            helper.close();
+        }
+    }
+
+    /**
      * Reads one slice file into the table.
      *
      * @return {@code {numbers, numbers it takes out again, numbers the filter kept out}}

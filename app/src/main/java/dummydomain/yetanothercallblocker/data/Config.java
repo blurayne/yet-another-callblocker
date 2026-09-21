@@ -10,6 +10,7 @@ import dummydomain.yetanothercallblocker.data.db.BlacklistDao;
 import dummydomain.yetanothercallblocker.data.db.YacbDaoSessionFactory;
 import dummydomain.yetanothercallblocker.sia.Settings;
 import dummydomain.yetanothercallblocker.sia.SettingsImpl;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersLookup;
 import dummydomain.yetanothercallblocker.sia.Storage;
 import dummydomain.yetanothercallblocker.sia.model.CommunityReviewsLoader;
 import dummydomain.yetanothercallblocker.sia.model.SiaMetadata;
@@ -183,9 +184,14 @@ public class Config {
                 = new PhoneBlockPersonalLists(storage::getDataDirPath);
         YacbHolder.setPhoneBlockPersonalLists(phoneBlockPersonalLists);
 
+        // the table every source is built into, which is where a number is looked up
+        NumbersLookup numbersLookup = new NumbersLookup(context);
+        YacbHolder.setNumbersLookup(numbersLookup);
+
         NumberInfoService numberInfoService = new NumberInfoService(
                 settings, NumberUtils::isHiddenNumber, NumberUtils::normalizeNumber,
                 communityDatabase, featuredDatabase, contactsProvider, blacklistService);
+        numberInfoService.setNumbersLookup(numbersLookup);
         numberInfoService.setPhoneBlockList(phoneBlockList);
         numberInfoService.setPhoneBlockPersonalLists(phoneBlockPersonalLists);
         numberInfoService.setWhitelist(new Whitelist(settings));

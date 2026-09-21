@@ -710,7 +710,7 @@ public class Settings extends GenericSettings {
     }
 
     /** What is kept when the database is built, as a pattern; everything else is dropped. */
-    public static final String DEFAULT_DB_FILTERING_PATTERN = "+{31,43,41,49}*";
+    public static final String DEFAULT_DB_FILTERING_PATTERN = "+{42,49,41}*";
 
     /**
      * Which numbers are worth keeping, written as a pattern.

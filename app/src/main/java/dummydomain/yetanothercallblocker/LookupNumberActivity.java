@@ -21,6 +21,7 @@ import androidx.core.util.Pair;
 import dummydomain.yetanothercallblocker.data.SiaNumberCategoryUtils;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersLookup;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseItem;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabaseItem;
 
@@ -202,8 +203,16 @@ public class LookupNumberActivity extends AppCompatActivity {
             @Override
             protected Pair<CommunityDatabaseItem, FeaturedDatabaseItem> doInBackground(String... params) {
                 String purePhoneNumber = params[0];
-                CommunityDatabaseItem item = YacbHolder.getCommunityDatabase()
-                        .getDbItemByNumber(purePhoneNumber);
+
+                /*
+                 * The same place a call is answered out of: the table every source was built
+                 * into when there is one, the library's own files until there is.
+                 */
+                NumbersLookup lookup = YacbHolder.getNumbersLookup();
+
+                CommunityDatabaseItem item = lookup != null && lookup.isReady()
+                        ? lookup.get(purePhoneNumber)
+                        : YacbHolder.getCommunityDatabase().getDbItemByNumber(purePhoneNumber);
 
                 FeaturedDatabaseItem featuredItem = YacbHolder.getFeaturedDatabase()
                         .getDbItemByNumber(purePhoneNumber);

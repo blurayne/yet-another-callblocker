@@ -32,11 +32,11 @@ public class DbUpdater {
                 updated = true;
 
                 /*
-                 * The update is merged where the other sources were merged into, so it can
-                 * bury what they added - and bring back what they took out. They go on top
-                 * again, from what was fetched last time, without asking them again.
+                 * A number is looked up in the table the sources were built into, so an
+                 * update that only reaches the library's own files would not be seen until
+                 * the next build. It goes into the table now, as the source it belongs to.
                  */
-                if (app != null) new DbCompileService(app, settings).reapplyLayers();
+                if (app != null) new DbCompileService(app, settings).mergeSecondaryUpdate();
             } // TODO: handle other results
             settings.setLastUpdateCheckTime(System.currentTimeMillis());
         } finally {

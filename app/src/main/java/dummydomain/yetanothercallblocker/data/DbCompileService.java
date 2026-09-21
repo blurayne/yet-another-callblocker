@@ -32,10 +32,7 @@ import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.numbers.NumberFlags;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersFilter;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
-import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
-import dummydomain.yetanothercallblocker.sia.model.database.NumberFilter;
 import dummydomain.yetanothercallblocker.sia.utils.FileUtils;
-import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
 import dummydomain.yetanothercallblocker.utils.DeferredInit;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -248,16 +245,13 @@ public class DbCompileService {
         reloadDatabases();
 
         /*
-         * A compile is the whole database, not an addition to the last one: what an earlier
-         * compile put on top is cleared out, so that a source that was removed or switched
-         * off takes its numbers with it. The library's own updates live there too and are
-         * fetched again by the next one.
+         * What the library has fetched for itself since is left where it is and read with
+         * the source it belongs to. It used to be thrown away here, because an earlier
+         * compile merged the other sources into the same place and a build had to start from
+         * what the sources actually say - nothing is merged there any more. The library
+         * clears it itself when it fetches a database the updates no longer fit.
          */
-        YacbHolder.getCommunityDatabase().resetSecondaryDatabase();
-
         dropDirsOfGoneSources(sources);
-
-        applyLayers(sources, primary);
 
         phase(listener, R.string.reading_sources);
 
@@ -282,17 +276,33 @@ public class DbCompileService {
     }
 
     /**
-     * Puts the other sources back on top of the library's database, from what was fetched
-     * last time.
+     * Writes what the library has just fetched for itself into the table as well.
      *
-     * <p>Wanted after the library updates itself: that update is merged into the same place
-     * the other sources were merged into, so without this the numbers one of them added -
-     * and the ones it took out - would quietly go back to what the update says about them.
+     * <p>The library updates itself between builds, and what it fetches is read at the next
+     * build - which may be days away. A number is looked up in the table, so until then the
+     * table would answer out of what that update supersedes. Merging it in now costs a
+     * handful of files rather than a database read again.
+     *
+     * <p>It goes in as the source whose files the library keeps, because that is whose
+     * update it is: it changes what that source said and keeps the place in the order that
+     * source has, so a later source still has the last word.
      */
-    public void reapplyLayers() {
-        List<NumberSource> sources = getSources();
+    public void mergeSecondaryUpdate() {
+        NumberSource primary = getPrimary(getSources());
+        if (primary == null) return;
 
-        if (sources.size() > 1) applyLayers(sources, getPrimary(sources));
+        File dir = new File(YacbHolder.getStorage().getDataDirPath(),
+                SiaConstants.SIA_SECONDARY_PATH_PREFIX);
+
+        long entries = new NumbersCompiler(context).mergeUpdates(dir, primary.getId());
+
+        if (entries < 0) return;
+
+        LOG.info("mergeSecondaryUpdate() {} entries went into the table", entries);
+
+        // what was looked up before came out of the table as it was a moment ago
+        if (YacbHolder.getNumbersLookup() != null) YacbHolder.getNumbersLookup().reload();
+        if (YacbHolder.getNumberInfoCache() != null) YacbHolder.getNumberInfoCache().clear();
     }
 
     /**
@@ -749,64 +759,6 @@ public class DbCompileService {
     }
 
     /**
-     * Puts what the other sources brought into the library's database as well.
-     *
-     * <p>Numbers are looked up in the library's own files, not yet in the table this build
-     * fills, so a source whose numbers are only in the table would be built and then not
-     * asked. The library takes one slice file at a time, so this is what it can be given:
-     * the sources that handed over a single file. A source that handed over a whole
-     * directory of them is in the table and will be looked up there when lookups move.
-     */
-    private void applyLayers(List<NumberSource> sources, NumberSource primary) {
-        CommunityDatabase communityDatabase = YacbHolder.getCommunityDatabase();
-
-        if (!communityDatabase.isOperational()) {
-            LOG.warn("applyLayers() there's no database to put the others on");
-            return;
-        }
-
-        NumberFilter numberFilter = DbFilteringUtils.getNumberFilter(settings);
-
-        boolean applied = false;
-
-        for (NumberSource source : sources) {
-            if (source == primary || source.getType() != NumberSource.Type.DATABASE) continue;
-
-            File[] files = getSourceDir(source).listFiles();
-            if (files == null || files.length != 1 || !files[0].isFile()) continue;
-
-            if (applyLayer(files[0], numberFilter)) applied = true;
-        }
-
-        if (applied) reloadDatabases();
-    }
-
-    /**
-     * Merges one file in.
-     *
-     * <p>The version the library keeps is put back afterwards: it says which update was
-     * fetched last and is what the next one is asked for, and this is not one of those.
-     */
-    private boolean applyLayer(File file, NumberFilter numberFilter) {
-        LOG.debug("applyLayer() {}", file.getName());
-
-        dummydomain.yetanothercallblocker.sia.Settings siaSettings = YacbHolder.getSiaSettings();
-
-        int version = siaSettings.getSecondaryDbVersion();
-
-        try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
-            YacbHolder.getCommunityDatabase().updateSecondary(inputStream, numberFilter);
-
-            return true;
-        } catch (Exception e) {
-            LOG.warn("applyLayer() couldn't apply {}", file, e);
-            return false;
-        } finally {
-            siaSettings.setSecondaryDbVersion(version);
-        }
-    }
-
-    /**
      * Forgets what was fetched from sources that are gone or switched off, and what older
      * versions kept beside the database.
      */
@@ -921,6 +873,14 @@ public class DbCompileService {
 
             return context.getString(R.string.db_build_table_failed);
         }
+
+        /*
+         * What was built is a new file in the place of the old one, so a lookup that had the
+         * old one open is still reading it - and what the app remembers about the numbers it
+         * has already been asked came out of the database this one replaces.
+         */
+        if (YacbHolder.getNumbersLookup() != null) YacbHolder.getNumbersLookup().reload();
+        if (YacbHolder.getNumberInfoCache() != null) YacbHolder.getNumberInfoCache().clear();
 
         return null;
     }

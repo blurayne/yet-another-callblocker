@@ -33,6 +33,7 @@ public class YacbHolder {
     private static dummydomain.yetanothercallblocker.data.provider.ProviderService providerService;
 
     private static NumberInfoService numberInfoService;
+    private static dummydomain.yetanothercallblocker.data.numbers.NumbersLookup numbersLookup;
     private static NumberInfoCache numberInfoCache;
     private static PhoneBlockList phoneBlockList;
     private static PhoneBlockPersonalLists phoneBlockPersonalLists;
@@ -112,6 +113,16 @@ public class YacbHolder {
 
     static void setBlacklistService(BlacklistService blacklistService) {
         YacbHolder.blacklistService = blacklistService;
+    }
+
+    static void setNumbersLookup(
+            dummydomain.yetanothercallblocker.data.numbers.NumbersLookup numbersLookup) {
+        YacbHolder.numbersLookup = numbersLookup;
+    }
+
+    /** Where a number is looked up: the table every source was built into. */
+    public static dummydomain.yetanothercallblocker.data.numbers.NumbersLookup getNumbersLookup() {
+        return numbersLookup;
     }
 
     static void setNumberInfoService(NumberInfoService numberInfoService) {

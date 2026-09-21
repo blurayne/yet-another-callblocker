@@ -11,6 +11,7 @@ import java.util.Set;
 
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.db.BlacklistItem;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersLookup;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseItem;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabase;
@@ -36,6 +37,7 @@ public class NumberInfoService {
     protected final FeaturedDatabase featuredDatabase;
     protected final ContactsProvider contactsProvider;
     protected final BlacklistService blacklistService;
+    protected NumbersLookup numbersLookup;
     protected PhoneBlockList phoneBlockList;
     protected PhoneBlockPersonalLists phoneBlockPersonalLists;
     protected Whitelist whitelist;
@@ -51,6 +53,11 @@ public class NumberInfoService {
         this.featuredDatabase = featuredDatabase;
         this.contactsProvider = contactsProvider;
         this.blacklistService = blacklistService;
+    }
+
+    /** Where the sources were built into, which is what a number is asked of first. */
+    public void setNumbersLookup(NumbersLookup numbersLookup) {
+        this.numbersLookup = numbersLookup;
     }
 
     public void setPhoneBlockList(PhoneBlockList phoneBlockList) {
@@ -126,7 +133,18 @@ public class NumberInfoService {
             }
         }
 
-        if (communityDatabase != null) {
+        /*
+         * The table every source was built into, when there is one: it holds what all of
+         * them said, in the order the user put them in, so it is the whole answer - the
+         * numbers a later source took out included. Asking the library afterwards would put
+         * those back and would miss the sources whose numbers only ever reach the table.
+         *
+         * Until the first build there is no table, and then the library's own files are all
+         * there is to ask.
+         */
+        if (numbersLookup != null && numbersLookup.isReady()) {
+            numberInfo.communityDatabaseItem = numbersLookup.get(normalizedNumber);
+        } else if (communityDatabase != null) {
             numberInfo.communityDatabaseItem = communityDatabase.getDbItemByNumber(normalizedNumber);
         }
         LOG.trace("getNumberInfo() communityItem={}", numberInfo.communityDatabaseItem);

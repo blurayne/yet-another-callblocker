@@ -62,6 +62,22 @@ public class NumbersWriter implements Closeable {
         today = (int) (System.currentTimeMillis() / (24L * 60 * 60 * 1000));
     }
 
+    /**
+     * The row a source already has in the table, or -1 when it has none.
+     *
+     * <p>Wanted when something is written into a table that is already built - the library's
+     * own update, which arrives between builds - and has to be written down as coming from
+     * the source it belongs to rather than as a source of its own.
+     */
+    public int findSource(String uuid) {
+        try (android.database.Cursor cursor = db.query("sources", new String[]{"id"},
+                "uuid = ?", new String[]{uuid}, null, null, null, "1")) {
+            return cursor.moveToFirst() ? cursor.getInt(0) : -1;
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
     /** Puts a source into the table the rows point at, and says which row it is. */
     public int addSource(String uuid, String name, int type, int layer) {
         try (SQLiteStatement statement = db.compileStatement(

@@ -395,6 +395,14 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="save_logcat_on_crash_summary">Save logcat output on crash (in addition to a basic stacktrace)</string>
     <string name="export_logcat">Export logcat</string>
     <string name="export_logcat_summary">Export and share logcat contents with an app of your choosing (for example with an email client). The reports may contain sensitive data (phone numbers, contact names). Only the chosen app will have access to this data</string>
+    <string name="view_logcat">Show the log</string>
+    <string name="view_logcat_summary">What this run of the app has written down so far</string>
+    <string name="logcat_activity">Log</string>
+    <string name="logcat_filter">Filter</string>
+    <string name="logcat_refresh">Read it again</string>
+    <string name="logcat_loading">Reading the log\u2026</string>
+    <string name="logcat_empty">Nothing to show</string>
+    <string name="logcat_failed">The log couldn\'t be read.</string>
     <string name="share_crash_reports">Share crash reports</string>
     <string name="share_crash_reports_summary">What the app wrote down the last few times it went down. The exported log above is this run\'s and holds nothing of a crash that ended the one before it.</string>
     <string name="share_crash_reports_none">There are no crash reports</string>

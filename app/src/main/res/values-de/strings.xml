@@ -515,6 +515,14 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="save_logcat_on_crash_summary">Bei einem Absturz zusätzlich zum Stacktrace die Logcat-Ausgabe speichern</string>
     <string name="export_logcat">Logcat exportieren</string>
     <string name="export_logcat_summary">Die Logcat-Ausgabe exportieren und mit einer App Ihrer Wahl teilen (zum Beispiel per E-Mail). Das Protokoll kann vertrauliche Daten enthalten (Telefonnummern, Kontaktnamen); nur die gewählte App erhält Zugriff darauf</string>
+    <string name="view_logcat">Protokoll anzeigen</string>
+    <string name="view_logcat_summary">Was dieser Lauf der App bisher aufgeschrieben hat</string>
+    <string name="logcat_activity">Protokoll</string>
+    <string name="logcat_filter">Filter</string>
+    <string name="logcat_refresh">Neu einlesen</string>
+    <string name="logcat_loading">Protokoll wird gelesen\u2026</string>
+    <string name="logcat_empty">Nichts anzuzeigen</string>
+    <string name="logcat_failed">Das Protokoll ließ sich nicht lesen.</string>
     <string name="share_crash_reports">Absturzberichte teilen</string>
     <string name="share_crash_reports_summary">Was die App bei den letzten Abstürzen aufgeschrieben hat. Das oben exportierte Protokoll ist das dieses Laufs und enthält nichts von einem Absturz, der den vorigen beendet hat.</string>
     <string name="share_crash_reports_none">Es gibt keine Absturzberichte</string>

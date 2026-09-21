@@ -149,6 +149,14 @@
                 android:value=".MainActivity" />
         </activity>
         <activity
+            android:name=".LogcatActivity"
+            android:label="@string/logcat_activity"
+            android:parentActivityName=".SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".SettingsActivity" />
+        </activity>
+        <activity
             android:name=".AboutActivity"
             android:label="@string/about_activity"
             android:parentActivityName=".MainActivity">

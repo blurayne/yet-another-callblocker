@@ -47,6 +47,12 @@
         app:title="@string/settings_category_debugging">
 
         <Preference
+            app:key="viewLogcat"
+            app:persistent="false"
+            app:summary="@string/view_logcat_summary"
+            app:title="@string/view_logcat" />
+
+        <Preference
             app:key="exportLogcat"
             app:persistent="false"
             app:summary="@string/export_logcat_summary"

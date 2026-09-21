@@ -32,6 +32,7 @@ public class AdvancedSettingsFragment extends BaseSettingsFragment {
 
     private static final String PREF_SCREEN_ADVANCED = "screenAdvanced";
     private static final String PREF_COUNTRY_CODES_INFO = "countryCodesInfo";
+    private static final String PREF_VIEW_LOGCAT = "viewLogcat";
     private static final String PREF_EXPORT_LOGCAT = "exportLogcat";
     private static final String PREF_SHARE_CRASH_REPORTS = "shareCrashReports";
     private static final String PREF_CATEGORY_LIMITED_MODE = "categoryLimitedMode";
@@ -49,6 +50,11 @@ public class AdvancedSettingsFragment extends BaseSettingsFragment {
 
     @Override
     protected void initScreen() {
+        requirePreference(PREF_VIEW_LOGCAT).setOnPreferenceClickListener(preference -> {
+            startActivity(LogcatActivity.getIntent(requireContext()));
+            return true;
+        });
+
         requirePreference(PREF_EXPORT_LOGCAT).setOnPreferenceClickListener(preference -> {
             exportLogcat();
             return true;

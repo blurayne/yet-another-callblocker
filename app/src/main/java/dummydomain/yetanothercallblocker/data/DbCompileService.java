@@ -699,17 +699,26 @@ public class DbCompileService {
     }
 
     /**
-     * Writes what every source brought into the one table, and puts a copy aside.
+     * Writes what every source brought into one table, beside the one in use.
      *
      * <p>This is where the sources stop being files in three formats and become rows: the
      * database fills the empty table, the updates and the layers go on top of it, and what
-     * comes out is one file with the number as its key.
+     * comes out is one file with the number as its key - so a number that several sources
+     * know is one row, whatever they each say about it.
      *
-     * <p>The copy is made while the table is still whole, because filtering is what happens
-     * next and there has to be something to go back to that isn't a download.
+     * <p>All of it happens in a database of its own: built, then filtered, and only then put
+     * in the place of the one the app reads. The copy that a filter can be taken back to is
+     * made in between, while the table is still whole.
      */
     private String buildNumbersTable(List<NumberSource> sources, ProgressListener listener) {
-        NumbersCompiler compiler = new NumbersCompiler(context);
+        /*
+         * Everything happens beside the database the app is reading, and what comes out takes
+         * its place only when it is whole. Nothing waits for the build, nothing is locked by
+         * it, and a build that fails leaves what worked exactly where it was.
+         */
+        NumbersCompiler compiler = NumbersCompiler.forBuild(context);
+
+        compiler.dropBuild(); // whatever an earlier attempt left behind
 
         String dataDir = YacbHolder.getStorage().getDataDirPath();
 
@@ -730,6 +739,8 @@ public class DbCompileService {
         if (!result.ok) {
             LOG.error("buildNumbersTable() the table couldn't be built: {}", result.error);
 
+            compiler.dropBuild();
+
             return result.error != null
                     ? context.getString(R.string.db_build_table_failed_reason, result.error)
                     : context.getString(R.string.db_build_table_failed);
@@ -740,11 +751,10 @@ public class DbCompileService {
         boolean filtering = settings.isDbFilteringEnabled();
 
         /*
-         * The copy is what a filter can be taken back to, so it is only made when there is
-         * going to be something to take back and the user wants to be able to: it is as big
+         * The copy is what a filter can be taken back to, so it is made while the table is
+         * still whole and only when there is going to be something to take back: it is as big
          * as the table itself, and a phone that has just written a few hundred megabytes has
-         * no business writing them a second time for nothing. Without filtering the table is
-         * the unfiltered one, and switching filtering on later copies it then.
+         * no business writing them a second time for nothing.
          */
         if (filtering && settings.getDbFilteringKeepMaster()) {
             compiler.makeShadowCopy();
@@ -753,9 +763,18 @@ public class DbCompileService {
         }
 
         if (filtering) {
+            phase(listener, R.string.filtering_db);
+
             compiler.filter(DbFilteringUtils.getPrefixesToKeep(settings),
                     settings.getDbFilteringKeepShortNumbers()
                             ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0);
+        }
+
+        // and only now does it become the database the app looks numbers up in
+        if (!compiler.promote()) {
+            LOG.error("buildNumbersTable() the built database couldn't be put in place");
+
+            return context.getString(R.string.db_build_table_failed);
         }
 
         return null;

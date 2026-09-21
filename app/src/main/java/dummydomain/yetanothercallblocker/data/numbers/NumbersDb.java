@@ -37,6 +37,16 @@ public class NumbersDb extends SQLiteOpenHelper {
     /** The copy kept before filtering, which is what "unfiltered" means afterwards. */
     public static final String SHADOW_FILE_NAME = "numbers-shadow.db";
 
+    /**
+     * Where a build is assembled.
+     *
+     * <p>A build writes here and nowhere else, and only takes the place of the database in
+     * use when it is finished and filtered. Until then the app keeps answering out of the
+     * database it already had: nothing waits for the build, nothing is locked by it, and a
+     * build that fails or is killed leaves what worked exactly where it was.
+     */
+    public static final String BUILD_FILE_NAME = "numbers-build.db";
+
     private static final int VERSION = 1;
 
     /** Whether the database in use has been filtered. */
@@ -85,7 +95,12 @@ public class NumbersDb extends SQLiteOpenHelper {
     private static final String[] TABLES = {"names", "numbers", "sources", "meta"};
 
     public NumbersDb(Context context) {
-        super(context, FILE_NAME, null, VERSION);
+        this(context, FILE_NAME);
+    }
+
+    /** @param fileName which of the databases this is: the one in use, or one being built */
+    public NumbersDb(Context context, String fileName) {
+        super(context, fileName, null, VERSION);
     }
 
     /** Where the file is, for copying it aside and putting it back. */
@@ -94,7 +109,15 @@ public class NumbersDb extends SQLiteOpenHelper {
     }
 
     public static File getShadowFile(Context context) {
-        return new File(getFile(context).getParentFile(), SHADOW_FILE_NAME);
+        return getFile(context, SHADOW_FILE_NAME);
+    }
+
+    public static File getBuildFile(Context context) {
+        return getFile(context, BUILD_FILE_NAME);
+    }
+
+    public static File getFile(Context context, String fileName) {
+        return new File(getFile(context).getParentFile(), fileName);
     }
 
     @Override

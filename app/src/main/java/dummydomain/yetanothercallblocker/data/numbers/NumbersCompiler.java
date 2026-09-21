@@ -31,6 +31,10 @@ import dummydomain.yetanothercallblocker.data.source.NumberSource;
  * <p>When it is complete a copy is put aside, and only then is the filter applied - so
  * "unfiltered" is a file that exists rather than a download that would have to happen again,
  * exactly as it was with the database of files.
+ *
+ * <p>A build works on a database of its own ({@link #forBuild}) and takes the place of the
+ * one in use at the end, whole. The number is the key of the table, so however many sources
+ * know a number, and however often a source repeats it, the table holds it once.
  */
 public class NumbersCompiler {
 
@@ -104,8 +108,38 @@ public class NumbersCompiler {
 
     private final Context context;
 
+    /** Which database this works on: the one in use, or the one being built. */
+    private final String fileName;
+
+    /** Reads and writes the database the app looks numbers up in. */
     public NumbersCompiler(Context context) {
+        this(context, NumbersDb.FILE_NAME);
+    }
+
+    private NumbersCompiler(Context context, String fileName) {
         this.context = context.getApplicationContext();
+        this.fileName = fileName;
+    }
+
+    /**
+     * Works on the database a build assembles, beside the one in use.
+     *
+     * <p>Everything a build does happens here - filling the table, filtering it - and only
+     * when all of it has worked does it take the place of the database the app reads. Until
+     * then nothing the app does waits for the build, and a build that dies leaves the
+     * database that worked untouched.
+     */
+    public static NumbersCompiler forBuild(Context context) {
+        return new NumbersCompiler(context, NumbersDb.BUILD_FILE_NAME);
+    }
+
+    /** The file this one works on. */
+    public File getDbFile() {
+        return NumbersDb.getFile(context, fileName);
+    }
+
+    private NumbersDb openDb() {
+        return new NumbersDb(context, fileName);
     }
 
     /**
@@ -122,7 +156,7 @@ public class NumbersCompiler {
 
         long startTime = System.currentTimeMillis();
 
-        NumbersDb helper = new NumbersDb(context);
+        NumbersDb helper = openDb();
 
         try {
             SQLiteDatabase db = helper.getWritableDatabase();
@@ -137,9 +171,11 @@ public class NumbersCompiler {
 
             int written = 0;
 
+            Run run = null;
+
             db.beginTransaction();
             try (NumbersWriter writer = new NumbersWriter(db)) {
-                Run run = new Run(db, writer, listener, total);
+                run = new Run(db, writer, listener, total);
 
                 for (int i = 0; i < sources.size(); i++) {
                     NumberSource source = sources.get(i);
@@ -179,8 +215,14 @@ public class NumbersCompiler {
 
             countSources(db);
 
-            LOG.info("compile() {} numbers from {} sources in {} ms",
-                    numbers, written, System.currentTimeMillis() - startTime);
+            /*
+             * Both numbers, because the difference between them is the point: what the
+             * sources handed over, and what is left once the same number from two of them is
+             * one row.
+             */
+            LOG.info("compile() {} numbers out of {} entries, from {} sources in {} ms",
+                    numbers, run != null ? run.entries : 0, written,
+                    System.currentTimeMillis() - startTime);
 
             return new Result(true, numbers, written);
         } catch (OutOfMemoryError e) {
@@ -228,6 +270,9 @@ public class NumbersCompiler {
         /** Files read since then; a database of tiny files would otherwise never commit. */
         private int files;
 
+        /** Everything the sources handed over, before the table put the same number together. */
+        private long entries;
+
         Run(SQLiteDatabase db, NumbersWriter writer, ProgressListener listener, int total) {
             this.db = db;
             this.writer = writer;
@@ -242,7 +287,10 @@ public class NumbersCompiler {
         }
 
         void read(File file, int sourceId, boolean asLayer) {
-            pending += NumbersCompiler.this.read(file, writer, sourceId, asLayer);
+            int read = NumbersCompiler.this.read(file, writer, sourceId, asLayer);
+
+            pending += read;
+            entries += read;
             files++;
 
             commitIfDue();
@@ -325,12 +373,64 @@ public class NumbersCompiler {
         return count[0];
     }
 
-    /** Puts the finished database aside, so that filtering has something to go back to. */
+    /** Puts the database aside unfiltered, so that filtering has something to go back to. */
     public boolean makeShadowCopy() {
-        File file = NumbersDb.getFile(context);
+        File file = getDbFile();
         if (!file.exists()) return false;
 
         return copy(file, NumbersDb.getShadowFile(context));
+    }
+
+    /**
+     * Puts what was built in the place of the database the app reads.
+     *
+     * <p>A move rather than a copy: the file is complete and filtered by now, and what it
+     * replaces is of no further use. The moment it lands, every lookup is answered out of the
+     * new one - there is no point at which the app reads a half-built database.
+     */
+    public boolean promote() {
+        File built = NumbersDb.getBuildFile(context);
+        if (!built.exists()) return false;
+
+        File live = NumbersDb.getFile(context);
+
+        deleteDb(live);
+
+        if (built.renameTo(live)) {
+            dropJournals(built);
+            return true;
+        }
+
+        // across a boundary a rename can't cross, which shouldn't happen but can be worked
+        LOG.warn("promote() couldn't move the built database into place, copying it");
+
+        if (!copy(built, live)) return false;
+
+        deleteDb(built);
+
+        return true;
+    }
+
+    /** Throws away a build, finished or not. */
+    public void dropBuild() {
+        deleteDb(NumbersDb.getBuildFile(context));
+    }
+
+    private static void deleteDb(File file) {
+        if (file.exists() && !file.delete()) LOG.warn("deleteDb() couldn't delete {}", file);
+
+        dropJournals(file);
+    }
+
+    /** What SQLite leaves beside a database; stale ones describe a database that is gone. */
+    private static void dropJournals(File file) {
+        for (String postfix : new String[]{"-journal", "-wal", "-shm"}) {
+            File journal = new File(file.getPath() + postfix);
+
+            if (journal.exists() && !journal.delete()) {
+                LOG.warn("dropJournals() couldn't delete {}", journal);
+            }
+        }
     }
 
     public boolean hasShadowCopy() {
@@ -348,9 +448,9 @@ public class NumbersCompiler {
         File shadow = NumbersDb.getShadowFile(context);
         if (!shadow.exists()) return false;
 
-        if (!copy(shadow, NumbersDb.getFile(context))) return false;
+        if (!copy(shadow, getDbFile())) return false;
 
-        NumbersDb helper = new NumbersDb(context);
+        NumbersDb helper = openDb();
         try {
             NumbersDb.setMeta(helper.getWritableDatabase(), NumbersDb.META_FILTERED, "0");
         } catch (Exception e) {
@@ -374,7 +474,7 @@ public class NumbersCompiler {
             return -1;
         }
 
-        NumbersDb helper = new NumbersDb(context);
+        NumbersDb helper = openDb();
 
         try {
             SQLiteDatabase db = helper.getWritableDatabase();
@@ -447,7 +547,7 @@ public class NumbersCompiler {
      * it anything waits for that to reach a point where it can answer.
      */
     public Info getInfo() {
-        NumbersDb helper = new NumbersDb(context);
+        NumbersDb helper = openDb();
 
         try {
             SQLiteDatabase db = helper.getReadableDatabase();
@@ -482,7 +582,7 @@ public class NumbersCompiler {
      * every row.
      */
     public long getCount() {
-        NumbersDb helper = new NumbersDb(context);
+        NumbersDb helper = openDb();
 
         try {
             String value = NumbersDb.getMeta(helper.getReadableDatabase(),
@@ -498,7 +598,7 @@ public class NumbersCompiler {
     }
 
     public boolean isFiltered() {
-        NumbersDb helper = new NumbersDb(context);
+        NumbersDb helper = openDb();
 
         try {
             return "1".equals(NumbersDb.getMeta(helper.getReadableDatabase(),
@@ -526,7 +626,7 @@ public class NumbersCompiler {
     public List<SourceCount> getSourceCounts() {
         List<SourceCount> counts = new ArrayList<>();
 
-        NumbersDb helper = new NumbersDb(context);
+        NumbersDb helper = openDb();
 
         try (Cursor cursor = helper.getReadableDatabase().rawQuery(
                 "SELECT uuid, name, type, layer, count FROM sources ORDER BY layer", null)) {
@@ -545,7 +645,7 @@ public class NumbersCompiler {
 
     /** When the table was last built, or 0 when it never was. */
     public long getCompiledTime() {
-        NumbersDb helper = new NumbersDb(context);
+        NumbersDb helper = openDb();
 
         try {
             String value = NumbersDb.getMeta(helper.getReadableDatabase(),
@@ -562,7 +662,7 @@ public class NumbersCompiler {
 
     /** How much room the table takes, and the copy beside it. */
     public long getSize() {
-        return NumbersDb.getFile(context).length();
+        return getDbFile().length();
     }
 
     public long getShadowSize() {
@@ -572,9 +672,9 @@ public class NumbersCompiler {
     /** Throws the table away; the sources are what it is built from, so nothing is lost. */
     public void clear() {
         dropShadowCopy();
+        dropBuild();
 
-        File file = NumbersDb.getFile(context);
-        if (file.exists() && !file.delete()) LOG.warn("clear() couldn't delete {}", file);
+        deleteDb(getDbFile());
     }
 
     /**

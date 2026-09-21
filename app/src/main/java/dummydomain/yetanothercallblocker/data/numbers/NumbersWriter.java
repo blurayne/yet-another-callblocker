@@ -19,6 +19,11 @@ import java.io.Closeable;
  * <p>The database itself is the exception: it is written into an empty table and has nothing
  * to merge with, so it goes in with one statement per row and no read at all. That is the
  * difference between a build that takes a minute and one that takes ten.
+ *
+ * <p>A number is in the table once, however many times it is written. It is the key of the
+ * table, so writing it again lands on the row that is already there - the second of two
+ * sources that know the same number changes that row rather than adding another, and a slice
+ * that holds a number twice ends up with one of it either way.
  */
 public class NumbersWriter implements Closeable {
 

@@ -69,7 +69,6 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_FILTERING = "dbFiltering";
     private static final String PREF_EXPORT = "dbExport";
     private static final String PREF_IMPORT = "dbImport";
-    private static final String PREF_RESET_UPDATES = "dbResetUpdates";
     private static final String PREF_DELETE = "dbDelete";
 
     // 128-133 are taken by the permission helpers and the backup
@@ -146,19 +145,6 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
 
         requirePreference(PREF_IMPORT).setOnPreferenceClickListener(preference -> {
             pickDbToImport();
-            return true;
-        });
-
-        requirePreference(PREF_RESET_UPDATES).setOnPreferenceClickListener(preference -> {
-            confirm(R.string.db_management_reset_updates, R.string.db_management_reset_updates_message,
-                    () -> {
-                        YacbHolder.getCommunityDatabase().resetSecondaryDatabase();
-
-                        Toast.makeText(requireContext(), R.string.db_management_reset_updates_done,
-                                Toast.LENGTH_SHORT).show();
-
-                        updateStatus();
-                    });
             return true;
         });
 

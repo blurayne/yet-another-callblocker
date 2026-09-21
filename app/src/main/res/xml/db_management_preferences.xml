@@ -82,12 +82,6 @@
     <PreferenceCategory app:title="@string/db_management_category_starting_over">
 
         <Preference
-            app:key="dbResetUpdates"
-            app:persistent="false"
-            app:summary="@string/db_management_reset_updates_summary"
-            app:title="@string/db_management_reset_updates" />
-
-        <Preference
             app:key="dbDelete"
             app:persistent="false"
             app:summary="@string/db_management_delete_summary"

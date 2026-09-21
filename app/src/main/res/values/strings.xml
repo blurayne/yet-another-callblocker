@@ -604,10 +604,6 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_management_export_summary">Write what was downloaded into a file, to save the next phone the download</string>
     <string name="db_management_import_summary">Read such a file back, replacing what is here</string>
     <string name="db_management_category_starting_over">Starting over</string>
-    <string name="db_management_reset_updates">Forget the updates</string>
-    <string name="db_management_reset_updates_summary">Throw away what came in after the download; the next update fetches it again</string>
-    <string name="db_management_reset_updates_message">The updates fetched since the database was downloaded are thrown away. The next update brings them back.</string>
-    <string name="db_management_reset_updates_done">The updates were thrown away.</string>
     <string name="db_management_delete">Delete the database</string>
     <string name="db_management_delete_summary">Throw it away entirely; it can be built from the sources again</string>
     <string name="db_management_delete_message">The database is thrown away, the downloaded files with it. Your lists and settings are untouched, and the sources can build it again.</string>

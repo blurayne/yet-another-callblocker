@@ -639,10 +639,6 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_management_export_summary">Das Heruntergeladene in eine Datei schreiben, damit das nächste Telefon es nicht laden muss</string>
     <string name="db_management_import_summary">So eine Datei zurücklesen und das Vorhandene ersetzen</string>
     <string name="db_management_category_starting_over">Von vorn anfangen</string>
-    <string name="db_management_reset_updates">Aktualisierungen vergessen</string>
-    <string name="db_management_reset_updates_summary">Alles wegwerfen, was nach dem Herunterladen dazukam; die nächste Aktualisierung holt es erneut</string>
-    <string name="db_management_reset_updates_message">Die Aktualisierungen, die seit dem Herunterladen dazukamen, werden weggeworfen. Die nächste Aktualisierung bringt sie zurück.</string>
-    <string name="db_management_reset_updates_done">Die Aktualisierungen wurden weggeworfen.</string>
     <string name="db_management_delete">Datenbank löschen</string>
     <string name="db_management_delete_summary">Ganz wegwerfen; aus den Quellen lässt sie sich neu bauen</string>
     <string name="db_management_delete_message">Die Datenbank wird weggeworfen, die heruntergeladenen Dateien mit ihr. Ihre Listen und Einstellungen bleiben unberührt, und die Quellen können sie neu bauen.</string>

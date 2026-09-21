@@ -47,18 +47,33 @@ public class SourceHttp {
      */
     public static OkHttpClientFactory getClientFactory(NumberSource source, String secret,
                                                       Supplier<OkHttpClient> base) {
-        return () -> decorate(base.get(), source, secret);
+        return () -> decorate(base.get(), source, secret, true);
     }
 
     /** The same client, with what this source needs on the way in and out. */
     public static OkHttpClient decorate(OkHttpClient client, NumberSource source, String secret) {
+        return decorate(client, source, secret, true);
+    }
+
+    /**
+     * The same client, with what this source needs on the way in and out.
+     *
+     * @param unpack whether the answer is unpacked before whoever asked for it sees it. Only
+     *               for a caller that reads the database out of the body itself: the code
+     *               that unpacks the community database reads the archive it was sent, and
+     *               handing it the first file out of that archive leaves it with nothing to
+     *               unpack - an empty database that then replaces the one that worked.
+     */
+    public static OkHttpClient decorate(OkHttpClient client, NumberSource source, String secret,
+                                        boolean unpack) {
         OkHttpClient.Builder builder = client != null
                 ? client.newBuilder() : new OkHttpClient.Builder();
 
-        return builder
-                .addInterceptor(new AuthInterceptor(source, secret))
-                .addInterceptor(new UnpackingInterceptor())
-                .build();
+        builder.addInterceptor(new AuthInterceptor(source, secret));
+
+        if (unpack) builder.addInterceptor(new UnpackingInterceptor());
+
+        return builder.build();
     }
 
     /** What goes in the Authorization header, or null when the source wants none. */

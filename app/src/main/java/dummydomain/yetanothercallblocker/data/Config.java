@@ -115,8 +115,14 @@ public class Config {
 
             NumberSource source = sourceService.getFetchingSource();
 
+            /*
+             * Logged in as that source, and not a byte more: this client feeds the
+             * library's own downloader, which is handed a zip and unpacks it itself. An
+             * answer that is unpacked on the way in arrives there as a single file that is
+             * not an archive, unpacks into nothing, and replaces the database with it.
+             */
             return SourceHttp.decorate(new OkHttpClient(), source,
-                    source != null ? sourceService.getSecret(source.getId()) : null);
+                    source != null ? sourceService.getSecret(source.getId()) : null, false);
         };
 
         YacbHolder.setStorage(storage);

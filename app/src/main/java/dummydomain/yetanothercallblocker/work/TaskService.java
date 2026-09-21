@@ -158,6 +158,15 @@ public class TaskService extends IntentService {
                 result != null && result.status == DbCompileService.Status.NO_SOURCES));
     }
 
+    /** The first of these that says something. */
+    private static String first(String... texts) {
+        for (String text : texts) {
+            if (!TextUtils.isEmpty(text)) return text;
+        }
+
+        return null;
+    }
+
     /** The short of it: what went wrong, in one line, for someone who is not reading a log. */
     private static String describe(Throwable t) {
         Throwable cause = t;
@@ -185,13 +194,14 @@ public class TaskService extends IntentService {
 
         if (result == null || result.status == DbCompileService.Status.FAILED) {
             title = getString(R.string.db_build_failed);
-            text = !TextUtils.isEmpty(error) ? error : getString(R.string.db_build_failed_text);
+            text = first(error, result != null ? result.reason : null,
+                    getString(R.string.db_build_failed_text));
         } else if (result.status == DbCompileService.Status.NO_SOURCES) {
             title = getString(R.string.db_build_failed);
             text = getString(R.string.sources_none_enabled);
         } else if (result.status == DbCompileService.Status.NO_BASE) {
             title = getString(R.string.db_build_failed);
-            text = getString(R.string.db_build_no_base_text);
+            text = first(result.reason, getString(R.string.db_build_no_base_text));
         } else {
             long numbers = new NumbersCompiler(this).getCount();
 

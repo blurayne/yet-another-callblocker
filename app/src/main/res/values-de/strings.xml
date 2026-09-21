@@ -86,6 +86,8 @@
     <string name="db_build_no_base_text">Die Quelle, welche die Datenbank selbst trägt, war nicht abrufbar.</string>
     <string name="db_update_done">Die Datenbank wurde aktualisiert</string>
     <string name="db_update_nothing_new">Die Datenbank ist aktuell</string>
+    <string name="db_build_not_readable">Was angekommen ist, lässt sich nicht als Datenbank lesen. Prüfen Sie die Adresse der Quelle, welche sie trägt.</string>
+    <string name="db_build_table_failed">Die Nummern ließen sich nicht in die Tabelle schreiben. Womöglich ist kein Platz mehr auf dem Telefon.</string>
     <string name="auto_updates_notify">Bei automatischen Läufen benachrichtigen</string>
     <string name="auto_updates_notify_summary">Zeigt eine Benachrichtigung, solange ein selbsttätiger Abgleich läuft. Was Sie selbst anstoßen, zeigt immer eine.</string>
     <string name="source_result_database">die Datenbank</string>

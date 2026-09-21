@@ -415,6 +415,8 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_build_no_base_text">The source that carries the database couldn\'t be fetched.</string>
     <string name="db_update_done">The database was updated</string>
     <string name="db_update_nothing_new">The database is up to date</string>
+    <string name="db_build_not_readable">What arrived can\'t be read as a database. Check the address of the source that carries it.</string>
+    <string name="db_build_table_failed">The numbers couldn\'t be written into the table. There may be no room left on the phone.</string>
     <string name="auto_updates_notify">Say when they run</string>
     <string name="auto_updates_notify_summary">Show a notification while an update that runs on its own is working. What you start by hand always shows one.</string>
     <string name="source_result_database">the database</string>

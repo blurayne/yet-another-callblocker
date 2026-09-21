@@ -28,6 +28,7 @@ import dummydomain.yetanothercallblocker.data.numbers.SliceReader;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.sia.model.database.NumberFilter;
+import dummydomain.yetanothercallblocker.sia.utils.FileUtils;
 import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
 import dummydomain.yetanothercallblocker.utils.DeferredInit;
 import okhttp3.OkHttpClient;
@@ -84,11 +85,18 @@ public class DbCompileService {
         public final int sources;
         /** How many of them couldn't be fetched. */
         public final int failed;
+        /** What went wrong, in words, or null when nothing did. */
+        public final String reason;
 
         Result(Status status, int sources, int failed) {
+            this(status, sources, failed, null);
+        }
+
+        Result(Status status, int sources, int failed, String reason) {
             this.status = status;
             this.sources = sources;
             this.failed = failed;
+            this.reason = reason;
         }
 
         public boolean isOk() {
@@ -153,9 +161,11 @@ public class DbCompileService {
          * schedule says so. What changes in between is what the other sources carry.
          */
         if (needsDownload(base)) {
-            if (!downloadBase(base)) {
-                LOG.warn("compile() the database itself couldn't be fetched");
-                return new Result(Status.NO_BASE, 0, 1);
+            String failure = downloadBase(base);
+
+            if (failure != null) {
+                LOG.error("compile() the database itself couldn't be fetched: {}", failure);
+                return new Result(Status.NO_BASE, 0, 1, failure);
             }
         } else {
             LOG.debug("compile() the database is there and not due");
@@ -189,9 +199,15 @@ public class DbCompileService {
 
         dropLayersOfGoneSources(ordered);
 
-        if (!applyLayers(ordered)) return new Result(Status.FAILED, total - failed, failed);
+        if (!applyLayers(ordered)) {
+            return new Result(Status.FAILED, total - failed, failed,
+                    context.getString(R.string.db_build_not_readable));
+        }
 
-        buildNumbersTable(ordered, listener);
+        if (!buildNumbersTable(ordered, listener)) {
+            return new Result(Status.FAILED, total - failed, failed,
+                    context.getString(R.string.db_build_table_failed));
+        }
 
         LOG.info("compile() built the database from {} of {} sources", total - failed, total);
 
@@ -226,33 +242,89 @@ public class DbCompileService {
         return !info.exists() || source.isDue(System.currentTimeMillis());
     }
 
-    /** Downloads the database itself, which is what the rest is layered onto. */
-    private boolean downloadBase(NumberSource source) {
+    /**
+     * Downloads the database itself, which is what the rest is layered onto.
+     *
+     * @return null when it worked, otherwise what went wrong
+     */
+    private String downloadBase(NumberSource source) {
         LOG.debug("downloadBase() {}", source.getUrl());
 
         if (TextUtils.isEmpty(source.getUrl())) {
             note(source, context.getString(R.string.source_result_no_address));
-            return false;
+            return context.getString(R.string.source_result_no_address);
         }
 
         source.setLastCheck(System.currentTimeMillis());
 
+        /*
+         * The library moves directories around rather than merging them: the new database is
+         * unpacked beside the old one, the old one is renamed away, and the new one takes its
+         * place. A run that was cut short in the middle of that leaves the renamed one behind,
+         * and the next run then can't rename anything anywhere.
+         */
+        dropLeftovers();
+
         boolean downloaded = false;
+        String error = null;
         try {
             // the client asks the service which source it is fetching, to log in as that one
             sourceService.setFetchingSource(source);
 
             downloaded = YacbHolder.getDbManager().downloadMainDb(source.getUrl());
         } catch (Exception e) {
-            LOG.warn("downloadBase() failed", e);
+            LOG.error("downloadBase() failed", e);
+            error = e.getClass().getSimpleName()
+                    + (e.getLocalizedMessage() != null ? ": " + e.getLocalizedMessage() : "");
         } finally {
             sourceService.setFetchingSource(null);
         }
 
-        note(source, context.getString(downloaded
-                ? R.string.source_result_database : R.string.source_result_failed));
+        if (!downloaded) {
+            note(source, context.getString(R.string.source_result_failed));
+            return error != null ? error : context.getString(R.string.db_build_no_base_text);
+        }
 
-        return downloaded;
+        /*
+         * Downloaded is not the same as readable. What arrives is an archive that the library
+         * unpacks itself, and one that holds nothing it recognises unpacks into an empty
+         * directory - which is then in the place of the database that worked. Saying so here
+         * is the difference between "there is nothing in it" and a screen full of numbers
+         * that are quietly gone.
+         */
+        reloadDatabases();
+
+        if (!YacbHolder.getCommunityDatabase().isOperational()) {
+            LOG.error("downloadBase() what arrived can't be read as a database");
+
+            note(source, context.getString(R.string.source_result_not_a_database));
+            return context.getString(R.string.db_build_not_readable);
+        }
+
+        note(source, context.getString(R.string.source_result_database));
+
+        return null;
+    }
+
+    /** Clears what an interrupted download left beside the database. */
+    private static void dropLeftovers() {
+        String prefix = SiaConstants.SIA_PATH_PREFIX;
+
+        int slash = prefix.indexOf('/');
+        if (slash <= 0) return;
+
+        String name = prefix.substring(0, slash);
+
+        File dataDir = new File(YacbHolder.getStorage().getDataDirPath());
+
+        for (String leftover : new String[]{name + "-old", name + "-tmp"}) {
+            File dir = new File(dataDir, leftover);
+            if (!dir.exists()) continue;
+
+            LOG.info("dropLeftovers() removing {}", dir);
+
+            FileUtils.delete(dir);
+        }
     }
 
     /** Fetches one layer and keeps it, replacing what was fetched from that source before. */
@@ -452,7 +524,7 @@ public class DbCompileService {
      * <p>The copy is made while the table is still whole, because filtering is what happens
      * next and there has to be something to go back to that isn't a download.
      */
-    private void buildNumbersTable(List<NumberSource> sources, ProgressListener listener) {
+    private boolean buildNumbersTable(List<NumberSource> sources, ProgressListener listener) {
         NumbersCompiler compiler = new NumbersCompiler(context);
 
         String dataDir = YacbHolder.getStorage().getDataDirPath();
@@ -464,8 +536,8 @@ public class DbCompileService {
                 listener != null ? listener::onProgress : null);
 
         if (!result.ok) {
-            LOG.warn("buildNumbersTable() the table couldn't be built");
-            return;
+            LOG.error("buildNumbersTable() the table couldn't be built");
+            return false;
         }
 
         noteSourceMeta(compiler, sources);
@@ -480,6 +552,8 @@ public class DbCompileService {
             // the copy is what the filtering can be taken back to; not everyone wants to pay
             if (!settings.getDbFilteringKeepMaster()) compiler.dropShadowCopy();
         }
+
+        return true;
     }
 
     /**

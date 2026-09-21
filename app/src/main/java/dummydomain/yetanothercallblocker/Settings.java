@@ -47,6 +47,8 @@ public class Settings extends GenericSettings {
     public static final String PREF_BACKUP_SECRETS = "backupSecrets";
     public static final String PREF_AUTO_BACKUP = "autoBackup";
     public static final String PREF_LAST_BACKUP_TIME = "lastBackupTime";
+    public static final String PREF_BACKUP_DATABASE = "backupDatabase";
+    public static final String PREF_LAST_BACKUP_DB_VERSION = "lastBackupDbVersion";
     public static final String PREF_UI_MODE = "uiMode";
     public static final String PREF_CALL_LOG_GROUPING = "callLogGrouping";
     public static final String PREF_USE_MONITORING_SERVICE = "useMonitoringService";
@@ -488,6 +490,30 @@ public class Settings extends GenericSettings {
 
     public void setBackupSecrets(boolean backup) {
         setBoolean(PREF_BACKUP_SECRETS, backup);
+    }
+
+    /**
+     * Whether the downloaded database goes into the backup as well.
+     *
+     * <p>On, because a phone that is set up again from the backup should be able to block a
+     * call without first downloading tens of megabytes over whatever connection it has. It
+     * is written only when it has changed, so the daily backup doesn't copy it every day.
+     */
+    public boolean getBackupDatabase() {
+        return getBoolean(PREF_BACKUP_DATABASE, true);
+    }
+
+    public void setBackupDatabase(boolean backup) {
+        setBoolean(PREF_BACKUP_DATABASE, backup);
+    }
+
+    /** Which version of the database the one in the backup directory is. */
+    public int getLastBackupDbVersion() {
+        return getInt(PREF_LAST_BACKUP_DB_VERSION, 0);
+    }
+
+    public void setLastBackupDbVersion(int version) {
+        setInt(PREF_LAST_BACKUP_DB_VERSION, version);
     }
 
     /** Whether the app writes the backup by itself. Off until the user says otherwise. */

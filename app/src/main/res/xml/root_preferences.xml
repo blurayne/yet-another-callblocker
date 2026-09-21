@@ -154,6 +154,11 @@
             app:summary="@string/auto_backup_summary"
             app:title="@string/auto_backup" />
         <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="backupDatabase"
+            app:summary="@string/backup_database_summary"
+            app:title="@string/backup_database" />
+        <SwitchPreferenceCompat
             app:key="backupSecrets"
             app:summary="@string/backup_secrets_summary"
             app:title="@string/backup_secrets" />

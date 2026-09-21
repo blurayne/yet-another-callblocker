@@ -12,12 +12,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 import dummydomain.yetanothercallblocker.data.BackupService;
+import dummydomain.yetanothercallblocker.data.DbImporterExporter;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.data.SiaConstants;
 
 /**
  * The backup file in the directory the user picked.
@@ -31,7 +34,12 @@ public class BackupHelper {
     /** The name the backup is written under, and looked for when restoring. */
     public static final String FILE_NAME = "yacb-backup.json";
 
+    /** And the name the downloaded database goes under, beside it. */
+    public static final String DB_FILE_NAME = "yacb-database.zip";
+
     private static final String MIME_TYPE = "application/json";
+
+    private static final String DB_MIME_TYPE = "application/zip";
 
     /** What an older version of the app called its export, so that those are found too. */
     private static final String LEGACY_PREFIX = "YetAnotherCallBlocker_backup";
@@ -151,7 +159,110 @@ public class BackupHelper {
 
         LOG.info("backup() written");
 
+        // and the database beside it, when it is wanted and isn't already the one in there
+        if (App.getSettings().getBackupDatabase()) backupDatabase(context, false);
+
         return true;
+    }
+
+    /**
+     * Writes the downloaded database into the backup directory, beside the backup itself.
+     *
+     * <p>So that a phone set up again from the backup can block a call straight away rather
+     * than downloading tens of megabytes over whatever connection it has first.
+     *
+     * <p>Only when it is not the one already in there: the backup runs daily and the database
+     * changes when it is built, which is not daily. Copying it every night would be tens of
+     * megabytes written for nothing, and would look like a change to whatever syncs the
+     * directory. A version that is the same is a file that is the same.
+     *
+     * @param force write it even when the directory already holds this version
+     * @return whether the directory holds this version of the database afterwards
+     */
+    public static boolean backupDatabase(Context context, boolean force) {
+        Uri treeUri = getDirectory();
+        if (treeUri == null) return false;
+
+        int version = YacbHolder.getCommunityDatabase().getEffectiveDbVersion();
+        if (version <= 0) {
+            LOG.info("backupDatabase() there is no database to write");
+            return false;
+        }
+
+        DocumentFile directory;
+        try {
+            directory = DocumentFile.fromTreeUri(context, treeUri);
+        } catch (Exception e) {
+            LOG.warn("backupDatabase() couldn't open the directory", e);
+            return false;
+        }
+
+        if (directory == null || !directory.canWrite()) {
+            LOG.warn("backupDatabase() the directory can't be written to");
+            return false;
+        }
+
+        DocumentFile file = directory.findFile(DB_FILE_NAME);
+
+        if (!force && file != null && App.getSettings().getLastBackupDbVersion() == version) {
+            LOG.debug("backupDatabase() the database in the directory is the current one");
+            return true;
+        }
+
+        if (file == null) {
+            file = directory.createFile(DB_MIME_TYPE, DB_FILE_NAME);
+
+            if (file == null) {
+                LOG.warn("backupDatabase() couldn't create the file");
+                return false;
+            }
+        }
+
+        String dataDir = YacbHolder.getStorage().getDataDirPath();
+
+        DbImporterExporter.Versions versions = new DbImporterExporter.Versions(
+                YacbHolder.getCommunityDatabase().getBaseDbVersion(),
+                YacbHolder.getSiaSettings().getSecondaryDbVersion());
+
+        /*
+         * Straight into the directory rather than through a file of our own first: the zip
+         * is as big as the database, and a phone that has room for it twice is not one to
+         * count on.
+         */
+        try (OutputStream out = context.getContentResolver().openOutputStream(file.getUri(), "wt")) {
+            if (out == null) return false;
+
+            if (!new DbImporterExporter().export(
+                    new File(dataDir, SiaConstants.SIA_PATH_PREFIX),
+                    new File(dataDir, SiaConstants.SIA_SECONDARY_PATH_PREFIX),
+                    versions, out)) {
+                LOG.warn("backupDatabase() the database couldn't be written");
+                return false;
+            }
+        } catch (Exception e) {
+            LOG.warn("backupDatabase() failed", e);
+            return false;
+        }
+
+        App.getSettings().setLastBackupDbVersion(version);
+
+        LOG.info("backupDatabase() version {} written", version);
+
+        return true;
+    }
+
+    /** The database in the backup directory, or null when there is none there. */
+    public static DocumentFile findDatabaseBackup(Context context, Uri treeUri) {
+        if (treeUri == null) return null;
+
+        try {
+            DocumentFile directory = DocumentFile.fromTreeUri(context, treeUri);
+
+            return directory != null ? directory.findFile(DB_FILE_NAME) : null;
+        } catch (Exception e) {
+            LOG.warn("findDatabaseBackup()", e);
+            return null;
+        }
     }
 
     /**

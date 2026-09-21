@@ -2,6 +2,7 @@ package dummydomain.yetanothercallblocker;
 
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -12,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
 
@@ -73,6 +75,11 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
 
     // 128-133 are taken by the permission helpers and the backup
     private static final int REQUEST_CODE_IMPORT_DB = 140;
+    private static final int REQUEST_CODE_BACKUP_DIRECTORY = 141;
+
+    /** What to do once the user has picked a directory to keep the backup in. */
+    private boolean backUpAfterPicking;
+    private boolean restoreAfterPicking;
 
     /** Whether a build is running right now, in which case it is what this screen says. */
     private boolean building;
@@ -139,12 +146,12 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         });
 
         requirePreference(PREF_EXPORT).setOnPreferenceClickListener(preference -> {
-            exportDb();
+            backUpDb();
             return true;
         });
 
         requirePreference(PREF_IMPORT).setOnPreferenceClickListener(preference -> {
-            pickDbToImport();
+            restoreDb();
             return true;
         });
 
@@ -415,6 +422,91 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         updateStatus();
     }
 
+    /**
+     * Writes the database into the backup directory, or hands it on when there is none.
+     *
+     * <p>The backup the app keeps is a directory the user picked, and the database belongs
+     * beside the rest of it rather than in a file of its own somewhere else - so when no
+     * directory has been picked yet, that is the first thing asked. A phone too old to keep
+     * a directory has nowhere to put it and shares the file instead, the way it always did.
+     */
+    private void backUpDb() {
+        if (BackupHelper.canUseDirectory() && BackupHelper.getDirectory() == null) {
+            backUpAfterPicking = true;
+            pickBackupDirectory();
+            return;
+        }
+
+        if (BackupHelper.getDirectory() == null) {
+            exportDb(); // nowhere to keep it: hand it on and let the user decide where
+            return;
+        }
+
+        Toast.makeText(requireContext(), R.string.db_management_exporting,
+                Toast.LENGTH_SHORT).show();
+
+        Context context = requireContext().getApplicationContext();
+
+        @SuppressLint("StaticFieldLeak") // the application context outlives the task
+        AsyncTask<Void, Void, Boolean> task = new AsyncTask<Void, Void, Boolean>() {
+            @Override
+            protected Boolean doInBackground(Void... voids) {
+                // by hand means now, whatever version the directory already holds
+                return BackupHelper.backupDatabase(context, true);
+            }
+
+            @Override
+            protected void onPostExecute(Boolean done) {
+                Toast.makeText(context, Boolean.TRUE.equals(done)
+                                ? R.string.db_management_export_done
+                                : R.string.db_management_export_failed,
+                        Toast.LENGTH_LONG).show();
+            }
+        };
+
+        task.execute();
+    }
+
+    /** Reads the database back: out of the backup directory, or out of a file that is picked. */
+    private void restoreDb() {
+        DocumentFile file = BackupHelper.findDatabaseBackup(
+                requireContext(), BackupHelper.getDirectory());
+
+        if (file == null) {
+            if (BackupHelper.canUseDirectory() && BackupHelper.getDirectory() == null) {
+                restoreAfterPicking = true;
+                pickBackupDirectory();
+                return;
+            }
+
+            pickDbToImport(); // there is a directory but no database in it
+            return;
+        }
+
+        Uri uri = file.getUri();
+
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.db_management_import_db)
+                .setMessage(R.string.db_management_import_confirmation)
+                .setPositiveButton(R.string.db_management_import_confirm,
+                        (dialog, which) -> startImport(uri))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void pickBackupDirectory() {
+        try {
+            startActivityForResult(BackupHelper.getPickDirectoryIntent(),
+                    REQUEST_CODE_BACKUP_DIRECTORY);
+        } catch (ActivityNotFoundException e) {
+            LOG.warn("pickBackupDirectory()", e);
+
+            backUpAfterPicking = restoreAfterPicking = false;
+
+            Toast.makeText(requireContext(), R.string.error, Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void pickDbToImport() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -431,6 +523,24 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_BACKUP_DIRECTORY) {
+            boolean backUp = backUpAfterPicking;
+            boolean restore = restoreAfterPicking;
+
+            backUpAfterPicking = restoreAfterPicking = false;
+
+            if (resultCode != android.app.Activity.RESULT_OK || data == null
+                    || data.getData() == null
+                    || !BackupHelper.keepDirectory(requireContext(), data.getData())) {
+                return;
+            }
+
+            if (backUp) backUpDb();
+            if (restore) restoreDb();
+
+            return;
+        }
 
         if (requestCode == REQUEST_CODE_IMPORT_DB && resultCode == android.app.Activity.RESULT_OK
                 && data != null && data.getData() != null) {

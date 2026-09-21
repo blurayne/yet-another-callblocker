@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.widget.Toast;
@@ -16,9 +17,12 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
 
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +44,9 @@ import dummydomain.yetanothercallblocker.data.BlacklistService;
 import dummydomain.yetanothercallblocker.data.CallDecisionLog;
 import dummydomain.yetanothercallblocker.data.Whitelist;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
+import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
+import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
 import dummydomain.yetanothercallblocker.utils.FileUtils;
 import dummydomain.yetanothercallblocker.utils.PackageManagerUtils;
@@ -155,6 +162,8 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         // the permission may be granted (or revoked) in the system settings
         updateCallerIdOverlayPreference();
 
+        updateCallerIdTemplatePreference();
+
         // all of these change on the screens this one leads to
         updateBlockingStatusPreference();
         updateListPreferences();
@@ -165,6 +174,35 @@ public class RootSettingsFragment extends BaseSettingsFragment {
         if (App.getSettings().getAutoBackup()) {
             BackupScheduler.get(requireContext()).schedule();
         }
+
+        /*
+         * A build takes minutes and can well finish while this screen is the one being
+         * looked at, and what it says then - how many numbers, built when - is exactly what
+         * has just changed.
+         */
+        EventUtils.register(this);
+    }
+
+    @Override
+    public void onStop() {
+        EventUtils.unregister(this);
+
+        super.onStop();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMainDbDownloadFinished(MainDbDownloadFinishedEvent event) {
+        if (isAdded()) updateSourcePreferences();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onSecondaryDbUpdateFinished(SecondaryDbUpdateFinished event) {
+        if (isAdded()) updateSourcePreferences();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onDbFilteringFinished(DbFilteringFinishedEvent event) {
+        if (isAdded()) updateSourcePreferences();
     }
 
     @Override
@@ -286,6 +324,23 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
                 return false; // enabled in updateCallerIdOverlayPreference() if granted
             }
+            return true;
+        });
+
+        /*
+         * What the phone app is told can be written by hand, and what is written is worth
+         * several lines: the first goes where the name goes, the rest next to it.
+         */
+        EditTextPreference callerIdTemplate = requirePreference(Settings.PREF_CALLER_ID_TEMPLATE);
+        callerIdTemplate.setOnBindEditTextListener(editText -> {
+            editText.setInputType(InputType.TYPE_CLASS_TEXT
+                    | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+            editText.setSingleLine(false);
+            editText.setMinLines(3);
+            editText.setHorizontallyScrolling(false);
+        });
+        setPrefChangeListener(Settings.PREF_CALLER_ID_TEMPLATE, (preference, newValue) -> {
+            requireView().post(this::updateCallerIdTemplatePreference);
             return true;
         });
 
@@ -707,6 +762,21 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
         this.<SwitchPreferenceCompat>requirePreference(PREF_USE_CALL_SCREENING_SERVICE)
                 .setChecked(PermissionHelper.isCallScreeningHeld(requireContext()));
+    }
+
+    /**
+     * Says what the phone app will show, which is either what was written or what the app does.
+     *
+     * <p>The placeholders are listed here rather than behind a help button: this is the one
+     * moment the user is looking for them.
+     */
+    private void updateCallerIdTemplatePreference() {
+        String template = App.getSettings().getCallerIdTemplate();
+
+        requirePreference(Settings.PREF_CALLER_ID_TEMPLATE).setSummary(
+                !TextUtils.isEmpty(template)
+                        ? template
+                        : getString(R.string.caller_id_template_summary));
     }
 
     private void updateCallerIdOverlayPreference() {

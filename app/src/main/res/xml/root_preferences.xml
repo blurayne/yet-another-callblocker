@@ -89,6 +89,9 @@
             app:key="callerIdOverlay"
             app:summary="@string/caller_id_overlay_summary"
             app:title="@string/caller_id_overlay" />
+        <EditTextPreference
+            app:key="callerIdTemplate"
+            app:title="@string/caller_id_template" />
         <SwitchPreferenceCompat
             app:key="useMonitoringService"
             app:summary="@string/use_monitoring_service_summary"

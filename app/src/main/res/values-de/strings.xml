@@ -84,6 +84,10 @@
     <string name="db_build_failed">Die Datenbank wurde nicht gebaut</string>
     <string name="db_build_failed_text">Unterwegs ist etwas schiefgegangen. Was, steht bei den Quellen, jeweils in ihrer Zeile.</string>
     <string name="db_build_no_base_text">Die Quelle, welche die Datenbank selbst trägt, war nicht abrufbar.</string>
+    <string name="db_update_done">Die Datenbank wurde aktualisiert</string>
+    <string name="db_update_nothing_new">Die Datenbank ist aktuell</string>
+    <string name="auto_updates_notify">Bei automatischen Läufen benachrichtigen</string>
+    <string name="auto_updates_notify_summary">Zeigt eine Benachrichtigung, solange ein selbsttätiger Abgleich läuft. Was Sie selbst anstoßen, zeigt immer eine.</string>
     <string name="source_result_database">die Datenbank</string>
     <string name="source_result_numbers">%d Nummern</string>
     <string name="source_result_no_address">keine Adresse</string>
@@ -443,6 +447,8 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="caller_id_directory_summary">Der Telefon-App die Informationen zum Anrufer bereitstellen, damit sie beim eingehenden Anruf und im Anrufprotokoll angezeigt werden. Gemeldet werden nur Nummern, über die die App etwas weiß; Kontakte sind nie betroffen.</string>
     <string name="caller_id_overlay">Anruferinfo einblenden</string>
     <string name="caller_id_overlay_summary">Die Informationen zum Anrufer über dem Anrufbildschirm einblenden. Verwenden Sie das, wenn Ihre Telefon-App die Anruferinfo oben ignoriert. Benötigt die Berechtigung „Über anderen Apps einblenden“.</string>
+    <string name="caller_id_template">Anzeige in der Telefon-App</string>
+    <string name="caller_id_template_summary">Wie die App es selbst schreibt. Eigene Fassung mit {name}, {info}, {number}, {contact}, {category}, {rating}, {negative}, {positive}, {neutral}, {list} und {phoneblock}. Die erste Zeile steht dort, wo der Name steht, der Rest daneben.</string>
     <string name="caller_id_overlay_close">Schließen</string>
     <string name="caller_id_overlay_permission">Über anderen Apps einblenden</string>
     <string name="caller_id_overlay_permission_message">Um die Anruferinfo einzublenden, braucht die App die Berechtigung, über anderen Apps zu zeichnen.</string>
@@ -552,7 +558,9 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
 
     <!-- Datenbank verwalten -->
     <string name="db_management">Datenbank</string>
-    <string name="db_management_status">Was drinsteht</string>
+    <string name="db_management_status">Datenbank-Informationen</string>
+    <string name="db_management_status_failed">Der letzte Aufbau ist %1$s fehlgeschlagen: %2$s</string>
+    <string name="db_management_status_failed_when_unknown">zuletzt</string>
     <string name="db_management_status_empty">Noch nichts gebaut</string>
     <string name="db_management_status_built">gebaut %s</string>
     <string name="db_management_sources">Quellen</string>

@@ -64,6 +64,9 @@ public class App extends Application {
 
         setUiMode(settings.getUiMode());
 
+        // what the service says in the drawer is said on screen as well, while there is one
+        TaskNotices.install(this);
+
         if (!settings.getAutoUpdateSetUp()) {
             settings.setAutoUpdateSetUp(true);
             UpdateScheduler.get(this).scheduleAutoUpdates();

@@ -36,6 +36,9 @@ public class NotificationHelper {
     /** Stays behind when the building is over, because nothing else would say that it is. */
     private static final int NOTIFICATION_ID_DB_BUILD_FINISHED = 6;
 
+    /** The updates that run on their own, for whoever asked to be told about them. */
+    private static final int NOTIFICATION_ID_AUTO_UPDATE = 7;
+
     private static final String CHANNEL_GROUP_ID_INCOMING_CALLS = "incoming_calls";
     private static final String CHANNEL_GROUP_ID_BLOCKED_CALLS = "blocked_calls";
     private static final String CHANNEL_GROUP_ID_SERVICES = "services";
@@ -181,19 +184,44 @@ public class NotificationHelper {
     }
 
     /**
+     * Says that an update that nobody started is running, for as long as it runs.
+     *
+     * <p>Only shown when the user asked to be told: the updates run daily and in the
+     * background, and something the app does by itself has no business announcing itself
+     * unless that was asked for.
+     */
+    public static void showAutoUpdateNotification(Context context, String title) {
+        notify(context, NOTIFICATION_ID_AUTO_UPDATE,
+                createServiceNotification(context, title));
+    }
+
+    public static void hideAutoUpdateNotification(Context context) {
+        NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_AUTO_UPDATE);
+    }
+
+    /**
      * Says that the database is built, and stays until it is looked at.
      *
      * <p>The one the service runs under disappears with the service, so the end of a job the
      * user started by hand would otherwise be the moment a notification silently vanishes.
      */
     public static void showDbBuildFinished(Context context, String title, String text) {
+        showDbBuildFinished(context, title, text, true);
+    }
+
+    /**
+     * @param ok whether it went well; a build that didn't says so with a warning rather than
+     *           with the tick that means "done"
+     */
+    public static void showDbBuildFinished(Context context, String title, String text,
+                                           boolean ok) {
         initNotificationChannels(context);
 
         PendingIntent contentIntent = pendingActivity(context,
                 new Intent(context, SettingsActivity.class));
 
         Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_TASKS)
-                .setSmallIcon(R.drawable.ic_check_24dp)
+                .setSmallIcon(ok ? R.drawable.ic_check_24dp : R.drawable.ic_error_24dp)
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
                 .setContentTitle(title)

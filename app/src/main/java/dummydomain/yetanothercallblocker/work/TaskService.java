@@ -128,6 +128,7 @@ public class TaskService extends IntentService {
         MainDbDownloadingEvent sticky = new MainDbDownloadingEvent();
 
         DbCompileService.Result result = null;
+        String error = null;
 
         postStickyEvent(sticky);
         try {
@@ -139,15 +140,36 @@ public class TaskService extends IntentService {
             updateNotification(getString(R.string.filtering_db));
             new DbFilteringService(this, App.getSettings()).updateFilter(true);
         } catch (Exception e) {
-            LOG.warn("downloadMainDb()", e);
+            /*
+             * The whole trace goes to the log - that is what a report is read from - and the
+             * one line that says what happened goes where the user can see it, in the
+             * notification and on the database screen afterwards.
+             */
+            LOG.error("downloadMainDb() the build failed", e);
+
+            error = describe(e);
         } finally {
             removeStickyEvent(sticky);
         }
 
-        showBuildFinished(result);
+        showBuildFinished(result, error);
 
         postEvent(new MainDbDownloadFinishedEvent(
                 result != null && result.status == DbCompileService.Status.NO_SOURCES));
+    }
+
+    /** The short of it: what went wrong, in one line, for someone who is not reading a log. */
+    private static String describe(Throwable t) {
+        Throwable cause = t;
+        while (cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+        }
+
+        String message = cause.getLocalizedMessage();
+
+        return TextUtils.isEmpty(message)
+                ? cause.getClass().getSimpleName()
+                : cause.getClass().getSimpleName() + ": " + message;
     }
 
     /**
@@ -156,13 +178,14 @@ public class TaskService extends IntentService {
      * <p>The notification the service runs under goes away with the service, so the end of
      * something that takes minutes would otherwise be a notification quietly disappearing.
      */
-    private void showBuildFinished(DbCompileService.Result result) {
+    private void showBuildFinished(DbCompileService.Result result, String error) {
         String title;
         String text;
+        boolean ok = false;
 
         if (result == null || result.status == DbCompileService.Status.FAILED) {
             title = getString(R.string.db_build_failed);
-            text = getString(R.string.db_build_failed_text);
+            text = !TextUtils.isEmpty(error) ? error : getString(R.string.db_build_failed_text);
         } else if (result.status == DbCompileService.Status.NO_SOURCES) {
             title = getString(R.string.db_build_failed);
             text = getString(R.string.sources_none_enabled);
@@ -177,9 +200,16 @@ public class TaskService extends IntentService {
                     ? getString(R.string.db_build_done_text,
                             NumberFormat.getInstance().format(numbers), result.sources)
                     : getString(R.string.db_build_done_text_plain, result.sources);
+            ok = true;
         }
 
-        NotificationHelper.showDbBuildFinished(getApplicationContext(), title, text);
+        // the reason outlives the notification: the database screen says it until it is fixed
+        App.getSettings().setLastDbBuildError(ok ? "" : text);
+        App.getSettings().setLastDbBuildErrorTime(ok ? 0 : System.currentTimeMillis());
+
+        if (!ok) LOG.error("showBuildFinished() the database was not built: {}", text);
+
+        NotificationHelper.showDbBuildFinished(getApplicationContext(), title, text, ok);
     }
 
     private void updateSecondaryDb() {

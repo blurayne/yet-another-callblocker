@@ -60,6 +60,7 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_BUILD = "dbBuild";
     private static final String PREF_UPDATE = "dbUpdate";
     private static final String PREF_AUTO_UPDATE = "autoUpdateEnabled";
+    private static final String PREF_NOTIFY_AUTO_UPDATES = "notifyAutoUpdates";
     private static final String PREF_FILTERING = "dbFiltering";
     private static final String PREF_EXPORT = "dbExport";
     private static final String PREF_IMPORT = "dbImport";
@@ -98,15 +99,20 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
             return true;
         });
 
+        SwitchPreferenceCompat notifyAutoUpdates = requirePreference(PREF_NOTIFY_AUTO_UPDATES);
+        notifyAutoUpdates.setChecked(App.getSettings().getNotifyAutoUpdates());
+        notifyAutoUpdates.setOnPreferenceChangeListener((preference, newValue) -> {
+            App.getSettings().setNotifyAutoUpdates(Boolean.TRUE.equals(newValue));
+            return true;
+        });
+
         requirePreference(PREF_SOURCES).setOnPreferenceClickListener(preference -> {
             startActivity(NumberSourcesActivity.getIntent(requireContext()));
             return true;
         });
 
         requirePreference(PREF_BUILD).setOnPreferenceClickListener(preference -> {
-            Toast.makeText(requireContext(), R.string.sources_compiling,
-                    Toast.LENGTH_SHORT).show();
-
+            // the start and the end of it are said by TaskNotices, wherever it is started
             TaskService.start(requireContext(), TaskService.TASK_DOWNLOAD_MAIN_DB);
             return true;
         });
@@ -200,7 +206,25 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
             parts.add(getString(R.string.db_management_status_empty));
         }
 
-        requirePreference(PREF_STATUS).setSummary(TextUtils.join(" · ", parts));
+        String status = TextUtils.join(" · ", parts);
+
+        /*
+         * A build that went wrong is the first thing this screen should say: it ran in a
+         * service, its notification is long gone, and what is in the database is whatever the
+         * build before it left there.
+         */
+        String error = App.getSettings().getLastDbBuildError();
+        if (!TextUtils.isEmpty(error)) {
+            long when = App.getSettings().getLastDbBuildErrorTime();
+
+            status += "\n" + getString(R.string.db_management_status_failed,
+                    when > 0 ? DateUtils.getRelativeTimeSpanString(when,
+                            System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
+                            : getString(R.string.db_management_status_failed_when_unknown),
+                    error);
+        }
+
+        requirePreference(PREF_STATUS).setSummary(status);
 
         updateSources();
         updateFiltering(compiler);

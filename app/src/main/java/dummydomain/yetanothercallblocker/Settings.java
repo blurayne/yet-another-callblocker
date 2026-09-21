@@ -55,6 +55,10 @@ public class Settings extends GenericSettings {
     public static final String PREF_AUTO_UPDATE_SET_UP = "autoUpdateSetUp";
     public static final String PREF_LAST_UPDATE_TIME = "lastUpdateTime";
     public static final String PREF_LAST_UPDATE_CHECK_TIME = "lastUpdateCheckTime";
+    public static final String PREF_LAST_DB_BUILD_ERROR = "lastDbBuildError";
+    public static final String PREF_LAST_DB_BUILD_ERROR_TIME = "lastDbBuildErrorTime";
+    public static final String PREF_NOTIFY_AUTO_UPDATES = "notifyAutoUpdates";
+    public static final String PREF_CALLER_ID_TEMPLATE = "callerIdTemplate";
     public static final String PREF_DB_FILTERING_ENABLED = "dbFilteringEnabled";
     public static final String PREF_DB_FILTERING_PREFIXES_PREFILLED = "dbFilteringPrefixesPrefilled";
     public static final String PREF_DB_FILTERING_PREFIXES_TO_KEEP = "dbFilteringPrefixesToKeep";
@@ -607,6 +611,57 @@ public class Settings extends GenericSettings {
 
     public long getLastUpdateTime() {
         return getLong(PREF_LAST_UPDATE_TIME, 0);
+    }
+
+    /**
+     * How the caller is written for the phone app, or an empty string for the app's own way.
+     *
+     * @see CallerIdTemplate
+     */
+    public String getCallerIdTemplate() {
+        return getString(PREF_CALLER_ID_TEMPLATE, "");
+    }
+
+    public void setCallerIdTemplate(String template) {
+        setString(PREF_CALLER_ID_TEMPLATE, template != null ? template : "");
+    }
+
+    /**
+     * What went wrong the last time the database was built, or an empty string.
+     *
+     * <p>A build runs in a service and can end while nobody is looking at the app, so the
+     * reason is written down rather than only said once: the notification says it when it
+     * happens, and the database screen still says it afterwards.
+     */
+    public String getLastDbBuildError() {
+        return getString(PREF_LAST_DB_BUILD_ERROR, "");
+    }
+
+    public void setLastDbBuildError(String error) {
+        setString(PREF_LAST_DB_BUILD_ERROR, error != null ? error : "");
+    }
+
+    public long getLastDbBuildErrorTime() {
+        return getLong(PREF_LAST_DB_BUILD_ERROR_TIME, 0);
+    }
+
+    public void setLastDbBuildErrorTime(long timestamp) {
+        setLong(PREF_LAST_DB_BUILD_ERROR_TIME, timestamp);
+    }
+
+    /**
+     * Whether the updates that run on their own say so in the notification drawer.
+     *
+     * <p>Off by default: they run daily and in the background, and a notification for
+     * something nobody asked for at that moment is noise. What the user started by hand
+     * always shows, whatever this says.
+     */
+    public boolean getNotifyAutoUpdates() {
+        return getBoolean(PREF_NOTIFY_AUTO_UPDATES, false);
+    }
+
+    public void setNotifyAutoUpdates(boolean notify) {
+        setBoolean(PREF_NOTIFY_AUTO_UPDATES, notify);
     }
 
     public void setLastUpdateTime(long timestamp) {

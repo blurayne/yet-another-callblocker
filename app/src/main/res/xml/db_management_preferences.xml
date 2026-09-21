@@ -23,6 +23,12 @@
             app:summary="@string/auto_updates_summary"
             app:title="@string/auto_updates" />
 
+        <SwitchPreferenceCompat
+            app:key="notifyAutoUpdates"
+            app:persistent="false"
+            app:summary="@string/auto_updates_notify_summary"
+            app:title="@string/auto_updates_notify" />
+
         <Preference
             app:key="dbUpdate"
             app:persistent="false"

@@ -109,8 +109,7 @@ public class NumberSourcesActivity extends AppCompatActivity {
 
     /** Builds the database from the sources again, in the order the list has them. */
     public void onCompileClicked(MenuItem item) {
-        Toast.makeText(this, R.string.sources_compiling, Toast.LENGTH_SHORT).show();
-
+        // TaskNotices says that it started, here and wherever else a build is started
         TaskService.start(this, TaskService.TASK_DOWNLOAD_MAIN_DB);
     }
 
@@ -441,9 +440,11 @@ public class NumberSourcesActivity extends AppCompatActivity {
             private void fetch(NumberSource source) {
                 boolean database = source.getType() == NumberSource.Type.DATABASE;
 
-                Toast.makeText(NumberSourcesActivity.this,
-                        database ? R.string.sources_compiling : R.string.source_fetching,
-                        Toast.LENGTH_SHORT).show();
+                // a build says so by itself; fetching one source is over too quickly to
+                if (!database) {
+                    Toast.makeText(NumberSourcesActivity.this, R.string.source_fetching,
+                            Toast.LENGTH_SHORT).show();
+                }
 
                 TaskService.start(NumberSourcesActivity.this, database
                         ? TaskService.TASK_DOWNLOAD_MAIN_DB : TaskService.TASK_UPDATE_PHONE_BLOCK);

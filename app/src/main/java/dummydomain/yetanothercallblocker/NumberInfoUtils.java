@@ -139,12 +139,36 @@ public class NumberInfoUtils {
     }
 
     /**
+     * The user's own wording for this number, or null when there is none to apply.
+     *
+     * <p>The template is rendered once for the name and once for the line next to it; both
+     * are cheap string replacements on facts that are already in hand.
+     */
+    private static String renderTemplate(Context context, NumberInfo numberInfo) {
+        Settings settings = App.getSettings();
+
+        return CallerIdTemplate.isSet(settings)
+                ? CallerIdTemplate.render(context, numberInfo, settings.getCallerIdTemplate())
+                : null;
+    }
+
+    /**
      * Returns a name to show instead of the number (the "caller ID"),
      * or {@code null} if nothing is known about the number.
      *
      * @see CallerIdDirectoryProvider
      */
     public static String getCallerIdName(Context context, NumberInfo numberInfo) {
+        if (numberInfo == null || numberInfo.noNumber) return null;
+
+        String custom = renderTemplate(context, numberInfo);
+        if (custom != null) return CallerIdTemplate.firstLine(custom);
+
+        return getDefaultCallerIdName(context, numberInfo);
+    }
+
+    /** What the app shows when the user hasn't said what to show. */
+    static String getDefaultCallerIdName(Context context, NumberInfo numberInfo) {
         if (numberInfo == null || numberInfo.noNumber) return null;
 
         FeaturedDatabaseItem featuredItem = numberInfo.featuredDatabaseItem;
@@ -180,6 +204,16 @@ public class NumberInfoUtils {
      * (the ratings summary), or {@code null} if there's nothing to add.
      */
     public static String getCallerIdLabel(Context context, NumberInfo numberInfo) {
+        if (numberInfo == null || numberInfo.noNumber) return null;
+
+        String custom = renderTemplate(context, numberInfo);
+        if (custom != null) return CallerIdTemplate.rest(custom);
+
+        return getDefaultCallerIdLabel(context, numberInfo);
+    }
+
+    /** What the app puts next to the name when the user hasn't said what to put there. */
+    static String getDefaultCallerIdLabel(Context context, NumberInfo numberInfo) {
         if (numberInfo == null || numberInfo.noNumber) return null;
 
         CommunityDatabaseItem communityItem = numberInfo.communityDatabaseItem;

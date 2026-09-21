@@ -441,6 +441,17 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_build_table_failed">The numbers couldn\'t be written into the table. There may be no room left on the phone.</string>
     <string name="db_build_table_failed_reason">The numbers couldn\'t be written into the table: %s</string>
     <string name="db_build_interrupted">The build never finished \u2013 the app stopped running while it was working.</string>
+    <string name="background_work">Working in the background</string>
+    <string name="background_work_allowed">Allowed</string>
+    <string name="background_work_optimized">The battery saver decides when this app may run</string>
+    <string name="background_work_restricted">Restricted \u2013 this app may not work in the background</string>
+    <string name="background_work_before_build">Building takes several minutes and carries on with the app closed.\n\n%s\n\nA phone that stops this app in the background will end the build somewhere in the middle.</string>
+    <string name="background_work_open_settings">Open the settings</string>
+    <string name="background_work_build_anyway">Build anyway</string>
+    <string name="background_work_interrupted_hint">This app is not allowed to work in the background (%s), which is the likeliest reason.</string>
+    <string name="background_work_warning_title">The database wasn\'t built</string>
+    <string name="background_work_warning_text">%s \u2013 so the build was ended before it finished. Tap to allow this app to work in the background.</string>
+    <string name="db_building_message">The database is being built \u2013 what is shown here may be incomplete until it is done.</string>
     <string name="auto_updates_notify">Say when they run</string>
     <string name="auto_updates_notify_summary">Show a notification while an update that runs on its own is working. What you start by hand always shows one.</string>
     <string name="source_result_database">the database</string>

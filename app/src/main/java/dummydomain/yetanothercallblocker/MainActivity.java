@@ -35,6 +35,7 @@ import dummydomain.yetanothercallblocker.event.BlacklistChangedEvent;
 import dummydomain.yetanothercallblocker.event.BlacklistItemChangedEvent;
 import dummydomain.yetanothercallblocker.event.CallEndedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
+import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
 import dummydomain.yetanothercallblocker.event.WhitelistChangedEvent;
 
@@ -133,6 +134,8 @@ public class MainActivity extends AppCompatActivity {
 
         EventUtils.register(this);
 
+        updateBuildingMessage(); // it may have started while this screen was away
+
         checkPermissions();
 
         registerContactsObserver();
@@ -196,8 +199,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMainDbDownloading(MainDbDownloadingEvent event) {
+        updateBuildingMessage();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onMainDbDownloadFinished(MainDbDownloadFinishedEvent event) {
+        updateBuildingMessage();
+
         reloadCallLog();
+    }
+
+    /**
+     * Says when the database is being rebuilt underneath the list.
+     *
+     * <p>A build replaces what every row here is looked up in, so while one runs the list is
+     * slower than usual and some of it says less than it did. That is worth a line rather
+     * than looking like the app has gone wrong.
+     */
+    private void updateBuildingMessage() {
+        boolean building = EventUtils.bus().getStickyEvent(MainDbDownloadingEvent.class) != null;
+
+        findViewById(R.id.buildingMessage).setVisibility(building ? View.VISIBLE : View.GONE);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)

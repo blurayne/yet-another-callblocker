@@ -104,10 +104,29 @@ public class App extends Application {
         String text = getString(R.string.db_build_interrupted)
                 + (reason != null ? " \u00b7 " + reason : "");
 
+        /*
+         * A phone that doesn't let this app work in the background kills whatever is running
+         * the moment the screen goes off, which is the likeliest thing to have happened to a
+         * build that took minutes. Saying so here - and once in the drawer, where it can be
+         * acted on - is the difference between a mystery and a setting.
+         */
+        boolean restricted = BackgroundWorkHelper.needsAttention(this);
+
+        if (restricted) {
+            text += " \u00b7 " + getString(R.string.background_work_interrupted_hint,
+                    BackgroundWorkHelper.getStatus(this));
+        }
+
         LOG.error("noteInterruptedBuild() {}", text);
 
         settings.setLastDbBuildError(text);
         settings.setLastDbBuildErrorTime(System.currentTimeMillis());
+
+        if (restricted) {
+            NotificationHelper.showBackgroundWorkWarning(this,
+                    getString(R.string.background_work_warning_text,
+                            BackgroundWorkHelper.getStatus(this)));
+        }
     }
 
     private static Context getDeviceProtectedStorageContext(Context context) {

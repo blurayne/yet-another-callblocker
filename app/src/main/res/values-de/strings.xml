@@ -92,6 +92,17 @@
     <string name="db_build_table_failed">Die Nummern ließen sich nicht in die Tabelle schreiben. Womöglich ist kein Platz mehr auf dem Telefon.</string>
     <string name="db_build_table_failed_reason">Die Nummern ließen sich nicht in die Tabelle schreiben: %s</string>
     <string name="db_build_interrupted">Der Aufbau wurde nicht fertig \u2013 die App lief nicht mehr, während sie daran war.</string>
+    <string name="background_work">Im Hintergrund arbeiten</string>
+    <string name="background_work_allowed">Erlaubt</string>
+    <string name="background_work_optimized">Die Akkuverwaltung entscheidet, wann diese App laufen darf</string>
+    <string name="background_work_restricted">Eingeschränkt \u2013 diese App darf nicht im Hintergrund arbeiten</string>
+    <string name="background_work_before_build">Der Aufbau dauert einige Minuten und läuft auch bei geschlossener App weiter.\n\n%s\n\nEin Telefon, das diese App im Hintergrund stoppt, beendet den Aufbau mittendrin.</string>
+    <string name="background_work_open_settings">Einstellungen öffnen</string>
+    <string name="background_work_build_anyway">Trotzdem bauen</string>
+    <string name="background_work_interrupted_hint">Diese App darf nicht im Hintergrund arbeiten (%s), was die wahrscheinlichste Ursache ist.</string>
+    <string name="background_work_warning_title">Die Datenbank wurde nicht gebaut</string>
+    <string name="background_work_warning_text">%s \u2013 deshalb wurde der Aufbau beendet, bevor er fertig war. Tippen Sie, um der App das Arbeiten im Hintergrund zu erlauben.</string>
+    <string name="db_building_message">Die Datenbank wird gerade gebaut \u2013 die Angaben hier können bis dahin unvollständig sein.</string>
     <string name="auto_updates_notify">Bei automatischen Läufen benachrichtigen</string>
     <string name="auto_updates_notify_summary">Zeigt eine Benachrichtigung, solange ein selbsttätiger Abgleich läuft. Was Sie selbst anstoßen, zeigt immer eine.</string>
     <string name="source_result_database">die Datenbank</string>

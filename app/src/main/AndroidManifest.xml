@@ -16,6 +16,15 @@
     <uses-permission android:name="android.permission.READ_LOG" android:maxSdkVersion="15" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!--
+        So that "let this app work in the background" can be answered with one tap rather
+        than found in the settings. It is only ever asked when something has just been cut
+        short by it, and the app works without it being granted.
+    -->
+    <uses-permission
+        android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+        tools:ignore="BatteryLife" />
+
     <queries>
         <intent>
             <action android:name="android.intent.action.DIAL" />

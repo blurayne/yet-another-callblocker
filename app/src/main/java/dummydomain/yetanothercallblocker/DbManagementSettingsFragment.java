@@ -61,6 +61,7 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_UPDATE = "dbUpdate";
     private static final String PREF_AUTO_UPDATE = "autoUpdateEnabled";
     private static final String PREF_NOTIFY_AUTO_UPDATES = "notifyAutoUpdates";
+    private static final String PREF_BACKGROUND_WORK = "dbBackgroundWork";
     private static final String PREF_FILTERING = "dbFiltering";
     private static final String PREF_EXPORT = "dbExport";
     private static final String PREF_IMPORT = "dbImport";
@@ -111,9 +112,13 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
             return true;
         });
 
+        requirePreference(PREF_BACKGROUND_WORK).setOnPreferenceClickListener(preference -> {
+            BackgroundWorkHelper.openSettings(requireContext());
+            return true;
+        });
+
         requirePreference(PREF_BUILD).setOnPreferenceClickListener(preference -> {
-            // the start and the end of it are said by TaskNotices, wherever it is started
-            TaskService.start(requireContext(), TaskService.TASK_DOWNLOAD_MAIN_DB);
+            build();
             return true;
         });
 
@@ -159,6 +164,35 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         EventUtils.register(this);
 
         updateStatus();
+
+        // it is changed in the system settings, which is somewhere this screen has just been
+        requirePreference(PREF_BACKGROUND_WORK)
+                .setSummary(BackgroundWorkHelper.getStatus(requireContext()));
+    }
+
+    /**
+     * Starts a build, after saying what will stop it if anything will.
+     *
+     * <p>It takes minutes and carries on with the app closed, so a phone that doesn't let
+     * this app work in the background will kill it somewhere in the middle - and what that
+     * looks like from here is a build that never finishes and never says why.
+     */
+    private void build() {
+        if (!BackgroundWorkHelper.needsAttention(requireContext())) {
+            // the start and the end of it are said by TaskNotices, wherever it is started
+            TaskService.start(requireContext(), TaskService.TASK_DOWNLOAD_MAIN_DB);
+            return;
+        }
+
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.background_work)
+                .setMessage(getString(R.string.background_work_before_build,
+                        BackgroundWorkHelper.getStatus(requireContext())))
+                .setPositiveButton(R.string.background_work_open_settings,
+                        (d, w) -> BackgroundWorkHelper.openSettings(requireContext()))
+                .setNegativeButton(R.string.background_work_build_anyway, (d, w) ->
+                        TaskService.start(requireContext(), TaskService.TASK_DOWNLOAD_MAIN_DB))
+                .show();
     }
 
     @Override

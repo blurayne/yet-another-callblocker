@@ -15,6 +15,18 @@
         android:text="@string/call_log_permission_message"
         android:visibility="gone" />
 
+    <!-- says why the list is what it is while the database underneath it is being replaced -->
+    <TextView
+        android:id="@+id/buildingMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:padding="@dimen/item_padding"
+        android:text="@string/db_building_message"
+        android:textColor="@android:color/white"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/callLogList"
         android:layout_width="match_parent"

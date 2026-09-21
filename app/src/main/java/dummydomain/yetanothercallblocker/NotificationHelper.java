@@ -7,7 +7,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.text.TextUtils;
 
 import androidx.core.app.NotificationCompat;
@@ -38,6 +40,9 @@ public class NotificationHelper {
 
     /** The updates that run on their own, for whoever asked to be told about them. */
     private static final int NOTIFICATION_ID_AUTO_UPDATE = 7;
+
+    /** The phone not letting the app work while nobody is looking at it. */
+    private static final int NOTIFICATION_ID_BACKGROUND_WORK = 8;
 
     private static final String CHANNEL_GROUP_ID_INCOMING_CALLS = "incoming_calls";
     private static final String CHANNEL_GROUP_ID_BLOCKED_CALLS = "blocked_calls";
@@ -149,6 +154,30 @@ public class NotificationHelper {
 
     public static void hidePhoneBlockTokenNotification(Context context) {
         NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_PHONE_BLOCK_TOKEN);
+    }
+
+    /**
+     * Says that the phone is stopping the app from working in the background.
+     *
+     * <p>Posted when that has just cost something - a build that never came back - because
+     * that is the moment it means anything. Tapping it goes where it can be changed.
+     */
+    public static void showBackgroundWorkWarning(Context context, String text) {
+        initNotificationChannels(context);
+
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + context.getPackageName()));
+
+        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_WARNINGS)
+                .setSmallIcon(R.drawable.ic_error_24dp)
+                .setContentIntent(pendingActivity(context, intent))
+                .setAutoCancel(true)
+                .setContentTitle(context.getString(R.string.background_work_warning_title))
+                .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .build();
+
+        notify(context, NOTIFICATION_ID_BACKGROUND_WORK, notification);
     }
 
     public static Notification createServiceNotification(Context context, String title) {

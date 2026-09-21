@@ -96,8 +96,6 @@ public class ExitReasons {
                 case ApplicationExitInfo.REASON_EXIT_SELF:
                 case ApplicationExitInfo.REASON_USER_REQUESTED:
                 case ApplicationExitInfo.REASON_USER_STOPPED:
-                case ApplicationExitInfo.REASON_PACKAGE_UPDATED:
-                case ApplicationExitInfo.REASON_PACKAGE_STATE_CHANGE:
                 case ApplicationExitInfo.REASON_PERMISSION_CHANGE:
                     continue;
 
@@ -155,6 +153,12 @@ public class ExitReasons {
 
     @RequiresApi(Build.VERSION_CODES.R)
     private static String getReasonName(int reason) {
+        // one of the few the app can be told about that only exists from Android 12 on
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                && reason == ApplicationExitInfo.REASON_FREEZER) {
+            return "frozen";
+        }
+
         switch (reason) {
             case ApplicationExitInfo.REASON_LOW_MEMORY: return "killed: the phone was low on memory";
             case ApplicationExitInfo.REASON_CRASH: return "crash";
@@ -163,13 +167,10 @@ public class ExitReasons {
             case ApplicationExitInfo.REASON_SIGNALED: return "killed by a signal";
             case ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE: return "killed: using too much";
             case ApplicationExitInfo.REASON_DEPENDENCY_DIED: return "something it depended on died";
-            case ApplicationExitInfo.REASON_FREEZER: return "frozen";
             case ApplicationExitInfo.REASON_INITIALIZATION_FAILURE: return "couldn't start";
             case ApplicationExitInfo.REASON_EXIT_SELF: return "ended by itself";
             case ApplicationExitInfo.REASON_USER_REQUESTED: return "closed by the user";
             case ApplicationExitInfo.REASON_USER_STOPPED: return "stopped by the user";
-            case ApplicationExitInfo.REASON_PACKAGE_UPDATED: return "updated";
-            case ApplicationExitInfo.REASON_PACKAGE_STATE_CHANGE: return "the app changed";
             case ApplicationExitInfo.REASON_PERMISSION_CHANGE: return "a permission changed";
             case ApplicationExitInfo.REASON_OTHER: return "other";
             default: return "unknown (" + reason + ")";

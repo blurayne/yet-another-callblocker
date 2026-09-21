@@ -169,6 +169,7 @@ public class ProviderService {
 
         save(providers);
         setSecret(id, null);
+        setPassword(id, null);
     }
 
     /** The token of a provider, kept where a backup only reaches when asked. */
@@ -209,6 +210,43 @@ public class ProviderService {
             settings.setProviderSecrets(secrets.length() != 0 ? secrets.toString() : "");
         } catch (Exception e) {
             LOG.warn("setSecret()", e);
+        }
+    }
+
+    /**
+     * The password of a provider, for the ones that are behind a plain login.
+     *
+     * <p>Kept apart from the token above: one login has a user and a password, an API has a
+     * key, and a provider that is switched from the one to the other keeps both until it is
+     * told otherwise.
+     */
+    public String getPassword(String id) {
+        if (TextUtils.isEmpty(id)) return null;
+
+        try {
+            JSONObject passwords = new JSONObject(orEmptyObject(settings.getProviderPasswords()));
+            return passwords.optString(id, null);
+        } catch (Exception e) {
+            LOG.warn("getPassword()", e);
+            return null;
+        }
+    }
+
+    public void setPassword(String id, String password) {
+        if (TextUtils.isEmpty(id)) return;
+
+        try {
+            JSONObject passwords = new JSONObject(orEmptyObject(settings.getProviderPasswords()));
+
+            if (TextUtils.isEmpty(password)) {
+                passwords.remove(id);
+            } else {
+                passwords.put(id, password);
+            }
+
+            settings.setProviderPasswords(passwords.length() != 0 ? passwords.toString() : "");
+        } catch (Exception e) {
+            LOG.warn("setPassword()", e);
         }
     }
 

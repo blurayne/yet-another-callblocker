@@ -191,6 +191,20 @@ The same placeholders the address of a search uses work here: `{number}` (`+4930
 `{token}`. An address that contains one of them is fetched with GET; one that contains none is
 asked with POST and the body above.
 
+**Saying who we are.** The login of a provider is one of three things, and each has its own
+field on the provider screen:
+
+* *None* - nothing is sent. A key can still be written into the address itself as `{token}`,
+  which is how an API that wants its key in the query is described without the app knowing
+  anything about that API.
+* *API token (Bearer)* - the token goes into `Authorization: Bearer <token>`.
+* *User name/password (Basic)* - the user name and the password go into
+  `Authorization: Basic <base64 of user:password>`. The password is kept apart from the token:
+  they are two different secrets, and setting one never overwrites the other.
+
+Both the token and the password stay on the phone and are written into a backup only when
+"include passwords and tokens" is switched on.
+
 **The answer.** JSON, and every field is optional:
 
 ```json

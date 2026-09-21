@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -106,6 +107,22 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/passwordTextField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/item_padding"
+                android:hint="@string/provider_password">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/passwordEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
         </LinearLayout>
 
         <!-- an API the app asks itself -->
@@ -159,7 +176,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/item_padding"
-            android:hint="@string/provider_pattern">
+            android:hint="@string/provider_pattern"
+            app:expandedHintEnabled="false"
+            app:placeholderText="@string/provider_pattern_all">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/patternEditText"
@@ -185,51 +204,59 @@
             android:text="@string/provider_phone_block_notice"
             android:textSize="12sp" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tokenTextField"
+        <LinearLayout
+            android:id="@+id/tokenBlock"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/item_padding"
-            android:hint="@string/provider_token">
+            android:orientation="vertical">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/tokenEditText"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tokenTextField"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword"
-                android:maxLines="1" />
+                android:layout_marginTop="@dimen/item_padding"
+                android:hint="@string/provider_token">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/tokenEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:maxLines="1" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/provider_token_notice"
-            android:textSize="12sp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/checkTokenButton"
-                style="?attr/borderlessButtonStyle"
-                android:layout_width="wrap_content"
+            <TextView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="-4dp"
-                android:layout_marginStart="-4dp"
-                android:onClick="onCheckTokenClicked"
-                android:text="@string/phone_block_check_token" />
+                android:layout_marginTop="4dp"
+                android:text="@string/provider_token_notice"
+                android:textSize="12sp" />
 
-            <Button
-                android:id="@+id/getTokenButton"
-                style="?attr/borderlessButtonStyle"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="onGetTokenClicked"
-                android:text="@string/phone_block_get_token" />
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/checkTokenButton"
+                    style="?attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="-4dp"
+                    android:layout_marginStart="-4dp"
+                    android:onClick="onCheckTokenClicked"
+                    android:text="@string/phone_block_check_token" />
+
+                <Button
+                    android:id="@+id/getTokenButton"
+                    style="?attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="onGetTokenClicked"
+                    android:text="@string/phone_block_get_token" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

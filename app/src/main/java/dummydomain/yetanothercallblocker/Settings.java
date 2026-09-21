@@ -38,6 +38,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_SOURCES_MIGRATED = "sourcesMigrated";
     public static final String PREF_PROVIDERS = "providers";
     public static final String PREF_PROVIDER_SECRETS = "providerSecrets";
+    public static final String PREF_PROVIDER_PASSWORDS = "providerPasswords";
     public static final String PREF_PROVIDERS_SEEDED = "providersSeeded";
     public static final String PREF_PROVIDERS_SEEDED_VERSION = "providersSeededVersion";
     public static final String PREF_BACKUP_DIRECTORY = "backupDirectory";
@@ -411,6 +412,22 @@ public class Settings extends GenericSettings {
 
     public void setProviderSecrets(String secrets) {
         setString(PREF_PROVIDER_SECRETS, secrets);
+    }
+
+    /**
+     * The passwords of the providers, kept apart from the tokens above.
+     *
+     * <p>A token and a password are not the same thing: the token is a key the provider
+     * handed out for its API and can hand out again, the password belongs to a login and to
+     * whoever typed it. They are written down separately so that changing one never touches
+     * the other.
+     */
+    public String getProviderPasswords() {
+        return getString(PREF_PROVIDER_PASSWORDS, "");
+    }
+
+    public void setProviderPasswords(String passwords) {
+        setString(PREF_PROVIDER_PASSWORDS, passwords);
     }
 
     /** Whether the ones the app knows have been put into the list; see the version below. */

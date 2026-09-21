@@ -5,12 +5,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -53,7 +56,8 @@ public class EditProviderActivity extends AppCompatActivity {
     private Provider provider;
 
     private TextInputLayout nameTextField, searchUrlTextField, reportUrlTextField,
-            patternTextField, usernameTextField, apiUrlTextField, tokenTextField;
+            patternTextField, usernameTextField, passwordTextField, apiUrlTextField,
+            tokenTextField;
     private Spinner authSpinner, apiSpinner;
     private SwitchCompat apiSwitch, enabledSwitch;
 
@@ -70,6 +74,7 @@ public class EditProviderActivity extends AppCompatActivity {
         reportUrlTextField = findViewById(R.id.reportUrlTextField);
         patternTextField = findViewById(R.id.patternTextField);
         usernameTextField = findViewById(R.id.usernameTextField);
+        passwordTextField = findViewById(R.id.passwordTextField);
         apiUrlTextField = findViewById(R.id.apiUrlTextField);
         tokenTextField = findViewById(R.id.tokenTextField);
         authSpinner = findViewById(R.id.authSpinner);
@@ -117,6 +122,22 @@ public class EditProviderActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
+        TextWatcher tokenWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                updateTokenField();
+            }
+        };
+
+        editTextOf(searchUrlTextField).addTextChangedListener(tokenWatcher);
+        editTextOf(reportUrlTextField).addTextChangedListener(tokenWatcher);
+
         updateMode();
 
         boolean phoneBlock = Provider.ID_PHONE_BLOCK.equals(provider.getId());
@@ -131,6 +152,8 @@ public class EditProviderActivity extends AppCompatActivity {
 
         tokenTextField.setHint(getString(phoneBlock
                 ? R.string.provider_token_phone_block : R.string.provider_token));
+
+        updateTokenField();
     }
 
     @Override
@@ -181,6 +204,9 @@ public class EditProviderActivity extends AppCompatActivity {
 
         // the token is kept apart from the list, so it is saved apart from it too
         providerService.setSecret(provider.getId(), getString(tokenTextField));
+
+        // and the password apart from the token: a login is not an API key
+        providerService.setPassword(provider.getId(), getString(passwordTextField));
 
         finish();
     }
@@ -260,6 +286,7 @@ public class EditProviderActivity extends AppCompatActivity {
 
         if (providerService != null) {
             setString(tokenTextField, providerService.getSecret(provider.getId()));
+            setString(passwordTextField, providerService.getPassword(provider.getId()));
         }
 
         enabledSwitch.setChecked(provider.isEnabled());
@@ -274,12 +301,40 @@ public class EditProviderActivity extends AppCompatActivity {
 
         if (!api) updateAuthFields();
         if (api) updateApiFields();
+
+        updateTokenField();
     }
 
-    /** A user name is only asked for where the login has one. */
+    /** A user name and a password are only asked for where the login has them. */
     private void updateAuthFields() {
-        usernameTextField.setVisibility(selected(authSpinner, Provider.Auth.values())
-                == Provider.Auth.BASIC ? View.VISIBLE : View.GONE);
+        boolean basic = selected(authSpinner, Provider.Auth.values()) == Provider.Auth.BASIC;
+
+        usernameTextField.setVisibility(basic ? View.VISIBLE : View.GONE);
+        passwordTextField.setVisibility(basic ? View.VISIBLE : View.GONE);
+
+        updateTokenField();
+    }
+
+    /**
+     * The token is asked for where one is any use, and nowhere else.
+     *
+     * <p>That is: an API, which is opened with a key; a login that says Bearer; an address
+     * that has {@code {token}} written into it; and PhoneBlock, whose row holds the token of
+     * the account the app reports numbers to whatever else is set here.
+     */
+    private void updateTokenField() {
+        findViewById(R.id.tokenBlock).setVisibility(wantsToken() ? View.VISIBLE : View.GONE);
+    }
+
+    private boolean wantsToken() {
+        if (Provider.ID_PHONE_BLOCK.equals(provider.getId())) return true;
+
+        if (apiSwitch.isChecked()) return true;
+
+        if (selected(authSpinner, Provider.Auth.values()) == Provider.Auth.BEARER) return true;
+
+        return getString(searchUrlTextField).contains(Provider.PLACEHOLDER_TOKEN)
+                || getString(reportUrlTextField).contains(Provider.PLACEHOLDER_TOKEN);
     }
 
     /** The two APIs the app knows live at addresses it knows; only a custom one is typed. */
@@ -348,12 +403,16 @@ public class EditProviderActivity extends AppCompatActivity {
         String getName(T value);
     }
 
+    private EditText editTextOf(TextInputLayout textInputLayout) {
+        return Objects.requireNonNull(textInputLayout.getEditText());
+    }
+
     private String getString(TextInputLayout textInputLayout) {
-        return Objects.requireNonNull(textInputLayout.getEditText()).getText().toString().trim();
+        return editTextOf(textInputLayout).getText().toString().trim();
     }
 
     private void setString(TextInputLayout textInputLayout, String value) {
-        Objects.requireNonNull(textInputLayout.getEditText()).setText(value);
+        editTextOf(textInputLayout).setText(value);
     }
 
 }

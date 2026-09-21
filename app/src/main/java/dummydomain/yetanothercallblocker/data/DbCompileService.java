@@ -106,9 +106,26 @@ public class DbCompileService {
 
     }
 
-    /** Reports which source is being fetched. */
+    /** Reports what the build is doing and how far it has got. */
     public interface ProgressListener {
+
+        /**
+         * A step of the build has started.
+         *
+         * <p>Building is four jobs of quite different character - fetching the database,
+         * unpacking it, reading every source into the table, and filtering it - and which of
+         * them is running is worth more to someone watching a bar than the bar itself.
+         *
+         * @param titleResId what to call it
+         */
+        void onPhase(int titleResId);
+
         void onProgress(int current, int total);
+    }
+
+    /** Says which step started, when anyone is listening. */
+    private static void phase(ProgressListener listener, int titleResId) {
+        if (listener != null) listener.onPhase(titleResId);
     }
 
     private final Context context;
@@ -162,7 +179,9 @@ public class DbCompileService {
          * schedule says so. What changes in between is what the other sources carry.
          */
         if (needsDownload(base)) {
-            String failure = downloadBase(base);
+            phase(listener, R.string.main_db_downloading);
+
+            String failure = downloadBase(base, listener);
 
             if (failure != null) {
                 LOG.error("compile() the database itself couldn't be fetched: {}", failure);
@@ -192,6 +211,8 @@ public class DbCompileService {
          */
         YacbHolder.getCommunityDatabase().resetSecondaryDatabase();
 
+        if (ordered.size() > 1) phase(listener, R.string.source_fetching);
+
         for (int i = 1; i < ordered.size(); i++) {
             if (listener != null) listener.onProgress(i + 1, total);
 
@@ -205,9 +226,12 @@ public class DbCompileService {
                     context.getString(R.string.db_build_not_readable));
         }
 
-        if (!buildNumbersTable(ordered, listener)) {
-            return new Result(Status.FAILED, total - failed, failed,
-                    context.getString(R.string.db_build_table_failed));
+        phase(listener, R.string.reading_sources);
+
+        String tableFailure = buildNumbersTable(ordered, listener);
+
+        if (tableFailure != null) {
+            return new Result(Status.FAILED, total - failed, failed, tableFailure);
         }
 
         LOG.info("compile() built the database from {} of {} sources", total - failed, total);
@@ -248,7 +272,7 @@ public class DbCompileService {
      *
      * @return null when it worked, otherwise what went wrong
      */
-    private String downloadBase(NumberSource source) {
+    private String downloadBase(NumberSource source, ProgressListener listener) {
         LOG.debug("downloadBase() {}", source.getUrl());
 
         if (TextUtils.isEmpty(source.getUrl())) {
@@ -279,7 +303,7 @@ public class DbCompileService {
              * source shouldn't have to repack a database to be usable.
              */
             downloaded = Boolean.FALSE.equals(looksLikeZip(source))
-                    ? unpackBase(source)
+                    ? unpackBase(source, listener)
                     : YacbHolder.getDbManager().downloadMainDb(source.getUrl());
         } catch (Exception e) {
             LOG.error("downloadBase() failed", e);
@@ -395,7 +419,7 @@ public class DbCompileService {
      * <p>The new one is unpacked beside the old one and only takes its place once it is
      * whole, so a download that is cut short leaves what was there working.
      */
-    private boolean unpackBase(NumberSource source) {
+    private boolean unpackBase(NumberSource source, ProgressListener listener) {
         File dataDir = new File(YacbHolder.getStorage().getDataDirPath());
 
         String name = dirName();
@@ -408,6 +432,8 @@ public class DbCompileService {
 
         try {
             if (!download(source, archive, false)) return false;
+
+            phase(listener, R.string.unpacking_db);
 
             FileUtils.delete(tempDir);
             createDir(tempDir);
@@ -682,7 +708,7 @@ public class DbCompileService {
      * <p>The copy is made while the table is still whole, because filtering is what happens
      * next and there has to be something to go back to that isn't a download.
      */
-    private boolean buildNumbersTable(List<NumberSource> sources, ProgressListener listener) {
+    private String buildNumbersTable(List<NumberSource> sources, ProgressListener listener) {
         NumbersCompiler compiler = new NumbersCompiler(context);
 
         String dataDir = YacbHolder.getStorage().getDataDirPath();
@@ -693,9 +719,20 @@ public class DbCompileService {
                 getLayersDir(),
                 listener != null ? listener::onProgress : null);
 
+        /*
+         * The library keeps what it read in memory - the slices it was asked about, and the
+         * tree above them - and the table was just built out of the same files. Letting go of
+         * that before the filtering walks the table again is free, and on a database of a few
+         * hundred thousand files it is the difference between filtering and running out.
+         */
+        YacbHolder.getCommunityDatabase().reload();
+
         if (!result.ok) {
-            LOG.error("buildNumbersTable() the table couldn't be built");
-            return false;
+            LOG.error("buildNumbersTable() the table couldn't be built: {}", result.error);
+
+            return result.error != null
+                    ? context.getString(R.string.db_build_table_failed_reason, result.error)
+                    : context.getString(R.string.db_build_table_failed);
         }
 
         noteSourceMeta(compiler, sources);
@@ -711,7 +748,7 @@ public class DbCompileService {
             if (!settings.getDbFilteringKeepMaster()) compiler.dropShadowCopy();
         }
 
-        return true;
+        return null;
     }
 
     /**

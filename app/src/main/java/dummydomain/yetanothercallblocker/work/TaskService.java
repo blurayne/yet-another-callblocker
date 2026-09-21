@@ -46,6 +46,12 @@ public class TaskService extends IntentService {
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskService.class);
 
+    /** How often the notification is allowed to say how far along something is. */
+    private static final long PROGRESS_INTERVAL_MS = 500;
+
+    /** When it last did. */
+    private long lastProgressTime;
+
     public static void start(Context context, String task) {
         Intent intent = new Intent(context, TaskService.class);
         intent.setAction(task);
@@ -115,6 +121,26 @@ public class TaskService extends IntentService {
         updateNotification(title, -1, -1);
     }
 
+    /**
+     * Whether it is worth saying again.
+     *
+     * <p>A database can be a few hundred thousand files, and one notification per file is
+     * hundreds of thousands of trips to the system - which takes longer than reading the
+     * files does, and gets the app throttled for the trouble. Twice a second is as much as
+     * anyone can read anyway; the first step and the last are always shown.
+     */
+    private boolean progressIsDue(int current, int total) {
+        long now = System.currentTimeMillis();
+
+        if (current > 1 && current < total && now - lastProgressTime < PROGRESS_INTERVAL_MS) {
+            return false;
+        }
+
+        lastProgressTime = now;
+
+        return true;
+    }
+
     /** The same notification, with a bar when there is something to count. */
     private void updateNotification(String title, int current, int total) {
         NotificationHelper.notify(getApplicationContext(),
@@ -132,15 +158,33 @@ public class TaskService extends IntentService {
 
         postStickyEvent(sticky);
         try {
-            result = new DbCompileService(this, App.getSettings()).compile((current, total) ->
-                    updateNotification(getString(R.string.compiling_db, current, total),
-                            current, total));
+            result = new DbCompileService(this, App.getSettings())
+                    .compile(new DbCompileService.ProgressListener() {
+                        @Override
+                        public void onPhase(int titleResId) {
+                            // there are four of them in a build; each one is worth saying
+                            lastProgressTime = 0;
+                            updateNotification(getString(titleResId));
+                        }
+
+                        @Override
+                        public void onProgress(int current, int total) {
+                            if (!progressIsDue(current, total)) return;
+
+                            updateNotification(getString(R.string.compiling_db, current, total),
+                                    current, total);
+                        }
+                    });
 
             // what was just fetched is unfiltered, so the filter has to be applied again
             updateNotification(getString(R.string.filtering_db));
             new DbFilteringService(this, App.getSettings()).updateFilter(true);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             /*
+             * Everything, an OutOfMemoryError included: a build that ends in a message is
+             * worth more than an app that disappears, and running out of memory is what a
+             * database of a few hundred thousand files does on a small phone.
+             *
              * The whole trace goes to the log - that is what a report is read from - and the
              * one line that says what happened goes where the user can see it, in the
              * notification and on the database screen afterwards.

@@ -10,7 +10,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import dummydomain.yetanothercallblocker.App;
@@ -27,6 +30,13 @@ public class DebuggingUtils {
         Thread.UncaughtExceptionHandler customHandler = (t, e) -> {
             try {
                 handleCrash(e);
+            } catch (Throwable ignored) {
+                /*
+                 * Writing down a crash can fail for the same reason as the crash itself -
+                 * there is no memory left to write it with - and a handler that then throws
+                 * is a crash with nothing said about either of them. The one the system
+                 * installed still gets its turn below, which is what ends the process.
+                 */
             } finally {
                 if (defaultHandler != null) {
                     defaultHandler.uncaughtException(t, e);
@@ -64,6 +74,43 @@ public class DebuggingUtils {
                 appendDeviceInfo(path);
             } catch (IOException | InterruptedException ex) {
                 ex.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * The crash reports and saved logs that are lying around, newest first.
+     *
+     * <p>They are written into the app's own directories, where nothing but adb can reach
+     * them - so the app has to hand them over itself. A log exported after the fact holds
+     * nothing of the crash: an app may only read its own process's log, and the process that
+     * crashed is not the one doing the reading.
+     */
+    public static List<File> listReports(Context context) {
+        List<File> reports = new ArrayList<>();
+
+        collectReports(context.getCacheDir(), reports);
+        collectReports(FileUtils.getExternalFilesDir(context), reports);
+
+        Collections.sort(reports, (a, b) -> {
+            long difference = b.lastModified() - a.lastModified();
+
+            return difference < 0 ? -1 : difference > 0 ? 1 : 0;
+        });
+
+        return reports;
+    }
+
+    private static void collectReports(File dir, List<File> reports) {
+        File[] files = dir != null ? dir.listFiles() : null;
+        if (files == null) return;
+
+        for (File file : files) {
+            String name = file.getName();
+
+            if (file.isFile() && name.endsWith(".txt")
+                    && (name.startsWith("crash_") || name.startsWith("logcat_"))) {
+                reports.add(file);
             }
         }
     }

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.List;
 
 import dummydomain.yetanothercallblocker.BuildConfig;
 
@@ -35,6 +36,32 @@ public class FileUtils {
             shareBuilder.startChooser();
         } catch (Exception e) {
             LOG.warn("shareFile()", e);
+        }
+    }
+
+    /** Shares several files at once, for the times when one of them says little by itself. */
+    public static void shareFiles(Activity activity, List<File> files) {
+        if (files == null || files.isEmpty()) return;
+
+        if (files.size() == 1) {
+            shareFile(activity, files.get(0));
+            return;
+        }
+
+        try {
+            ShareCompat.IntentBuilder shareBuilder = ShareCompat.IntentBuilder.from(activity)
+                    .setType("text/plain");
+
+            for (File file : files) {
+                shareBuilder.addStream(FileProvider.getUriForFile(
+                        activity, FILEPROVIDER_AUTHORITY, file));
+            }
+
+            shareBuilder.getIntent().addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            shareBuilder.startChooser();
+        } catch (Exception e) {
+            LOG.warn("shareFiles()", e);
         }
     }
 

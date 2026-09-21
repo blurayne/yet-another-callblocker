@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
@@ -26,6 +27,7 @@ public class AdvancedSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_SCREEN_ADVANCED = "screenAdvanced";
     private static final String PREF_COUNTRY_CODES_INFO = "countryCodesInfo";
     private static final String PREF_EXPORT_LOGCAT = "exportLogcat";
+    private static final String PREF_SHARE_CRASH_REPORTS = "shareCrashReports";
     private static final String PREF_CATEGORY_LIMITED_MODE = "categoryLimitedMode";
     private static final String PREF_LIMITED_MODE_INFO = "limitedModeInfo";
 
@@ -43,6 +45,11 @@ public class AdvancedSettingsFragment extends BaseSettingsFragment {
     protected void initScreen() {
         requirePreference(PREF_EXPORT_LOGCAT).setOnPreferenceClickListener(preference -> {
             exportLogcat();
+            return true;
+        });
+
+        requirePreference(PREF_SHARE_CRASH_REPORTS).setOnPreferenceClickListener(preference -> {
+            shareCrashReports();
             return true;
         });
 
@@ -102,6 +109,28 @@ public class AdvancedSettingsFragment extends BaseSettingsFragment {
         setPrefChangeListener(Settings.PREF_COUNTRY_CODE_OVERRIDE, countryCodeChangeListener);
         setPrefChangeListener(Settings.PREF_COUNTRY_CODE_FOR_REVIEWS_OVERRIDE,
                 countryCodeChangeListener);
+    }
+
+    /**
+     * Hands over what the app wrote down when it last crashed.
+     *
+     * <p>The log exported above is this run's, and a crash is by definition not in it: an app
+     * may only read its own process's log, and the process that crashed is not the one doing
+     * the reading. What the app writes for itself when it goes down is the only thing that
+     * survives it, and until now there was no way to get at it without adb.
+     */
+    private void shareCrashReports() {
+        Activity activity = requireActivity();
+
+        List<File> reports = DebuggingUtils.listReports(activity);
+
+        if (reports.isEmpty()) {
+            Toast.makeText(activity, R.string.share_crash_reports_none, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // the newest few; everything ever written would be a long list of old news
+        FileUtils.shareFiles(activity, reports.subList(0, Math.min(reports.size(), 5)));
     }
 
     /** Puts the log of this run in a file and offers to share it. */

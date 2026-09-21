@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,11 +42,18 @@ public class NumbersCompiler {
         public final boolean ok;
         public final long numbers;
         public final int sources;
+        /** What went wrong, for whoever has to read it, or null. */
+        public final String error;
 
         Result(boolean ok, long numbers, int sources) {
+            this(ok, numbers, sources, null);
+        }
+
+        Result(boolean ok, long numbers, int sources, String error) {
             this.ok = ok;
             this.numbers = numbers;
             this.sources = sources;
+            this.error = error;
         }
 
     }
@@ -83,6 +89,9 @@ public class NumbersCompiler {
     /** How many entries are written before the work so far is made permanent. */
     private static final int COMMIT_EVERY = 200_000;
 
+    /** And how many files, for a database whose files hold a handful of numbers each. */
+    private static final int COMMIT_EVERY_FILES = 5_000;
+
     private final Context context;
 
     public NumbersCompiler(Context context) {
@@ -110,55 +119,37 @@ public class NumbersCompiler {
 
             helper.recreate(db);
 
-            List<File> baseFiles = listFiles(baseDir, SLICE_PREFIX, SLICE_POSTFIX);
-            List<File> secondaryFiles = listFiles(secondaryDir, "", SECONDARY_POSTFIX);
+            List<String> baseFiles = listNames(baseDir, SLICE_PREFIX, SLICE_POSTFIX);
+            List<String> secondaryFiles = listNames(secondaryDir, "", SECONDARY_POSTFIX);
 
-            int total = baseFiles.size() + secondaryFiles.size() + Math.max(0, sources.size() - 1);
-            int done = 0;
+            int total = baseFiles.size() + secondaryFiles.size()
+                    + Math.max(0, sources.size() - 1);
 
             int written = 0;
-            int pending = 0;
 
             db.beginTransaction();
             try (NumbersWriter writer = new NumbersWriter(db)) {
+                Run run = new Run(db, writer, listener, total);
+
                 for (int i = 0; i < sources.size(); i++) {
                     NumberSource source = sources.get(i);
 
                     int sourceId = writer.addSource(source.getId(), source.getName(),
                             source.getType().ordinal(), i);
 
-                    List<File> files = new ArrayList<>();
-
                     if (i == 0) {
                         // the database itself, and then what the library fetched since
-                        files.addAll(baseFiles);
-                        files.addAll(secondaryFiles);
+                        run.readAll(baseDir, baseFiles, sourceId, false);
+                        run.readAll(secondaryDir, secondaryFiles, sourceId, false);
                     } else {
                         File file = new File(layersDir, source.getId() + SLICE_POSTFIX);
-                        if (file.exists()) files.add(file);
-                    }
 
-                    for (File file : files) {
-                        pending += read(file, writer, sourceId, i != 0);
-
-                        /*
-                         * Written down in chunks rather than in one go: a database of two
-                         * million rows in a single transaction wants as much room again for
-                         * the journal, and a phone that runs out of it has nothing to show
-                         * for the wait.
-                         */
-                        if (pending >= COMMIT_EVERY) {
-                            db.setTransactionSuccessful();
-                            db.endTransaction();
-                            db.beginTransaction();
-
-                            pending = 0;
+                        if (file.exists()) {
+                            run.read(file, sourceId, true);
+                        } else {
+                            run.step();
                         }
-
-                        report(listener, ++done, total);
                     }
-
-                    if (i != 0 && files.isEmpty()) report(listener, ++done, total);
 
                     written++;
                 }
@@ -169,7 +160,8 @@ public class NumbersCompiler {
 
                 db.setTransactionSuccessful();
             } finally {
-                db.endTransaction();
+                // there may be none left to end when this is reached the hard way
+                if (db.inTransaction()) db.endTransaction();
             }
 
             long numbers = NumbersDb.getCount(db);
@@ -181,13 +173,94 @@ public class NumbersCompiler {
                     numbers, written, System.currentTimeMillis() - startTime);
 
             return new Result(true, numbers, written);
-        } catch (Exception e) {
+        } catch (OutOfMemoryError e) {
+            /*
+             * Caught rather than left to kill the app: a database of a few hundred thousand
+             * files is more than some phones can hold at once, and the difference between a
+             * build that says so and an app that disappears is the difference between a
+             * problem that can be looked at and one that can only be guessed at.
+             */
+            LOG.error("compile() ran out of memory", e);
+
+            return new Result(false, 0, 0, "OutOfMemoryError (max heap "
+                    + (Runtime.getRuntime().maxMemory() / (1024 * 1024)) + " MB)");
+        } catch (Throwable e) {
             LOG.error("compile() failed", e);
 
-            return new Result(false, 0, 0);
+            String message = e.getLocalizedMessage();
+
+            return new Result(false, 0, 0, e.getClass().getSimpleName()
+                    + (message != null ? ": " + message : ""));
         } finally {
             helper.close();
         }
+    }
+
+    /**
+     * One build, as it walks the files.
+     *
+     * <p>It keeps what the walk needs to know - how far it has got, how much is waiting to be
+     * made permanent - so that the files can be read from wherever they are without the count
+     * of them being carried around by hand.
+     */
+    private final class Run {
+
+        private final SQLiteDatabase db;
+        private final NumbersWriter writer;
+        private final ProgressListener listener;
+        private final int total;
+
+        private int done;
+
+        /** Entries written since the last time the work was made permanent. */
+        private int pending;
+
+        /** Files read since then; a database of tiny files would otherwise never commit. */
+        private int files;
+
+        Run(SQLiteDatabase db, NumbersWriter writer, ProgressListener listener, int total) {
+            this.db = db;
+            this.writer = writer;
+            this.listener = listener;
+            this.total = total;
+        }
+
+        void readAll(File dir, List<String> names, int sourceId, boolean asLayer) {
+            for (String name : names) {
+                read(new File(dir, name), sourceId, asLayer);
+            }
+        }
+
+        void read(File file, int sourceId, boolean asLayer) {
+            pending += NumbersCompiler.this.read(file, writer, sourceId, asLayer);
+            files++;
+
+            commitIfDue();
+
+            step();
+        }
+
+        /** Says how far along it is; one file further. */
+        void step() {
+            report(listener, ++done, total);
+        }
+
+        /*
+         * Written down in chunks rather than in one go: a database of two million rows in a
+         * single transaction wants as much room again for the journal, and a phone that runs
+         * out of it has nothing to show for the wait.
+         */
+        private void commitIfDue() {
+            if (pending < COMMIT_EVERY && files < COMMIT_EVERY_FILES) return;
+
+            db.setTransactionSuccessful();
+            db.endTransaction();
+            db.beginTransaction();
+
+            pending = 0;
+            files = 0;
+        }
+
     }
 
     /**
@@ -418,16 +491,29 @@ public class NumbersCompiler {
         if (file.exists() && !file.delete()) LOG.warn("clear() couldn't delete {}", file);
     }
 
-    private static List<File> listFiles(File dir, String prefix, String postfix) {
-        File[] files = dir != null ? dir.listFiles((d, name) -> name.startsWith(prefix)
-                && name.endsWith(postfix)
-                && name.length() > prefix.length() + postfix.length()
-                && Character.isDigit(name.charAt(prefix.length()))) : null;
+    /**
+     * What a directory holds of one kind, in order, as names rather than as files.
+     *
+     * <p>Names, because a database can be a few hundred thousand files and a {@link File} for
+     * each of them is tens of megabytes of paths held at once - on a phone that is the
+     * difference between a build and no app. The file is made when it is read.
+     */
+    private static List<String> listNames(File dir, String prefix, String postfix) {
+        String[] names = dir != null ? dir.list() : null;
 
-        if (files == null) return new ArrayList<>();
+        if (names == null) return new ArrayList<>();
 
-        List<File> list = new ArrayList<>(Arrays.asList(files));
-        Collections.sort(list, (a, b) -> a.getName().compareTo(b.getName()));
+        List<String> list = new ArrayList<>(names.length);
+
+        for (String name : names) {
+            if (name.startsWith(prefix) && name.endsWith(postfix)
+                    && name.length() > prefix.length() + postfix.length()
+                    && Character.isDigit(name.charAt(prefix.length()))) {
+                list.add(name);
+            }
+        }
+
+        Collections.sort(list);
 
         return list;
     }

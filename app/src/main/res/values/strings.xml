@@ -395,6 +395,9 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="save_logcat_on_crash_summary">Save logcat output on crash (in addition to a basic stacktrace)</string>
     <string name="export_logcat">Export logcat</string>
     <string name="export_logcat_summary">Export and share logcat contents with an app of your choosing (for example with an email client). The reports may contain sensitive data (phone numbers, contact names). Only the chosen app will have access to this data</string>
+    <string name="share_crash_reports">Share crash reports</string>
+    <string name="share_crash_reports_summary">What the app wrote down the last few times it went down. The exported log above is this run\'s and holds nothing of a crash that ended the one before it.</string>
+    <string name="share_crash_reports_none">There are no crash reports</string>
 
     <string name="settings_screen_db_filtering">Database filtering</string>
     <string name="db_filtering_status">Status</string>
@@ -423,6 +426,8 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_filtering_filter_db_summary">Apply the filter to the database now. It starts from the unfiltered database, fetching it from the sources again if no copy is kept</string>
     <string name="filtering_db">Filtering DB…</string>
     <string name="compiling_db">Building the database (%1$d/%2$d)\u2026</string>
+    <string name="unpacking_db">Unpacking the database\u2026</string>
+    <string name="reading_sources">Reading the sources\u2026</string>
     <string name="db_build_done">Database built</string>
     <string name="db_build_done_text">%1$s numbers from %2$d sources</string>
     <string name="db_build_done_text_plain">Built from %d sources</string>
@@ -433,6 +438,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_update_nothing_new">The database is up to date</string>
     <string name="db_build_not_readable">What arrived can\'t be read as a database. Check the address of the source that carries it.</string>
     <string name="db_build_table_failed">The numbers couldn\'t be written into the table. There may be no room left on the phone.</string>
+    <string name="db_build_table_failed_reason">The numbers couldn\'t be written into the table: %s</string>
     <string name="auto_updates_notify">Say when they run</string>
     <string name="auto_updates_notify_summary">Show a notification while an update that runs on its own is working. What you start by hand always shows one.</string>
     <string name="source_result_database">the database</string>

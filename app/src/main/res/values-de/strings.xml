@@ -78,6 +78,8 @@
     <string name="secondary_db_updating">Datenbank wird aktualisiert …</string>
     <string name="filtering_db">Datenbank wird gefiltert …</string>
     <string name="compiling_db">Datenbank wird gebaut (%1$d/%2$d)\u2026</string>
+    <string name="unpacking_db">Datenbank wird entpackt\u2026</string>
+    <string name="reading_sources">Quellen werden eingelesen\u2026</string>
     <string name="db_build_done">Datenbank gebaut</string>
     <string name="db_build_done_text">%1$s Nummern aus %2$d Quellen</string>
     <string name="db_build_done_text_plain">Aus %d Quellen gebaut</string>
@@ -88,6 +90,7 @@
     <string name="db_update_nothing_new">Die Datenbank ist aktuell</string>
     <string name="db_build_not_readable">Was angekommen ist, lässt sich nicht als Datenbank lesen. Prüfen Sie die Adresse der Quelle, welche sie trägt.</string>
     <string name="db_build_table_failed">Die Nummern ließen sich nicht in die Tabelle schreiben. Womöglich ist kein Platz mehr auf dem Telefon.</string>
+    <string name="db_build_table_failed_reason">Die Nummern ließen sich nicht in die Tabelle schreiben: %s</string>
     <string name="auto_updates_notify">Bei automatischen Läufen benachrichtigen</string>
     <string name="auto_updates_notify_summary">Zeigt eine Benachrichtigung, solange ein selbsttätiger Abgleich läuft. Was Sie selbst anstoßen, zeigt immer eine.</string>
     <string name="source_result_database">die Datenbank</string>
@@ -500,6 +503,9 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="save_logcat_on_crash_summary">Bei einem Absturz zusätzlich zum Stacktrace die Logcat-Ausgabe speichern</string>
     <string name="export_logcat">Logcat exportieren</string>
     <string name="export_logcat_summary">Die Logcat-Ausgabe exportieren und mit einer App Ihrer Wahl teilen (zum Beispiel per E-Mail). Das Protokoll kann vertrauliche Daten enthalten (Telefonnummern, Kontaktnamen); nur die gewählte App erhält Zugriff darauf</string>
+    <string name="share_crash_reports">Absturzberichte teilen</string>
+    <string name="share_crash_reports_summary">Was die App bei den letzten Abstürzen aufgeschrieben hat. Das oben exportierte Protokoll ist das dieses Laufs und enthält nichts von einem Absturz, der den vorigen beendet hat.</string>
+    <string name="share_crash_reports_none">Es gibt keine Absturzberichte</string>
 
     <string name="settings_screen_advanced">Erweiterte Einstellungen</string>
     <string name="notification_settings">Benachrichtigungseinstellungen</string>

@@ -52,6 +52,12 @@
             app:summary="@string/export_logcat_summary"
             app:title="@string/export_logcat" />
 
+        <Preference
+            app:key="shareCrashReports"
+            app:persistent="false"
+            app:summary="@string/share_crash_reports_summary"
+            app:title="@string/share_crash_reports" />
+
         <SwitchPreferenceCompat
             app:key="saveCrashesToExternalStorage"
             app:summary="@string/save_crashes_to_external_storage_summary"

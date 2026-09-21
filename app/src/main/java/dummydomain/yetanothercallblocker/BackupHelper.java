@@ -17,7 +17,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import dummydomain.yetanothercallblocker.data.BackupService;
+import dummydomain.yetanothercallblocker.data.DatabaseBackup;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 
 /**
  * The backup file in the directory the user picked.

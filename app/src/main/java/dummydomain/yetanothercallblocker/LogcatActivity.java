@@ -5,11 +5,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -18,8 +21,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,6 @@ import java.util.List;
 import java.util.Locale;
 
 import dummydomain.yetanothercallblocker.data.BuildLog;
-import dummydomain.yetanothercallblocker.event.DbCompileProgressEvent;
 import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
 import dummydomain.yetanothercallblocker.utils.FileUtils;
 
@@ -58,10 +58,16 @@ public class LogcatActivity extends AppCompatActivity {
     /** How much of it is read. Enough to cover a build; not enough to run out of memory. */
     private static final int LINES = 3000;
 
-    /** How often it is read again while a build is writing into it. */
-    private static final long RELOAD_INTERVAL_MS = 2000;
+    /** How often it is read again while it is open. */
+    private static final long RELOAD_INTERVAL_MS = 1000;
 
-    private long lastReloaded;
+    /**
+     * How far from the bottom still counts as being at it.
+     *
+     * <p>A line's worth, so that a screen that is a few pixels short of the end - which is
+     * where one lands after scrolling with a finger - is taken to be at the end.
+     */
+    private static final int BOTTOM_SLACK_PX = 48;
 
     public static Intent getIntent(Context context) {
         return new Intent(context, LogcatActivity.class);
@@ -93,6 +99,34 @@ public class LogcatActivity extends AppCompatActivity {
     /** Whether this is the build log; the other one is what the app itself wrote. */
     private boolean buildLog;
 
+    /**
+     * Whether the view stays at the end as lines arrive.
+     *
+     * <p>On until the reader scrolls up, and on again when they scroll back down: following
+     * is what someone watching a build wants, and the moment they stop to read something it
+     * is the last thing they want. So it isn't a mode to remember to turn off - it is where
+     * the view happens to be.
+     */
+    private boolean following = true;
+
+    /** So that a refresh doesn't blank what is on screen and start again. */
+    private boolean loaded;
+
+    /** What is on screen, to leave it alone when the log hasn't changed. */
+    private String shown;
+
+    private final Handler handler = new Handler(Looper.getMainLooper());
+
+    /** Reads it again, over and over, for as long as the screen is in front of someone. */
+    private final Runnable tick = new Runnable() {
+        @Override
+        public void run() {
+            load();
+
+            handler.postDelayed(this, RELOAD_INTERVAL_MS);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -112,6 +146,23 @@ public class LogcatActivity extends AppCompatActivity {
         String filter = getIntent().getStringExtra(PARAM_FILTER);
         if (filter != null) filterEditText.setText(filter);
 
+        /*
+         * Following is a place rather than a setting: at the end means follow, anywhere else
+         * means the reader is reading and is not to be dragged away from it.
+         */
+        scrollView.getViewTreeObserver().addOnScrollChangedListener(
+                new ViewTreeObserver.OnScrollChangedListener() {
+                    @Override
+                    public void onScrollChanged() {
+                        /*
+                         * Whoever did the scrolling, the answer is the same: this one goes to
+                         * the end, so it leaves following on; a finger that goes anywhere else
+                         * turns it off, and one that comes back turns it on again.
+                         */
+                        following = atBottom();
+                    }
+                });
+
         filterEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -121,7 +172,9 @@ public class LogcatActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                showLines(false);
+                shown = null; // the filter changed, so what is on screen has to change with it
+
+                showLines();
             }
         });
 
@@ -148,26 +201,20 @@ public class LogcatActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        // a build writes into it while this is open, so it follows along
-        if (buildLog) EventUtils.register(this);
+        /*
+         * A build writes into it while this is open, so it is read again and again for as
+         * long as someone is looking at it - which is the whole point of having it on screen
+         * while a build runs. The app's own log is not followed: reading that one means
+         * starting a process, and doing that every second to catch nothing is not worth it.
+         */
+        if (buildLog) handler.postDelayed(tick, RELOAD_INTERVAL_MS);
     }
 
     @Override
     protected void onStop() {
-        if (buildLog) EventUtils.unregister(this);
+        handler.removeCallbacks(tick);
 
         super.onStop();
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
-    public void onDbCompileProgress(DbCompileProgressEvent event) {
-        long now = System.currentTimeMillis();
-
-        if (now - lastReloaded < RELOAD_INTERVAL_MS) return;
-
-        lastReloaded = now;
-
-        load();
     }
 
     @Override
@@ -177,7 +224,19 @@ public class LogcatActivity extends AppCompatActivity {
     }
 
     public void onRefreshClicked(MenuItem item) {
+        following = true; // asking for it again is asking for the end of it
+
         load();
+    }
+
+    /** Whether the view is at the end of the log, give or take a line. */
+    private boolean atBottom() {
+        View content = scrollView.getChildCount() != 0 ? scrollView.getChildAt(0) : null;
+        if (content == null) return true;
+
+        int left = content.getBottom() - scrollView.getHeight() - scrollView.getScrollY();
+
+        return left <= BOTTOM_SLACK_PX;
     }
 
     /** Hands the whole log over as a file, for when it has to go somewhere else. */
@@ -211,6 +270,8 @@ public class LogcatActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        handler.removeCallbacks(tick);
+
         if (loadTask != null) {
             loadTask.cancel(true);
             loadTask = null;
@@ -221,7 +282,8 @@ public class LogcatActivity extends AppCompatActivity {
 
     @SuppressLint("StaticFieldLeak") // it reads a few thousand lines and is cancelled below
     private void load() {
-        logTextView.setText(R.string.logcat_loading);
+        // only the first time: a refresh that blanks the screen first is a flicker every second
+        if (!loaded) logTextView.setText(R.string.logcat_loading);
 
         AsyncTask<Void, Void, List<String>> task = loadTask
                 = new AsyncTask<Void, Void, List<String>>() {
@@ -233,8 +295,9 @@ public class LogcatActivity extends AppCompatActivity {
             @Override
             protected void onPostExecute(List<String> read) {
                 lines = read;
+                loaded = true;
 
-                showLines(true);
+                showLines();
             }
         };
 
@@ -242,7 +305,7 @@ public class LogcatActivity extends AppCompatActivity {
     }
 
     /** What the filter lets through, or everything when there is none. */
-    private void showLines(boolean scrollToEnd) {
+    private void showLines() {
         String filter = filterEditText.getText().toString().trim().toLowerCase(Locale.ROOT);
 
         StringBuilder builder = new StringBuilder();
@@ -255,11 +318,38 @@ public class LogcatActivity extends AppCompatActivity {
             builder.append(line);
         }
 
-        logTextView.setText(builder.length() != 0
-                ? builder.toString() : getString(R.string.logcat_empty));
+        String text = builder.length() != 0
+                ? builder.toString() : getString(R.string.logcat_empty);
+
+        /*
+         * A log that hasn't changed is left exactly as it is. Setting the same text again
+         * would be a second of work every second, and would take the reader's place in it
+         * away from them for no reason at all.
+         */
+        if (text.equals(shown)) return;
+
+        shown = text;
+
+        logTextView.setText(text);
 
         // the end of it is where the last thing that happened is
-        if (scrollToEnd) scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+        if (following) scrollToEnd();
+    }
+
+    /**
+     * Puts the view at the end, in one go.
+     *
+     * <p>Not {@link ScrollView#fullScroll}: that one slides there over several frames, and
+     * every frame of it is a position that isn't the end - which is what decides whether
+     * this is still following.
+     */
+    private void scrollToEnd() {
+        scrollView.post(() -> {
+            View content = scrollView.getChildCount() != 0 ? scrollView.getChildAt(0) : null;
+            if (content == null) return;
+
+            scrollView.scrollTo(0, Math.max(0, content.getBottom() - scrollView.getHeight()));
+        });
     }
 
     private List<String> read() {

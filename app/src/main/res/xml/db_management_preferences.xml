@@ -10,6 +10,12 @@
         app:title="@string/db_management_status" />
 
     <Preference
+        app:key="dbBuildLog"
+        app:persistent="false"
+        app:summary="@string/build_log_summary"
+        app:title="@string/build_log" />
+
+    <Preference
         app:key="dbSources"
         app:persistent="false"
         app:summary="@string/db_management_sources_summary"

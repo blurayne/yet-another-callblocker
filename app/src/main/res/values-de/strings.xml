@@ -50,6 +50,14 @@
     <string name="open_blacklist_activity">Schwarze Liste</string>
     <string name="open_whitelist_activity">Weiße Liste</string>
     <string name="open_about_activity">Über</string>
+    <string name="open_help_activity">Hilfe</string>
+    <string name="help_activity">Hilfe</string>
+    <string name="help_database_title">Wie die Datenbank gebaut wird</string>
+    <string name="help_database">Die App weiß von sich aus nichts über eine Nummer: alles kommt aus den Quellen, die Sie angeben, in der Reihenfolge, in die Sie sie bringen.\n\n\u2022 Die Quelle, die als Träger der Datenbank markiert ist, wird zuerst gelesen und füllt die leere Tabelle. Jede weitere Quelle ist eine Schicht darüber: sie ändert, was sie kennt, und lässt den Rest in Ruhe \u2013 und sie kann Nummern auch wieder herausnehmen.\n\u2022 Die Nummer ist der Schlüssel der Tabelle. Eine Nummer, die mehrere Quellen kennen, ist ein Eintrag: die spätere Quelle ändert die Felder, zu denen sie etwas zu sagen hat, der Rest bleibt stehen.\n\u2022 Ein Aufbau arbeitet in einer eigenen Datenbank neben der benutzten. Sie wird gefüllt, dann gefiltert, und erst wenn das alles geklappt hat, tritt sie an die Stelle der alten \u2013 ein fehlgeschlagener Aufbau lässt also das Funktionierende unangetastet, und Abfragen sehen nie eine halbfertige Datenbank.\n\u2022 Das Filtern wirft alles weg, was außerhalb der behaltenen Vorwahlen liegt. Eine Kopie von vor dem Filtern bleibt liegen, wenn Sie das so eingestellt haben \u2013 dann lässt sich der Filter wieder weiten, ohne etwas neu zu holen.\n\u2022 Die Datenbank selbst wird nur geholt, wenn keine da ist, wenn Sie die Quelle woandershin zeigen lassen oder wenn ihr eigener Zeitplan es sagt \u2013 es sind zig Megabyte. \"Abrufen\" bei einer Quelle holt sie unabhängig davon.\n\u2022 Was jeder Aufbau getan hat, Quelle für Quelle, steht im Aufbau-Protokoll unter \"Datenbank\".</string>
+    <string name="help_matching_title">Was über einen Anruf entscheidet</string>
+    <string name="help_matching">Manches sagt \"durchlassen\" und manches \"blockieren\", und gefragt wird nicht in der Reihenfolge, in der es in den Einstellungen steht.\n\n<b>Erlaubt, was immer sonst gilt:</b>\n\u2022 die Nummer steht in Ihren Kontakten\n\u2022 die Nummer steht auf Ihrer Weißen Liste\n\u2022 die Nummer steht auf der Erlaubt-Liste Ihres PhoneBlock-Kontos\n\nDann wird nichts von dem darunter noch gefragt \u2013 ein Anruf aus den Kontakten wird nie blockiert.\n\n<b>Sonst blockiert das Erste, was zutrifft</b> (jeweils nur, wenn Sie es eingeschaltet haben):\n1. die Nummer ist unterdrückt\n2. die Community-Datenbank bewertet sie negativ\n3. sie steht auf Ihrer Schwarzen Liste\n4. PhoneBlock führt sie als Spam, oder sie steht auf der Sperrliste Ihres Kontos\n\nAb Android 11 wird ein Anruf, von dem das Netz sagt, dass er nicht von der angezeigten Nummer kommt, schon vor all dem blockiert \u2013 wenn Sie das eingeschaltet haben.\n\nSolange das Telefon seit dem Einschalten nicht entsperrt wurde, sind Kontakte und Listen nicht lesbar. Was dann trotzdem blockieren darf, ist eine eigene Einstellung unter \"Erweitert\".</string>
+    <string name="help_lists_title">Die Listen selbst</string>
+    <string name="help_lists">\u2022 Eine Nummer wird in jeder Schreibweise erkannt: +4930123456, 004930123456 und 030123456 sind dieselbe Nummer, und ein Eintrag in einer dieser Formen findet sie.\n\u2022 Ein Eintrag kann ein Muster statt einer Nummer sein \u2013 49* umfasst alle deutschen Nummern \u2013 und die App zeigt, welcher Eintrag gegriffen hat.\n\u2022 Eine Nummer auf die eine Liste zu setzen nimmt sie von der anderen.\n\u2022 Die Weiße Liste sticht die Schwarze, und Kontakte stechen beide.</string>
     <string name="call_log_permission_message">Erteilen Sie die Berechtigung „Telefon“, um die letzten Anrufe anzuzeigen</string>
     <!-- was aus einem Anruf wurde -->
     <string name="call_status_blocked">Blockiert</string>
@@ -107,6 +115,14 @@
     <string name="auto_updates_notify_summary">Zeigt eine Benachrichtigung, solange ein selbsttätiger Abgleich läuft. Was Sie selbst anstoßen, zeigt immer eine.</string>
     <string name="source_result_database">die Datenbank</string>
     <string name="source_result_kept">schon da, behalten</string>
+    <string name="build_log">Aufbau-Protokoll</string>
+    <string name="build_log_summary">Was die letzten Aufbauten getan haben, Quelle für Quelle</string>
+    <string name="build_log_run">Datenbank wird gebaut</string>
+    <string name="build_log_downloading">Wird heruntergeladen\u2026</string>
+    <string name="build_log_failed">Fehlgeschlagen: %s</string>
+    <string name="build_log_finished">Fertig mit %1$s Nummern um %2$s, nach %3$d Sekunden</string>
+    <string name="build_log_empty">Es wurde noch nichts gebaut</string>
+    <string name="build_log_clear">Protokoll leeren</string>
     <string name="source_result_numbers">%d Nummern</string>
     <string name="source_result_no_address">keine Adresse</string>
     <string name="source_result_failed">nicht abrufbar</string>
@@ -311,6 +327,8 @@
     <string name="source_type_carddav">Adressbuch (CardDAV), blockiert</string>
     <string name="source_url">Adresse</string>
     <string name="source_url_empty">Eine Adresse wird gebraucht</string>
+    <string name="source_name_empty">Bitte geben Sie der Quelle einen Namen</string>
+    <string name="source_name_taken">So heißt schon eine andere Quelle</string>
     <string name="source_auth">Anmeldung</string>
     <string name="source_auth_none">Keine</string>
     <string name="source_auth_bearer">API-Token (Bearer)</string>

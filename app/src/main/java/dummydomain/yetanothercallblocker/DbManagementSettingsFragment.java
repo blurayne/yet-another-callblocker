@@ -59,6 +59,7 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_SCREEN_DB_MANAGEMENT = "dbManagement";
     private static final String PREF_STATUS = "dbStatus";
     private static final String PREF_SOURCES = "dbSources";
+    private static final String PREF_BUILD_LOG = "dbBuildLog";
     private static final String PREF_BUILD = "dbBuild";
     private static final String PREF_UPDATE = "dbUpdate";
     private static final String PREF_AUTO_UPDATE = "autoUpdateEnabled";
@@ -109,6 +110,11 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
         notifyAutoUpdates.setChecked(App.getSettings().getNotifyAutoUpdates());
         notifyAutoUpdates.setOnPreferenceChangeListener((preference, newValue) -> {
             App.getSettings().setNotifyAutoUpdates(Boolean.TRUE.equals(newValue));
+            return true;
+        });
+
+        requirePreference(PREF_BUILD_LOG).setOnPreferenceClickListener(preference -> {
+            startActivity(LogcatActivity.getBuildLogIntent(requireContext(), null));
             return true;
         });
 

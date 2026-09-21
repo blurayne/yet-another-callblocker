@@ -12,7 +12,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +26,7 @@ import dummydomain.yetanothercallblocker.R;
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.source.ArchiveUtils;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
+import dummydomain.yetanothercallblocker.data.source.SourceNames;
 import dummydomain.yetanothercallblocker.data.source.SourceHttp;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.numbers.SliceReader;
@@ -131,6 +135,7 @@ public class DbCompileService {
     private final Context context;
     private final Settings settings;
     private final SourceService sourceService;
+    private final BuildLog buildLog;
 
     /**
      * @param context used for what a source's row ends up saying, in the user's language
@@ -139,6 +144,7 @@ public class DbCompileService {
         this.context = context.getApplicationContext();
         this.settings = settings;
         this.sourceService = YacbHolder.getSourceService();
+        this.buildLog = new BuildLog(this.context);
     }
 
     /**
@@ -157,9 +163,16 @@ public class DbCompileService {
     public Result compile(boolean force, ProgressListener listener) {
         LOG.debug("compile() started");
 
+        long startTime = System.currentTimeMillis();
+
+        buildLog.startRun(context.getString(R.string.build_log_run));
+
         List<NumberSource> sources = getSources();
         if (sources.isEmpty()) {
             LOG.info("compile() there are no sources to build the database from");
+
+            buildLog.line(BuildLog.MAIN, context.getString(R.string.sources_none_enabled));
+
             return new Result(Status.NO_SOURCES, 0, 0);
         }
 
@@ -189,14 +202,21 @@ public class DbCompileService {
         if (force || needsDownload(base)) {
             phase(listener, R.string.main_db_downloading);
 
+            buildLog.line(tagOf(base), context.getString(R.string.build_log_downloading));
+
             String failure = downloadBase(base, listener);
 
             if (failure != null) {
                 LOG.error("compile() the database itself couldn't be fetched: {}", failure);
+
+                buildLog.line(tagOf(base), context.getString(R.string.build_log_failed, failure));
+
                 return new Result(Status.NO_BASE, 0, 1, failure);
             }
         } else {
             LOG.debug("compile() the database is there and not due");
+
+            buildLog.line(tagOf(base), context.getString(R.string.source_result_kept));
 
             /*
              * Said out loud in the source's row: a build that keeps the database it already
@@ -230,7 +250,16 @@ public class DbCompileService {
         for (int i = 1; i < ordered.size(); i++) {
             if (listener != null) listener.onProgress(i + 1, total);
 
-            if (!downloadLayer(ordered.get(i))) failed++;
+            NumberSource layer = ordered.get(i);
+
+            buildLog.line(tagOf(layer), context.getString(R.string.build_log_downloading));
+
+            if (!downloadLayer(layer)) {
+                failed++;
+
+                buildLog.line(tagOf(layer), context.getString(R.string.build_log_failed,
+                        layer.getLastResult() != null ? layer.getLastResult() : ""));
+            }
         }
 
         dropLayersOfGoneSources(ordered);
@@ -249,6 +278,15 @@ public class DbCompileService {
         }
 
         LOG.info("compile() built the database from {} of {} sources", total - failed, total);
+
+        /*
+         * The line someone reads first: what came out of the whole thing, and when it was
+         * over - which is also the answer to "did that build I started ever finish".
+         */
+        buildLog.line(BuildLog.MAIN, context.getString(R.string.build_log_finished,
+                NumberFormat.getInstance().format(new NumbersCompiler(context).getCount()),
+                DateFormat.getTimeInstance(DateFormat.MEDIUM).format(new Date()),
+                (System.currentTimeMillis() - startTime) / 1000));
 
         return new Result(Status.COMPILED, total - failed, failed);
     }
@@ -752,11 +790,17 @@ public class DbCompileService {
 
         String dataDir = YacbHolder.getStorage().getDataDirPath();
 
+        List<String> tags = new ArrayList<>(sources.size());
+        for (NumberSource source : sources) {
+            tags.add(tagOf(source));
+        }
+
         NumbersCompiler.Result result = compiler.compile(sources,
                 new File(dataDir, SiaConstants.SIA_PATH_PREFIX),
                 new File(dataDir, SiaConstants.SIA_SECONDARY_PATH_PREFIX),
                 getLayersDir(),
-                listener != null ? listener::onProgress : null);
+                listener != null ? listener::onProgress : null,
+                this::noteSourceCounts, buildLog, tags);
 
         /*
          * The library keeps what it read in memory - the slices it was asked about, and the
@@ -795,6 +839,8 @@ public class DbCompileService {
         if (filtering) {
             phase(listener, R.string.filtering_db);
 
+            buildLog.line(BuildLog.MAIN, context.getString(R.string.filtering_db));
+
             compiler.filter(DbFilteringUtils.getPrefixesToKeep(settings),
                     settings.getDbFilteringKeepShortNumbers()
                             ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0);
@@ -808,6 +854,28 @@ public class DbCompileService {
         }
 
         return null;
+    }
+
+    /**
+     * Writes down what a source did the moment it has done it.
+     *
+     * <p>So that the screens showing the sources fill in as the build runs rather than all at
+     * once at the end: a source that has been read is a source that has something to say.
+     */
+    private void noteSourceCounts(NumberSource source, NumbersCompiler.Counts counts) {
+        if (sourceService == null) return;
+
+        source.setEntries(counts.read);
+        source.setLastUpdate(System.currentTimeMillis());
+        source.setLastResult(context.getString(R.string.source_result_numbers,
+                (int) counts.read));
+
+        sourceService.save(source);
+    }
+
+    /** What a source is called in the log and in what it says about itself. */
+    private String tagOf(NumberSource source) {
+        return SourceNames.getName(context, source);
     }
 
     /**

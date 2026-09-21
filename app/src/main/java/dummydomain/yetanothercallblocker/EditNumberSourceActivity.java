@@ -27,6 +27,7 @@ import java.util.Objects;
 
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
+import dummydomain.yetanothercallblocker.data.source.SourceNames;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 
 /** One source: where it is, what it holds, what it needs to let us in, how often to ask. */
@@ -100,6 +101,8 @@ public class EditNumberSourceActivity extends AppCompatActivity {
             Intent intent = getIntent();
             if (intent.hasExtra(PARAM_TYPE)) {
                 source.setType(NumberSource.Type.valueOf(intent.getStringExtra(PARAM_TYPE)));
+
+                source.setName(freeName(getString(SourceNames.getTypeName(source.getType()))));
                 source.setUrl(intent.getStringExtra(PARAM_URL));
                 source.setAuth(NumberSource.Auth.valueOf(intent.getStringExtra(PARAM_AUTH)));
             }
@@ -186,6 +189,25 @@ public class EditNumberSourceActivity extends AppCompatActivity {
 
     /** Puts what is on the screen into a source; false when there isn't enough of it. */
     private boolean apply(NumberSource target) {
+        /*
+         * A name, and one that isn't taken: it is what this source is called in the list, in
+         * the build log and in anything the app says about where a number came from, and two
+         * sources with the same name make all three of those useless.
+         */
+        String name = getString(nameTextField);
+
+        if (TextUtils.isEmpty(name)) {
+            nameTextField.setError(getString(R.string.source_name_empty));
+            return false;
+        }
+
+        if (isNameTaken(target, name)) {
+            nameTextField.setError(getString(R.string.source_name_taken));
+            return false;
+        }
+
+        nameTextField.setError(null);
+
         String url = getString(urlTextField);
         if (TextUtils.isEmpty(url)) {
             urlTextField.setError(getString(R.string.source_url_empty));
@@ -193,7 +215,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         }
         urlTextField.setError(null);
 
-        target.setName(getString(nameTextField));
+        target.setName(name);
         target.setUrl(url);
         target.setType(selected(typeSpinner, NumberSource.Type.values()));
         target.setAuth(selected(authSpinner, NumberSource.Auth.values()));
@@ -204,6 +226,35 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         // whether a source is used is decided in the list, where all of them are side by side
 
         return true;
+    }
+
+    /** The name with a number after it when something else already has it. */
+    private String freeName(String name) {
+        if (!isNameTaken(source, name)) return name;
+
+        for (int i = 2; i < 100; i++) {
+            String candidate = name + " " + i;
+
+            if (!isNameTaken(source, candidate)) return candidate;
+        }
+
+        return name;
+    }
+
+    /** Whether another source is already called that, however it is capitalised. */
+    private boolean isNameTaken(NumberSource target, String name) {
+        if (sourceService == null) return false;
+
+        for (NumberSource other : sourceService.getSources()) {
+            if (other.getId().equals(target.getId())) continue;
+
+            if (name.equalsIgnoreCase(
+                    other.getName() != null ? other.getName().trim() : null)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void onDeleteClicked(MenuItem item) {

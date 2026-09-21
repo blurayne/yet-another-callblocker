@@ -10,6 +10,12 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/menu_clear"
+        android:onClick="onClearClicked"
+        android:title="@string/build_log_clear"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_share"
         android:onClick="onShareClicked"
         android:title="@string/export_logcat"

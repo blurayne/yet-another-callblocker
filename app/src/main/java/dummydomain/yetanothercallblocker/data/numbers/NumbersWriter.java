@@ -48,6 +48,9 @@ public class NumbersWriter implements Closeable {
     /** Days since the epoch: what "when did this arrive" is written as. */
     private final int today;
 
+    /** How many rows have actually gone away, which only the statement can say. */
+    private long deletedRows;
+
     public NumbersWriter(SQLiteDatabase db) {
         this.db = db;
 
@@ -126,10 +129,17 @@ public class NumbersWriter implements Closeable {
         if (number <= 0) return;
 
         deleteNumber.bindLong(1, number);
-        deleteNumber.executeUpdateDelete();
+
+        // a number a source takes out that wasn't there is not a number that went away
+        deletedRows += deleteNumber.executeUpdateDelete();
 
         deleteName.bindLong(1, number);
         deleteName.executeUpdateDelete();
+    }
+
+    /** How many rows have been taken out since this writer was made. */
+    public long getDeletedRows() {
+        return deletedRows;
     }
 
     /** The name a phone book has for the number, or nothing when it has none. */

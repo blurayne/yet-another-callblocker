@@ -263,6 +263,10 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, SettingsActivity.class));
     }
 
+    public void onOpenHelp(MenuItem item) {
+        startActivity(new Intent(this, HelpActivity.class));
+    }
+
     public void onOpenAbout(MenuItem item) {
         startActivity(new Intent(this, AboutActivity.class));
     }

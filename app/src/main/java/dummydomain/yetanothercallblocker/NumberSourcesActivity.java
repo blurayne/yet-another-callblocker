@@ -36,6 +36,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
+import dummydomain.yetanothercallblocker.data.source.SourceNames;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
@@ -236,11 +237,7 @@ public class NumberSourcesActivity extends AppCompatActivity {
     }
 
     static int getTypeName(NumberSource.Type type) {
-        switch (type) {
-            case PHONE_BLOCK: return R.string.source_type_phone_block;
-            case CARDDAV: return R.string.source_type_carddav;
-            default: return R.string.source_type_database;
-        }
+        return SourceNames.getTypeName(type);
     }
 
     static int getUpdatesName(NumberSource.Updates updates) {

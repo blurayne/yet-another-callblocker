@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import dummydomain.yetanothercallblocker.data.BuildLog;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 
 /**
@@ -67,6 +68,34 @@ public class NumbersCompiler {
         void onProgress(int current, int total);
     }
 
+    /**
+     * What one source did to the table.
+     *
+     * <p>Read is what it handed over; the rest is what became of it. A number two sources
+     * know is inserted by the first and updated by the second, so the three of them add up to
+     * what was read and not to the size of the table.
+     */
+    public static class Counts {
+
+        public final long read;
+        public final long inserted;
+        public final long updated;
+        public final long deleted;
+
+        Counts(long read, long inserted, long updated, long deleted) {
+            this.read = read;
+            this.inserted = inserted;
+            this.updated = updated;
+            this.deleted = deleted;
+        }
+
+    }
+
+    /** Told what each source did, as it finishes. */
+    public interface SourceListener {
+        void onSourceFinished(NumberSource source, Counts counts);
+    }
+
     /** One source, and how much of the table came from it. */
     public static class SourceCount {
 
@@ -105,6 +134,9 @@ public class NumbersCompiler {
 
     /** How often the log says where the build is and what it is holding. */
     private static final int LOG_EVERY_FILES = 10_000;
+
+    /** And how often the build's own log gets a line about it. */
+    private static final long LOG_INTERVAL_MS = 5_000;
 
     private final Context context;
 
@@ -152,6 +184,17 @@ public class NumbersCompiler {
      */
     public Result compile(List<NumberSource> sources, File baseDir, File secondaryDir,
                           File layersDir, ProgressListener listener) {
+        return compile(sources, baseDir, secondaryDir, layersDir, listener, null, null, null);
+    }
+
+    /**
+     * @param sourceListener told what each source did as it finishes, may be null
+     * @param log written to as the work happens, may be null
+     * @param tags what each source is called in the log, in the same order as {@code sources}
+     */
+    public Result compile(List<NumberSource> sources, File baseDir, File secondaryDir,
+                          File layersDir, ProgressListener listener,
+                          SourceListener sourceListener, BuildLog log, List<String> tags) {
         LOG.info("compile() started with {} sources", sources.size());
 
         long startTime = System.currentTimeMillis();
@@ -177,11 +220,17 @@ public class NumbersCompiler {
             try (NumbersWriter writer = new NumbersWriter(db)) {
                 run = new Run(db, writer, listener, total);
 
+                long countBefore = 0;
+
                 for (int i = 0; i < sources.size(); i++) {
                     NumberSource source = sources.get(i);
 
+                    String tag = tags != null && i < tags.size() ? tags.get(i) : null;
+
                     int sourceId = writer.addSource(source.getId(), source.getName(),
                             source.getType().ordinal(), i);
+
+                    run.startSource(tag, log);
 
                     if (i == 0) {
                         // the database itself, and then what the library fetched since
@@ -196,6 +245,30 @@ public class NumbersCompiler {
                             run.step();
                         }
                     }
+
+                    /*
+                     * What this source did, worked out from the size of the table: the rows
+                     * it added are what the table grew by, plus whatever it took out again,
+                     * and everything else it handed over landed on a row that was there.
+                     * Counted inside the transaction, where its own writing is visible.
+                     */
+                    long countAfter = NumbersDb.getCount(db);
+                    long deleted = run.sourceDeleted();
+                    long inserted = Math.max(0, countAfter - countBefore + deleted);
+                    long updated = Math.max(0, run.sourceNumbers() - inserted);
+
+                    countBefore = countAfter;
+
+                    Counts counts = new Counts(run.sourceRead(), inserted, updated, deleted);
+
+                    if (log != null) {
+                        log.line(tag, "Read records:", counts.read);
+                        log.line(tag, "Inserted records:", counts.inserted);
+                        log.line(tag, "Updated records:", counts.updated);
+                        log.line(tag, "Deleted records:", counts.deleted);
+                    }
+
+                    if (sourceListener != null) sourceListener.onSourceFinished(source, counts);
 
                     written++;
                 }
@@ -273,11 +346,46 @@ public class NumbersCompiler {
         /** Everything the sources handed over, before the table put the same number together. */
         private long entries;
 
+        /** The same, for the source being read right now, and what it came to. */
+        private long sourceNumbers;
+        private long sourceDeletions;
+        private long sourceDeletedRows;
+
+        /** What this source is called in the log, and where that log is. */
+        private String tag;
+        private BuildLog log;
+
+        /** When the log was last told how far this source has got. */
+        private long lastLogged;
+
         Run(SQLiteDatabase db, NumbersWriter writer, ProgressListener listener, int total) {
             this.db = db;
             this.writer = writer;
             this.listener = listener;
             this.total = total;
+        }
+
+        /** Starts counting again; what came before belonged to the source before. */
+        void startSource(String tag, BuildLog log) {
+            this.tag = tag;
+            this.log = log;
+
+            sourceNumbers = 0;
+            sourceDeletions = 0;
+            sourceDeletedRows = writer.getDeletedRows();
+            lastLogged = 0;
+        }
+
+        long sourceNumbers() {
+            return sourceNumbers;
+        }
+
+        long sourceRead() {
+            return sourceNumbers + sourceDeletions;
+        }
+
+        long sourceDeleted() {
+            return writer.getDeletedRows() - sourceDeletedRows;
         }
 
         void readAll(File dir, List<String> names, int sourceId, boolean asLayer) {
@@ -287,10 +395,15 @@ public class NumbersCompiler {
         }
 
         void read(File file, int sourceId, boolean asLayer) {
-            int read = NumbersCompiler.this.read(file, writer, sourceId, asLayer);
+            long[] read = NumbersCompiler.this.read(file, writer, sourceId, asLayer);
 
-            pending += read;
-            entries += read;
+            sourceNumbers += read[0];
+            sourceDeletions += read[1];
+
+            long total = read[0] + read[1];
+
+            pending += total;
+            entries += total;
             files++;
 
             commitIfDue();
@@ -301,6 +414,18 @@ public class NumbersCompiler {
         /** Says how far along it is; one file further. */
         void step() {
             report(listener, ++done, total);
+
+            /*
+             * The log gets a line now and then rather than one per file: a few hundred
+             * thousand of them would say nothing that the first and the last don't.
+             */
+            long now = System.currentTimeMillis();
+
+            if (log != null && now - lastLogged >= LOG_INTERVAL_MS) {
+                lastLogged = now;
+
+                log.line(tag, "Ingesting record " + done + " of " + total);
+            }
 
             /*
              * Left in the log on purpose: when a build disappears rather than fails, the
@@ -337,10 +462,10 @@ public class NumbersCompiler {
     /**
      * Reads one slice file into the table.
      *
-     * @return how many entries it held
+     * @return {@code {numbers, numbers it takes out again}}
      */
-    private int read(File file, NumbersWriter writer, int sourceId, boolean asLayer) {
-        int[] count = {0};
+    private long[] read(File file, NumbersWriter writer, int sourceId, boolean asLayer) {
+        long[] count = {0, 0};
 
         try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
             SliceReader.read(inputStream, new SliceReader.Visitor() {
@@ -363,14 +488,14 @@ public class NumbersCompiler {
                 public void onDeleted(long number) {
                     writer.delete(number);
 
-                    count[0]++;
+                    count[1]++;
                 }
             });
         } catch (Exception e) {
             LOG.warn("read() couldn't read {}", file, e);
         }
 
-        return count[0];
+        return count;
     }
 
     /** Puts the database aside unfiltered, so that filtering has something to go back to. */

@@ -147,6 +147,8 @@
     <string name="source_type_carddav">Address book (CardDAV), blocked</string>
     <string name="source_url">Address</string>
     <string name="source_url_empty">An address is needed</string>
+    <string name="source_name_empty">Please give the source a name</string>
+    <string name="source_name_taken">Another source is already called that</string>
     <string name="source_auth">Login</string>
     <string name="source_auth_none">None</string>
     <string name="source_auth_bearer">API token (Bearer)</string>
@@ -464,6 +466,14 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="auto_updates_notify_summary">Show a notification while an update that runs on its own is working. What you start by hand always shows one.</string>
     <string name="source_result_database">the database</string>
     <string name="source_result_kept">already here, kept</string>
+    <string name="build_log">Build log</string>
+    <string name="build_log_summary">What the last builds did, source by source</string>
+    <string name="build_log_run">Building the database</string>
+    <string name="build_log_downloading">Downloading\u2026</string>
+    <string name="build_log_failed">Failed: %s</string>
+    <string name="build_log_finished">Finished with %1$s numbers at %2$s, after %3$d seconds</string>
+    <string name="build_log_empty">Nothing has been built yet</string>
+    <string name="build_log_clear">Clear the log</string>
     <string name="source_result_numbers">%d numbers</string>
     <string name="source_result_no_address">no address</string>
     <string name="source_result_failed">couldn\'t be fetched</string>
@@ -634,6 +644,14 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="duration_s">%ds</string>
 
     <string name="open_about_activity">About</string>
+    <string name="open_help_activity">Help</string>
+    <string name="help_activity">Help</string>
+    <string name="help_database_title">How the database is built</string>
+    <string name="help_database">The app knows nothing about a number by itself: everything comes from the sources you list, in the order you put them in.\n\n\u2022 The source marked as carrying the database is read first and fills the empty table. Every source after it is a layer on top: it changes what it knows about and leaves the rest alone, and it can also take numbers out again.\n\u2022 The number is the key of the table, so a number several sources know is one entry. The later source changes the fields it has something to say about; the others stay as they were.\n\u2022 A build works on a database of its own, beside the one in use. It is filled, then filtered, and only when all of that has worked does it take the place of the old one \u2013 so a build that fails leaves what worked untouched, and lookups never see a half-built database.\n\u2022 Filtering throws away everything outside the country codes you keep. A copy from before the filtering is kept if you asked for one, so the filter can be widened again without fetching anything.\n\u2022 The database itself is only downloaded when there is none, when you point the source somewhere else, or when its own schedule says so \u2013 it is tens of megabytes. \"Fetch now\" on a source fetches it whatever that says.\n\u2022 What each build did, source by source, is in the build log under Database.</string>
+    <string name="help_matching_title">What decides about a call</string>
+    <string name="help_matching">Some things say \"let it through\" and some say \"block it\", and they are not asked in the order they are listed in the settings.\n\n<b>Allowed, whatever anything else says:</b>\n\u2022 the number is in your contacts\n\u2022 the number is on your whitelist\n\u2022 the number is on the allow list of your PhoneBlock account\n\nNothing below is consulted then \u2013 a call from a contact is never blocked.\n\n<b>Otherwise it is blocked by the first of these that applies</b> (each only if you switched it on):\n1. the number is withheld\n2. the community database rates it negative\n3. it is on your blacklist\n4. PhoneBlock has it as spam, or it is on the block list of your account\n\nOn Android 11 and newer, a call the network says is not coming from the number it claims is blocked before any of this, if you switched that on.\n\nWhen the phone has not been unlocked since it was started, your contacts and lists can\'t be read. What may still block then is a setting of its own in the advanced settings.</string>
+    <string name="help_lists_title">The lists themselves</string>
+    <string name="help_lists">\u2022 A number is matched in every form it can be written in: +4930123456, 004930123456 and 030123456 are the same number, and an entry in any of those forms finds it.\n\u2022 An entry can be a pattern rather than a number \u2013 49* covers every German number \u2013 and the app shows which entry matched, so a call blocked by a pattern says which pattern it was.\n\u2022 Putting a number on one list takes it off the other.\n\u2022 The whitelist wins over the blacklist, and contacts win over both.</string>
     <string name="about_activity">About</string>
     <string name="version_string">v%1$s (%2$d)</string>
     <string name="build_info">%1$s \u00b7 %2$s \u00b7 %3$s</string>

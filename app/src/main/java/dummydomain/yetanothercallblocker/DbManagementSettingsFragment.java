@@ -305,8 +305,9 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
                     NumberFormat.getInstance().format(info.count)));
 
             // the file exists either way; its size only says something once it holds numbers
-            long size = info.size + info.shadowSize;
-            if (size > 0) parts.add(Formatter.formatShortFileSize(requireContext(), size));
+            if (info.size > 0) {
+                parts.add(Formatter.formatShortFileSize(requireContext(), info.size));
+            }
 
             if (info.compiledTime > 0) {
                 parts.add(getString(R.string.db_management_status_built,
@@ -342,11 +343,11 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
 
     /** What the filter is doing right now, said where the filter lives. */
     private void updateFiltering(NumbersCompiler.Info info) {
-        List<String> prefixes = DbFilteringUtils.getPrefixesToKeep(App.getSettings());
+        Settings settings = App.getSettings();
 
-        requirePreference(PREF_FILTERING).setSummary(info.filtered && !prefixes.isEmpty()
+        requirePreference(PREF_FILTERING).setSummary(settings.isDbFilteringEnabled()
                 ? getString(R.string.db_filtering_status_filtered,
-                        DbFilteringUtils.formatPrefixes(prefixes))
+                        settings.getDbFilteringPattern())
                 : getString(R.string.db_filtering_status_not_filtered));
     }
 

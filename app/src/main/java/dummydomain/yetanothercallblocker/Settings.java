@@ -9,9 +9,11 @@ import androidx.preference.PreferenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -63,6 +65,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_DB_FILTERING_ENABLED = "dbFilteringEnabled";
     public static final String PREF_DB_FILTERING_PREFIXES_PREFILLED = "dbFilteringPrefixesPrefilled";
     public static final String PREF_DB_FILTERING_PREFIXES_TO_KEEP = "dbFilteringPrefixesToKeep";
+    public static final String PREF_DB_FILTERING_PATTERN = "dbFilteringPattern";
     public static final String PREF_DB_FILTERING_KEEP_MASTER = "dbFilteringKeepMaster";
     public static final String PREF_DB_FILTERED = "dbFiltered";
     public static final String PREF_DB_FILTERING_THOROUGH = "dbFilteringThorough";
@@ -708,6 +711,41 @@ public class Settings extends GenericSettings {
         setBoolean(PREF_DB_FILTERING_PREFIXES_PREFILLED, prefilled);
     }
 
+    /** What is kept when the database is built, as a pattern; everything else is dropped. */
+    public static final String DEFAULT_DB_FILTERING_PATTERN = "+{31,43,41,49}*";
+
+    /**
+     * Which numbers are worth keeping, written as a pattern.
+     *
+     * <p>It used to be a list of country codes, which is one shape of the same question and
+     * not the only useful one: a pattern says the same thing ({@code +{49,43}*}) and can also
+     * say "German mobile numbers only" ({@code +4915*}). A list that was set before is read as
+     * the pattern it amounts to, so nobody has to rewrite theirs.
+     */
+    public String getDbFilteringPattern() {
+        String pattern = getString(PREF_DB_FILTERING_PATTERN, null);
+        if (!TextUtils.isEmpty(pattern)) return pattern;
+
+        String prefixes = getDbFilteringPrefixesToKeep();
+        if (TextUtils.isEmpty(prefixes)) return DEFAULT_DB_FILTERING_PATTERN;
+
+        List<String> parts = new ArrayList<>();
+        for (String prefix : prefixes.split("[,;]")) {
+            prefix = prefix.replaceAll("[^0-9]", "");
+            if (!prefix.isEmpty() && !parts.contains(prefix)) parts.add(prefix);
+        }
+
+        if (parts.isEmpty()) return DEFAULT_DB_FILTERING_PATTERN;
+
+        return parts.size() == 1
+                ? "+" + parts.get(0) + "*"
+                : "+{" + TextUtils.join(",", parts) + "}*";
+    }
+
+    public void setDbFilteringPattern(String pattern) {
+        setString(PREF_DB_FILTERING_PATTERN, pattern);
+    }
+
     public String getDbFilteringPrefixesToKeep() {
         return getString(PREF_DB_FILTERING_PREFIXES_TO_KEEP);
     }
@@ -743,7 +781,7 @@ public class Settings extends GenericSettings {
     }
 
     public boolean getDbFilteringKeepShortNumbers() {
-        return getBoolean(PREF_DB_FILTERING_KEEP_SHORT_NUMBERS, true);
+        return getBoolean(PREF_DB_FILTERING_KEEP_SHORT_NUMBERS, false);
     }
 
     public void setDbFilteringKeepShortNumbers(boolean keep) {

@@ -23,9 +23,8 @@
             app:title="@string/db_filtering_enabled" />
 
         <EditTextPreference
-            app:key="dbFilteringPrefixesToKeep"
-            app:summary="@string/db_filtering_prefixes_to_keep_summary"
-            app:title="@string/db_filtering_prefixes_to_keep" />
+            app:key="dbFilteringPattern"
+            app:title="@string/db_filtering_pattern" />
 
         <SwitchPreferenceCompat
             app:defaultValue="true"
@@ -34,7 +33,6 @@
             app:title="@string/db_filtering_thorough" />
 
         <SwitchPreferenceCompat
-            app:defaultValue="true"
             app:key="dbFilteringKeepShortNumbers"
             app:summary="@string/db_filtering_keep_short_numbers_summary"
             app:title="@string/db_filtering_keep_short_numbers" />

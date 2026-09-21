@@ -81,12 +81,15 @@ public class NumbersCompiler {
         public final long inserted;
         public final long updated;
         public final long deleted;
+        /** What the filter kept out, which is most of a community database. */
+        public final long skipped;
 
-        Counts(long read, long inserted, long updated, long deleted) {
+        Counts(long read, long inserted, long updated, long deleted, long skipped) {
             this.read = read;
             this.inserted = inserted;
             this.updated = updated;
             this.deleted = deleted;
+            this.skipped = skipped;
         }
 
     }
@@ -143,6 +146,9 @@ public class NumbersCompiler {
     /** Which database this works on: the one in use, or the one being built. */
     private final String fileName;
 
+    /** Which numbers are worth keeping, or null when all of them are. */
+    private NumbersFilter filter;
+
     /** Reads and writes the database the app looks numbers up in. */
     public NumbersCompiler(Context context) {
         this(context, NumbersDb.FILE_NAME);
@@ -163,6 +169,16 @@ public class NumbersCompiler {
      */
     public static NumbersCompiler forBuild(Context context) {
         return new NumbersCompiler(context, NumbersDb.BUILD_FILE_NAME);
+    }
+
+    /**
+     * Sets which numbers are worth writing down at all.
+     *
+     * <p>Asked of every number as it arrives, so that the ones that don't belong are never
+     * written rather than deleted again afterwards.
+     */
+    public void setFilter(NumbersFilter filter) {
+        this.filter = filter;
     }
 
     /** The file this one works on. */
@@ -259,13 +275,18 @@ public class NumbersCompiler {
 
                     countBefore = countAfter;
 
-                    Counts counts = new Counts(run.sourceRead(), inserted, updated, deleted);
+                    Counts counts = new Counts(run.sourceRead(), inserted, updated, deleted,
+                            run.sourceSkipped());
 
                     if (log != null) {
                         log.line(tag, "Read records:", counts.read);
                         log.line(tag, "Inserted records:", counts.inserted);
                         log.line(tag, "Updated records:", counts.updated);
                         log.line(tag, "Deleted records:", counts.deleted);
+
+                        if (counts.skipped > 0) {
+                            log.line(tag, "Filtered out:", counts.skipped);
+                        }
                     }
 
                     if (sourceListener != null) sourceListener.onSourceFinished(source, counts);
@@ -350,6 +371,7 @@ public class NumbersCompiler {
         private long sourceNumbers;
         private long sourceDeletions;
         private long sourceDeletedRows;
+        private long sourceSkipped;
 
         /** What this source is called in the log, and where that log is. */
         private String tag;
@@ -372,12 +394,17 @@ public class NumbersCompiler {
 
             sourceNumbers = 0;
             sourceDeletions = 0;
+            sourceSkipped = 0;
             sourceDeletedRows = writer.getDeletedRows();
             lastLogged = 0;
         }
 
         long sourceNumbers() {
-            return sourceNumbers;
+            return sourceNumbers - sourceSkipped;
+        }
+
+        long sourceSkipped() {
+            return sourceSkipped;
         }
 
         long sourceRead() {
@@ -399,6 +426,7 @@ public class NumbersCompiler {
 
             sourceNumbers += read[0];
             sourceDeletions += read[1];
+            sourceSkipped += read[2];
 
             long total = read[0] + read[1];
 
@@ -462,16 +490,24 @@ public class NumbersCompiler {
     /**
      * Reads one slice file into the table.
      *
-     * @return {@code {numbers, numbers it takes out again}}
+     * @return {@code {numbers, numbers it takes out again, numbers the filter kept out}}
      */
     private long[] read(File file, NumbersWriter writer, int sourceId, boolean asLayer) {
-        long[] count = {0, 0};
+        long[] count = {0, 0, 0};
 
         try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
             SliceReader.read(inputStream, new SliceReader.Visitor() {
                 @Override
                 public void onNumber(long number, int positive, int negative,
                                      int neutral, int category) {
+                    count[0]++;
+
+                    // the ones that don't belong here are never written, not written and deleted
+                    if (filter != null && !filter.keep(number)) {
+                        count[2]++;
+                        return;
+                    }
+
                     int rating = NumberFlags.ratingOf(positive, negative, neutral);
                     int score = NumberFlags.scoreOf(positive, negative);
 
@@ -480,8 +516,6 @@ public class NumbersCompiler {
                     } else {
                         writer.put(number, NumberFlags.of(rating, category, 0), score, sourceId);
                     }
-
-                    count[0]++;
                 }
 
                 @Override
@@ -498,20 +532,12 @@ public class NumbersCompiler {
         return count;
     }
 
-    /** Puts the database aside unfiltered, so that filtering has something to go back to. */
-    public boolean makeShadowCopy() {
-        File file = getDbFile();
-        if (!file.exists()) return false;
-
-        return copy(file, NumbersDb.getShadowFile(context));
-    }
-
     /**
      * Puts what was built in the place of the database the app reads.
      *
-     * <p>A move rather than a copy: the file is complete and filtered by now, and what it
-     * replaces is of no further use. The moment it lands, every lookup is answered out of the
-     * new one - there is no point at which the app reads a half-built database.
+     * <p>A move rather than a copy: the file is complete by now, and what it replaces is of
+     * no further use. The moment it lands, every lookup is answered out of the new one -
+     * there is no point at which the app reads a half-built database.
      */
     public boolean promote() {
         File built = NumbersDb.getBuildFile(context);
@@ -523,6 +549,7 @@ public class NumbersCompiler {
 
         if (built.renameTo(live)) {
             dropJournals(built);
+            dropShadowCopy();
             return true;
         }
 
@@ -532,6 +559,7 @@ public class NumbersCompiler {
         if (!copy(built, live)) return false;
 
         deleteDb(built);
+        dropShadowCopy();
 
         return true;
     }
@@ -539,6 +567,20 @@ public class NumbersCompiler {
     /** Throws away a build, finished or not. */
     public void dropBuild() {
         deleteDb(NumbersDb.getBuildFile(context));
+    }
+
+    /**
+     * Removes the copy that older versions kept beside the database.
+     *
+     * <p>There used to be one: the table was built whole and filtered afterwards, and the
+     * copy was what the filtering could be taken back to. Now nothing that doesn't belong is
+     * ever written, so there is nothing to go back to and no reason to keep a second copy of
+     * a few hundred megabytes.
+     */
+    public void dropShadowCopy() {
+        File file = NumbersDb.getShadowFile(context);
+
+        if (file.exists() && !file.delete()) LOG.warn("dropShadowCopy() couldn't delete {}", file);
     }
 
     private static void deleteDb(File file) {
@@ -558,85 +600,6 @@ public class NumbersCompiler {
         }
     }
 
-    public boolean hasShadowCopy() {
-        return NumbersDb.getShadowFile(context).exists();
-    }
-
-    public void dropShadowCopy() {
-        File file = NumbersDb.getShadowFile(context);
-
-        if (file.exists() && !file.delete()) LOG.warn("dropShadowCopy() couldn't delete {}", file);
-    }
-
-    /** Puts the copy back, which undoes the filtering. */
-    public boolean revertToShadowCopy() {
-        File shadow = NumbersDb.getShadowFile(context);
-        if (!shadow.exists()) return false;
-
-        if (!copy(shadow, getDbFile())) return false;
-
-        NumbersDb helper = openDb();
-        try {
-            NumbersDb.setMeta(helper.getWritableDatabase(), NumbersDb.META_FILTERED, "0");
-        } catch (Exception e) {
-            LOG.warn("revertToShadowCopy() couldn't note it", e);
-        } finally {
-            helper.close();
-        }
-
-        return true;
-    }
-
-    /**
-     * Throws away everything outside the country codes that are kept.
-     *
-     * @return how many numbers are left, or -1 when nothing was filtered
-     */
-    public long filter(List<String> prefixesToKeep, int shortNumbersMaxLength) {
-        String condition = NumberRanges.keepCondition(prefixesToKeep, shortNumbersMaxLength);
-        if (condition == null) {
-            LOG.info("filter() nothing is set to keep");
-            return -1;
-        }
-
-        NumbersDb helper = openDb();
-
-        try {
-            SQLiteDatabase db = helper.getWritableDatabase();
-
-            long before = NumbersDb.getCount(db);
-
-            db.beginTransaction();
-            try {
-                db.execSQL("DELETE FROM numbers WHERE NOT (" + condition + ")");
-                db.execSQL("DELETE FROM names WHERE NOT (" + condition + ")");
-
-                NumbersDb.setMeta(db, NumbersDb.META_FILTERED, "1");
-
-                db.setTransactionSuccessful();
-            } finally {
-                db.endTransaction();
-            }
-
-            long after = NumbersDb.getCount(db);
-            NumbersDb.setMeta(db, NumbersDb.META_COUNT, String.valueOf(after));
-
-            countSources(db);
-
-            // the rows are gone, but the space they took is only given back here
-            db.execSQL("VACUUM");
-
-            LOG.info("filter() {} numbers of {} are left", after, before);
-
-            return after;
-        } catch (Exception e) {
-            LOG.error("filter() failed", e);
-            return -1;
-        } finally {
-            helper.close();
-        }
-    }
-
     /** Everything a screen says about the table, read in one go. */
     public static class Info {
 
@@ -644,21 +607,18 @@ public class NumbersCompiler {
         public final long compiledTime;
         public final boolean filtered;
         public final long size;
-        public final long shadowSize;
         /** Whether the table could be read at all; it can't while it is being written. */
         public final boolean readable;
 
-        Info(long count, long compiledTime, boolean filtered, long size, long shadowSize) {
-            this(count, compiledTime, filtered, size, shadowSize, true);
+        Info(long count, long compiledTime, boolean filtered, long size) {
+            this(count, compiledTime, filtered, size, true);
         }
 
-        Info(long count, long compiledTime, boolean filtered, long size, long shadowSize,
-             boolean readable) {
+        Info(long count, long compiledTime, boolean filtered, long size, boolean readable) {
             this.count = count;
             this.compiledTime = compiledTime;
             this.filtered = filtered;
             this.size = size;
-            this.shadowSize = shadowSize;
             this.readable = readable;
         }
 
@@ -685,7 +645,7 @@ public class NumbersCompiler {
 
             return new Info(count != null ? Long.parseLong(count) : -1,
                     compiled != null ? Long.parseLong(compiled) : 0,
-                    filtered, getSize(), getShadowSize());
+                    filtered, getSize());
         } catch (Exception e) {
             /*
              * Most likely because a build has the table open and hasn't reached a point where
@@ -694,7 +654,7 @@ public class NumbersCompiler {
              */
             LOG.warn("getInfo()", e);
 
-            return new Info(-1, 0, false, 0, 0, false);
+            return new Info(-1, 0, false, 0, false);
         } finally {
             helper.close();
         }
@@ -785,13 +745,9 @@ public class NumbersCompiler {
         }
     }
 
-    /** How much room the table takes, and the copy beside it. */
+    /** How much room the table takes. */
     public long getSize() {
         return getDbFile().length();
-    }
-
-    public long getShadowSize() {
-        return NumbersDb.getShadowFile(context).length();
     }
 
     /** Throws the table away; the sources are what it is built from, so nothing is lost. */

@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dummydomain.yetanothercallblocker.Settings;
-import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseDataSlice;
 import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
 
@@ -138,13 +137,31 @@ public class DbFilteringService {
         CANCELLATION_REQUESTED.set(false);
 
         NumberFilter numberFilter = DbFilteringUtils.getNumberFilter(settings);
+
         if (numberFilter == null) {
-            LOG.info("filter() filtering is not configured");
-            return new Result(Status.NO_FILTER, 0, 0);
+            if (!settings.isDbFilteringEnabled()) {
+                LOG.info("filter() filtering is not configured");
+                return new Result(Status.NO_FILTER, 0, 0);
+            }
+
+            /*
+             * Filtering is on, but the pattern says something the file names can't answer -
+             * "German mobile numbers", say, where the file holds all German numbers. The
+             * files stay as they are and the table is built again, which is where a pattern
+             * like that is applied: to every number as it is read.
+             */
+            LOG.info("filter() the files can't be filtered by this pattern; building the table");
+
+            boolean built = compileDb();
+
+            return new Result(built ? Status.FILTERED : Status.FAILED, 0, 0);
         }
 
         File mainDir = getMainDir();
         File masterDir = getMasterDir();
+
+        /** Whether the table has already been built with the filter that is being set. */
+        boolean compiled = false;
 
         try {
             if (isDatabase(masterDir)) {
@@ -156,9 +173,13 @@ public class DbFilteringService {
                  * is never applied to a database that has been filtered already: without a
                  * copy of the unfiltered one, the sources are asked for it again.
                  */
-                if ((settings.isDbFiltered() || !isDatabase(mainDir)) && !compileDb()) {
-                    LOG.warn("filter() there's no unfiltered database to filter");
-                    return new Result(Status.NO_DATABASE, 0, 0);
+                if (settings.isDbFiltered() || !isDatabase(mainDir)) {
+                    if (!compileDb()) {
+                        LOG.warn("filter() there's no unfiltered database to filter");
+                        return new Result(Status.NO_DATABASE, 0, 0);
+                    }
+
+                    compiled = true;
                 }
 
                 LOG.debug("filter() keeping a copy of the unfiltered database");
@@ -195,7 +216,12 @@ public class DbFilteringService {
 
             settings.setDbFiltered(true);
 
-            filterNumbers();
+            /*
+             * The table is filtered as it is built - every number is held against the pattern
+             * as it arrives - so it is built again rather than narrowed afterwards. Unless
+             * that has just happened above, in which case it already knows this filter.
+             */
+            if (!compiled) compileDb();
 
             if (!settings.getDbFilteringKeepMaster()) {
                 LOG.debug("filter() dropping the master database");
@@ -271,7 +297,7 @@ public class DbFilteringService {
             settings.setDbFiltered(false);
             reloadDatabases();
 
-            // a build leaves the table unfiltered, so there is nothing else to undo
+            // the table was built along with the files, with whatever filter is set now
 
             return true;
         }
@@ -281,9 +307,14 @@ public class DbFilteringService {
         delete(masterDir);
         settings.setDbFiltered(false);
 
-        new NumbersCompiler(context).revertToShadowCopy();
-
         reloadDatabases();
+
+        /*
+         * The files are back as they were downloaded; the table is not a copy of anything and
+         * is built again out of them - with whatever filter is set at that moment, which is
+         * none if this was reached by switching filtering off.
+         */
+        compileDb();
 
         LOG.info("revertToMaster() the unfiltered database is back in use");
         return true;
@@ -373,26 +404,6 @@ public class DbFilteringService {
         }
         return name.substring(SLICE_NAME_PREFIX.length(),
                 name.length() - SLICE_NAME_POSTFIX.length());
-    }
-
-    /**
-     * Filters the compiled table the way the files are filtered: from the copy that was put
-     * aside when it was built, never from a table that has been narrowed already.
-     */
-    private void filterNumbers() {
-        NumbersCompiler compiler = new NumbersCompiler(context);
-
-        if (compiler.hasShadowCopy()) {
-            compiler.revertToShadowCopy();
-        } else {
-            compiler.makeShadowCopy();
-        }
-
-        compiler.filter(DbFilteringUtils.getPrefixesToKeep(settings),
-                settings.getDbFilteringKeepShortNumbers()
-                        ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0);
-
-        if (!settings.getDbFilteringKeepMaster()) compiler.dropShadowCopy();
     }
 
     /** Builds the database from the sources, which is what an unfiltered database is. */

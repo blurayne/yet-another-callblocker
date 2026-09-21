@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.EditTextPreference;
@@ -19,6 +20,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.text.NumberFormat;
 import java.util.List;
 
+import dummydomain.yetanothercallblocker.data.BlacklistUtils;
 import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
@@ -29,7 +31,6 @@ import dummydomain.yetanothercallblocker.event.DbFilteringProgressEvent;
 import dummydomain.yetanothercallblocker.utils.DbFilteringUtils;
 import dummydomain.yetanothercallblocker.work.TaskService;
 
-import static dummydomain.yetanothercallblocker.Settings.PREF_DB_FILTERING_PREFIXES_TO_KEEP;
 
 public class DbFilteringSettingsFragment extends BaseSettingsFragment {
 
@@ -59,13 +60,19 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
 
     @Override
     protected void initScreen() {
+        /*
+         * The pattern has a default that suits the phone this was written for; the call log
+         * knows better, so it is asked once and what it says is offered instead.
+         */
         if (!settings.isDbFilteringPrefixesPrefilled()) {
             settings.setDbFilteringPrefixesPrefilled(true);
 
-            if (TextUtils.isEmpty(settings.getDbFilteringPrefixesToKeep())) {
-                startPrefillPrefixesTask();
-            }
+            startPrefillPrefixesTask();
         }
+
+        requirePreference(Settings.PREF_DB_FILTERING_PATTERN).setSummary(
+                getString(R.string.db_filtering_pattern_summary,
+                        Settings.DEFAULT_DB_FILTERING_PATTERN));
 
         requirePreference(PREF_INFO).setOnPreferenceClickListener(pref -> {
             new AlertDialog.Builder(requireActivity())
@@ -82,14 +89,14 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
             return true;
         });
 
-        setPrefChangeListener(PREF_DB_FILTERING_PREFIXES_TO_KEEP, (pref, newValue) -> {
-            String value = (String) newValue;
+        setPrefChangeListener(Settings.PREF_DB_FILTERING_PATTERN, (pref, newValue) -> {
+            String value = ((String) newValue).trim();
 
-            String formattedPrefixes = DbFilteringUtils.formatPrefixes(
-                    DbFilteringUtils.parsePrefixes(value));
-
-            if (!TextUtils.equals(formattedPrefixes, value)) {
-                ((EditTextPreference) pref).setText(formattedPrefixes);
+            // a pattern that can't be read would quietly filter nothing at all
+            if (!TextUtils.isEmpty(value) && BlacklistUtils.compilePattern(
+                    BlacklistUtils.patternFromHumanReadable(value)) == null) {
+                Toast.makeText(requireContext(), R.string.db_filtering_pattern_invalid,
+                        Toast.LENGTH_LONG).show();
                 return false;
             }
 
@@ -294,14 +301,13 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
 
     private void showStatus(long count) {
         String state;
-        if (settings.isDbFiltered()) {
-            state = getString(R.string.db_filtering_status_filtered, DbFilteringUtils
-                    .formatPrefixes(DbFilteringUtils.getPrefixesToKeep(settings)));
-        } else if (settings.isDbFilteringEnabled()
-                && DbFilteringUtils.getPrefixesToKeep(settings).isEmpty()) {
+        if (!settings.isDbFilteringEnabled()) {
+            state = getString(R.string.db_filtering_status_not_filtered);
+        } else if (TextUtils.isEmpty(settings.getDbFilteringPattern())) {
             state = getString(R.string.db_filtering_status_nothing_set);
         } else {
-            state = getString(R.string.db_filtering_status_not_filtered);
+            state = getString(R.string.db_filtering_status_filtered,
+                    settings.getDbFilteringPattern());
         }
 
         String copy = getString(hasMaster()
@@ -357,14 +363,19 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
 
             @Override
             protected void onPostExecute(List<String> prefixList) {
-                if (!prefixList.isEmpty()) {
-                    EditTextPreference preference = requirePreference(
-                            PREF_DB_FILTERING_PREFIXES_TO_KEEP);
+                if (!isAdded() || prefixList.isEmpty()) return;
 
-                    if (TextUtils.isEmpty(preference.getText())) {
-                        preference.setText(DbFilteringUtils.formatPrefixes(prefixList));
-                    }
-                }
+                EditTextPreference preference
+                        = requirePreference(Settings.PREF_DB_FILTERING_PATTERN);
+
+                // only when nothing has been set by hand; the default is not "set by hand"
+                if (!TextUtils.isEmpty(preference.getText())) return;
+
+                preference.setText(prefixList.size() == 1
+                        ? "+" + prefixList.get(0) + "*"
+                        : "+{" + TextUtils.join(",", prefixList) + "}*");
+
+                updateStatusPreference();
             }
         };
         prefillPrefixesTask.execute();

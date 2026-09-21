@@ -18,17 +18,67 @@ import dummydomain.yetanothercallblocker.data.NumberUtils;
 
 public class DbFilteringUtils {
 
+    /**
+     * The filter for the downloaded files, or null when they can't be filtered by name.
+     *
+     * <p>Null when nothing is being filtered, and also when the pattern says something the
+     * file names can't answer - a filter with nothing to keep would throw away every file,
+     * which is the opposite of what an unanswerable question should do. The numbers
+     * themselves are sorted out as they are read either way.
+     */
     public static NumberFilter getNumberFilter(Settings settings) {
         if (!settings.isDbFilteringEnabled()) return null;
 
-        return new NumberFilter(getPrefixesToKeep(settings),
+        List<String> prefixes = getPrefixesToKeep(settings);
+        if (prefixes.isEmpty()) return null;
+
+        return new NumberFilter(prefixes,
                 settings.isDbFilteringThorough(),
                 settings.getDbFilteringKeepShortNumbers()
                         ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0);
     }
 
+    /**
+     * The country codes the pattern keeps, when it is the sort of pattern that has any.
+     *
+     * <p>The files the database is downloaded as are one per country code, so they can be
+     * left out by name - but only when the pattern says something about country codes and
+     * nothing else: {@code +49*} and {@code +{49,43}*} do, {@code +4915*} does not, because
+     * the file it would be in holds more than what is wanted. When nothing can be said, the
+     * files are all kept and the numbers are sorted out one by one as they are read.
+     */
     public static List<String> getPrefixesToKeep(Settings settings) {
-        return parsePrefixes(settings.getDbFilteringPrefixesToKeep());
+        return parsePattern(settings.getDbFilteringPattern());
+    }
+
+    /** The prefixes a {@code +49*} or {@code +{49,43}*} pattern amounts to, or nothing. */
+    public static List<String> parsePattern(String pattern) {
+        if (TextUtils.isEmpty(pattern)) return Collections.emptyList();
+
+        String rest = pattern.trim();
+
+        if (!rest.startsWith("+")) return Collections.emptyList();
+        rest = rest.substring(1);
+
+        if (!rest.endsWith("*")) return Collections.emptyList();
+        rest = rest.substring(0, rest.length() - 1);
+
+        if (rest.startsWith("{") && rest.endsWith("}")) {
+            rest = rest.substring(1, rest.length() - 1);
+        }
+
+        List<String> prefixes = new ArrayList<>();
+
+        for (String prefix : rest.split(",")) {
+            prefix = prefix.trim();
+
+            // anything else in it - another wildcard, a digit placeholder - and this can't say
+            if (prefix.isEmpty() || !prefix.matches("[0-9]+")) return Collections.emptyList();
+
+            if (!prefixes.contains(prefix)) prefixes.add(prefix);
+        }
+
+        return prefixes;
     }
 
     public static List<String> parsePrefixes(String prefixesString) {

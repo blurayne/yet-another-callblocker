@@ -29,6 +29,7 @@ import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceNames;
 import dummydomain.yetanothercallblocker.data.source.SourceHttp;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersFilter;
 import dummydomain.yetanothercallblocker.data.numbers.SliceReader;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabase;
@@ -788,6 +789,21 @@ public class DbCompileService {
 
         compiler.dropBuild(); // whatever an earlier attempt left behind
 
+        /*
+         * What is worth keeping is decided as each number arrives rather than afterwards: a
+         * community database holds nine million numbers from everywhere, and writing all of
+         * them down to delete most of them again is minutes of work and a few hundred
+         * megabytes for nothing. The same filter applies to every source.
+         */
+        NumbersFilter filter = NumbersFilter.of(settings);
+
+        compiler.setFilter(filter);
+
+        buildLog.line(BuildLog.MAIN, filter != null
+                ? context.getString(R.string.build_log_filter,
+                        NumbersFilter.describe(settings))
+                : context.getString(R.string.build_log_no_filter));
+
         String dataDir = YacbHolder.getStorage().getDataDirPath();
 
         List<String> tags = new ArrayList<>(sources.size());
@@ -805,8 +821,7 @@ public class DbCompileService {
         /*
          * The library keeps what it read in memory - the slices it was asked about, and the
          * tree above them - and the table was just built out of the same files. Letting go of
-         * that before the filtering walks the table again is free, and on a database of a few
-         * hundred thousand files it is the difference between filtering and running out.
+         * it here is free and leaves the phone that much more to work with.
          */
         YacbHolder.getCommunityDatabase().reload();
 
@@ -821,30 +836,6 @@ public class DbCompileService {
         }
 
         noteSourceMeta(compiler, sources);
-
-        boolean filtering = settings.isDbFilteringEnabled();
-
-        /*
-         * The copy is what a filter can be taken back to, so it is made while the table is
-         * still whole and only when there is going to be something to take back: it is as big
-         * as the table itself, and a phone that has just written a few hundred megabytes has
-         * no business writing them a second time for nothing.
-         */
-        if (filtering && settings.getDbFilteringKeepMaster()) {
-            compiler.makeShadowCopy();
-        } else {
-            compiler.dropShadowCopy(); // an older one would be a copy of an older database
-        }
-
-        if (filtering) {
-            phase(listener, R.string.filtering_db);
-
-            buildLog.line(BuildLog.MAIN, context.getString(R.string.filtering_db));
-
-            compiler.filter(DbFilteringUtils.getPrefixesToKeep(settings),
-                    settings.getDbFilteringKeepShortNumbers()
-                            ? settings.getDbFilteringKeepShortNumbersMaxLength() : 0);
-        }
 
         // and only now does it become the database the app looks numbers up in
         if (!compiler.promote()) {

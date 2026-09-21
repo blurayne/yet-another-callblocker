@@ -56,6 +56,7 @@ public class Settings extends GenericSettings {
     public static final String PREF_LAST_UPDATE_TIME = "lastUpdateTime";
     public static final String PREF_LAST_UPDATE_CHECK_TIME = "lastUpdateCheckTime";
     public static final String PREF_LAST_DB_BUILD_ERROR = "lastDbBuildError";
+    public static final String PREF_DB_BUILD_RUNNING = "dbBuildRunning";
     public static final String PREF_LAST_DB_BUILD_ERROR_TIME = "lastDbBuildErrorTime";
     public static final String PREF_NOTIFY_AUTO_UPDATES = "notifyAutoUpdates";
     public static final String PREF_CALLER_ID_TEMPLATE = "callerIdTemplate";
@@ -624,6 +625,21 @@ public class Settings extends GenericSettings {
 
     public void setCallerIdTemplate(String template) {
         setString(PREF_CALLER_ID_TEMPLATE, template != null ? template : "");
+    }
+
+    /**
+     * Whether a build was running when the app was last heard from.
+     *
+     * <p>Written down because a build that is killed - by the system, for memory, or by the
+     * user - says nothing on its way out. Finding this still set at the next start is how the
+     * app knows that the last build never finished, and the only way to say so afterwards.
+     */
+    public boolean getDbBuildRunning() {
+        return getBoolean(PREF_DB_BUILD_RUNNING, false);
+    }
+
+    public void setDbBuildRunning(boolean running) {
+        setBoolean(PREF_DB_BUILD_RUNNING, running);
     }
 
     /**

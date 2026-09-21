@@ -398,6 +398,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="share_crash_reports">Share crash reports</string>
     <string name="share_crash_reports_summary">What the app wrote down the last few times it went down. The exported log above is this run\'s and holds nothing of a crash that ended the one before it.</string>
     <string name="share_crash_reports_none">There are no crash reports</string>
+    <string name="share_crash_reports_last_exit">Last ending: %s</string>
 
     <string name="settings_screen_db_filtering">Database filtering</string>
     <string name="db_filtering_status">Status</string>
@@ -439,6 +440,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_build_not_readable">What arrived can\'t be read as a database. Check the address of the source that carries it.</string>
     <string name="db_build_table_failed">The numbers couldn\'t be written into the table. There may be no room left on the phone.</string>
     <string name="db_build_table_failed_reason">The numbers couldn\'t be written into the table: %s</string>
+    <string name="db_build_interrupted">The build never finished \u2013 the app stopped running while it was working.</string>
     <string name="auto_updates_notify">Say when they run</string>
     <string name="auto_updates_notify_summary">Show a notification while an update that runs on its own is working. What you start by hand always shows one.</string>
     <string name="source_result_database">the database</string>

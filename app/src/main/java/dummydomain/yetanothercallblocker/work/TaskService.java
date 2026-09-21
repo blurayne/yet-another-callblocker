@@ -156,6 +156,9 @@ public class TaskService extends IntentService {
         DbCompileService.Result result = null;
         String error = null;
 
+        // so that a build that is killed rather than finished can be told about afterwards
+        App.getSettings().setDbBuildRunning(true);
+
         postStickyEvent(sticky);
         try {
             result = new DbCompileService(this, App.getSettings())
@@ -193,6 +196,8 @@ public class TaskService extends IntentService {
 
             error = describe(e);
         } finally {
+            App.getSettings().setDbBuildRunning(false);
+
             removeStickyEvent(sticky);
         }
 

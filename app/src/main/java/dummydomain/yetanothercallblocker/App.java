@@ -7,11 +7,17 @@ import android.os.Build;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dummydomain.yetanothercallblocker.data.Config;
 import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
+import dummydomain.yetanothercallblocker.utils.ExitReasons;
 import dummydomain.yetanothercallblocker.work.UpdateScheduler;
 
 public class App extends Application {
+
+    private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     private static App instance;
 
@@ -64,6 +70,8 @@ public class App extends Application {
 
         setUiMode(settings.getUiMode());
 
+        noteInterruptedBuild();
+
         // what the service says in the drawer is said on screen as well, while there is one
         TaskNotices.install(this);
 
@@ -75,6 +83,31 @@ public class App extends Application {
         if (settings.getUseMonitoringService()) {
             CallMonitoringService.start(this);
         }
+    }
+
+    /**
+     * Says that the last build never finished, when it didn't.
+     *
+     * <p>A build that is killed - for memory, or by the user - writes nothing on its way out:
+     * there is no exception, no handler runs, and the next start looks like any other. The
+     * marker it sets while it runs is still set here in that case, and the system can say why
+     * the process before this one ended, which is the difference between "it ran out of
+     * memory" and "something in it is broken".
+     */
+    private void noteInterruptedBuild() {
+        if (!settings.getDbBuildRunning()) return;
+
+        settings.setDbBuildRunning(false);
+
+        String reason = ExitReasons.getLastAbnormal(this);
+
+        String text = getString(R.string.db_build_interrupted)
+                + (reason != null ? " \u00b7 " + reason : "");
+
+        LOG.error("noteInterruptedBuild() {}", text);
+
+        settings.setLastDbBuildError(text);
+        settings.setLastDbBuildErrorTime(System.currentTimeMillis());
     }
 
     private static Context getDeviceProtectedStorageContext(Context context) {

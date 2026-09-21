@@ -12,11 +12,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import dummydomain.yetanothercallblocker.utils.DebuggingUtils;
+import dummydomain.yetanothercallblocker.utils.ExitReasons;
 import dummydomain.yetanothercallblocker.utils.FileUtils;
 import dummydomain.yetanothercallblocker.utils.SystemUtils;
 
@@ -48,10 +54,22 @@ public class AdvancedSettingsFragment extends BaseSettingsFragment {
             return true;
         });
 
-        requirePreference(PREF_SHARE_CRASH_REPORTS).setOnPreferenceClickListener(preference -> {
+        Preference shareCrashReports = requirePreference(PREF_SHARE_CRASH_REPORTS);
+        shareCrashReports.setOnPreferenceClickListener(preference -> {
             shareCrashReports();
             return true;
         });
+
+        /*
+         * How the app last stopped running, said here rather than only inside the file that
+         * gets shared: when it was killed for memory there is no file at all, and that is
+         * exactly the case worth knowing about.
+         */
+        String lastExit = ExitReasons.getLastAbnormal(requireContext());
+        if (lastExit != null) {
+            shareCrashReports.setSummary(getString(R.string.share_crash_reports_last_exit,
+                    lastExit));
+        }
 
         /*
          * Direct Boot is what the setting below is about, so the explanation of it sits with
@@ -122,15 +140,44 @@ public class AdvancedSettingsFragment extends BaseSettingsFragment {
     private void shareCrashReports() {
         Activity activity = requireActivity();
 
-        List<File> reports = DebuggingUtils.listReports(activity);
+        List<File> reports = new ArrayList<>(DebuggingUtils.listReports(activity));
+
+        // the newest few; everything ever written would be a long list of old news
+        if (reports.size() > 5) reports = new ArrayList<>(reports.subList(0, 5));
+
+        // and how the app stopped running, which is all there is when it was simply killed
+        File exitReasons = writeExitReasons(activity);
+        if (exitReasons != null) reports.add(exitReasons);
 
         if (reports.isEmpty()) {
             Toast.makeText(activity, R.string.share_crash_reports_none, Toast.LENGTH_LONG).show();
             return;
         }
 
-        // the newest few; everything ever written would be a long list of old news
-        FileUtils.shareFiles(activity, reports.subList(0, Math.min(reports.size(), 5)));
+        FileUtils.shareFiles(activity, reports);
+    }
+
+    /**
+     * What the app has to share about its own endings, as a file.
+     *
+     * <p>Written fresh every time it is asked for: it is the system's answer, not the app's,
+     * and it changes without the app being involved.
+     */
+    private File writeExitReasons(Activity activity) {
+        String reasons = ExitReasons.get(activity);
+        if (reasons == null) return null;
+
+        File file = new File(activity.getCacheDir(), "exit_reasons.txt");
+
+        try (Writer writer = new OutputStreamWriter(
+                new FileOutputStream(file), Charset.forName("UTF-8"))) {
+            writer.write(reasons);
+        } catch (IOException e) {
+            LOG.warn("writeExitReasons()", e);
+            return null;
+        }
+
+        return file;
     }
 
     /** Puts the log of this run in a file and offers to share it. */

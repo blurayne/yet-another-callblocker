@@ -91,6 +91,7 @@
     <string name="db_build_not_readable">Was angekommen ist, lässt sich nicht als Datenbank lesen. Prüfen Sie die Adresse der Quelle, welche sie trägt.</string>
     <string name="db_build_table_failed">Die Nummern ließen sich nicht in die Tabelle schreiben. Womöglich ist kein Platz mehr auf dem Telefon.</string>
     <string name="db_build_table_failed_reason">Die Nummern ließen sich nicht in die Tabelle schreiben: %s</string>
+    <string name="db_build_interrupted">Der Aufbau wurde nicht fertig \u2013 die App lief nicht mehr, während sie daran war.</string>
     <string name="auto_updates_notify">Bei automatischen Läufen benachrichtigen</string>
     <string name="auto_updates_notify_summary">Zeigt eine Benachrichtigung, solange ein selbsttätiger Abgleich läuft. Was Sie selbst anstoßen, zeigt immer eine.</string>
     <string name="source_result_database">die Datenbank</string>
@@ -506,6 +507,7 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="share_crash_reports">Absturzberichte teilen</string>
     <string name="share_crash_reports_summary">Was die App bei den letzten Abstürzen aufgeschrieben hat. Das oben exportierte Protokoll ist das dieses Laufs und enthält nichts von einem Absturz, der den vorigen beendet hat.</string>
     <string name="share_crash_reports_none">Es gibt keine Absturzberichte</string>
+    <string name="share_crash_reports_last_exit">Zuletzt beendet: %s</string>
 
     <string name="settings_screen_advanced">Erweiterte Einstellungen</string>
     <string name="notification_settings">Benachrichtigungseinstellungen</string>

@@ -210,9 +210,6 @@
     <string name="sia_category_safe_company">Sicuro società</string>
     <string name="sia_category_safe_personal">Sicuro personale</string>
     <string name="sia_category_dept_collector">Esattore</string>
-    <string name="filtering_db">Filtraggio banca dati…</string>
-    <string name="db_filtering_filter_db_summary">Esegui ora il filtraggio della banca dati (per filtrare i dati esistenti)</string>
-    <string name="db_filtering_filter_db">Filtra la banca dati</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">La lunghezza massima (inclusa) dei numeri brevi da mantenere indipendentemente dai prefissi. Ad esempio, il valore 5 manterrà i numeri di lunghezza pari o inferiore a 5 cifre</string>
     <string name="db_filtering_keep_short_numbers_max_length">Lunghezza dei numeri da conservare</string>
     <string name="db_filtering_keep_short_numbers_summary">Conserva i numeri più corti della lunghezza specificata indipendentemente dai prefissi</string>

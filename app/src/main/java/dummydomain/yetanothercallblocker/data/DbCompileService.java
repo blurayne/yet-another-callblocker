@@ -64,8 +64,11 @@ public class DbCompileService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DbCompileService.class);
 
-    /** Where an older version kept one file per source; emptied when one is found. */
+    /** Where an older version kept one file per source; removed when one is found. */
     private static final String LAYERS_DIR_NAME = "sia-layers";
+
+    /** And where it kept the downloaded files as they arrived, to undo filtering with. */
+    private static final String MASTER_DIR_NAME = "sia-master";
 
     /** And where each source keeps what it handed over, one directory each. */
     private static final String SOURCES_DIR_NAME = "sources";
@@ -768,8 +771,13 @@ public class DbCompileService {
         }
     }
 
-    /** Forgets what was fetched from sources that are gone or switched off. */
+    /**
+     * Forgets what was fetched from sources that are gone or switched off, and what older
+     * versions kept beside the database.
+     */
     private void dropDirsOfGoneSources(List<NumberSource> sources) {
+        dropOldCopies();
+
         Set<String> names = new HashSet<>();
         for (NumberSource source : sources) {
             names.add(source.getId());
@@ -787,13 +795,27 @@ public class DbCompileService {
 
             FileUtils.delete(dir);
         }
+    }
 
-        // what an older version kept: one file per source, in a directory of its own
-        File[] layers = getLayersDir().listFiles();
-        if (layers == null) return;
+    /**
+     * Removes what older versions kept beside the database.
+     *
+     * <p>Two things, both from when the database was built whole and filtered afterwards: a
+     * file per source, and a copy of the downloaded files as they arrived, to take the
+     * filtering back to. Nothing is filtered out of a finished database any more - a number
+     * that doesn't belong is never written - so neither has anything to go back to, and
+     * between them they are a few hundred megabytes of a phone's storage.
+     */
+    private static void dropOldCopies() {
+        String dataDir = YacbHolder.getStorage().getDataDirPath();
 
-        for (File file : layers) {
-            if (!file.delete()) LOG.warn("dropDirsOfGoneSources() couldn't delete {}", file);
+        for (String name : new String[]{LAYERS_DIR_NAME, MASTER_DIR_NAME}) {
+            File dir = new File(dataDir, name);
+            if (!dir.exists()) continue;
+
+            LOG.info("dropOldCopies() removing {}", dir);
+
+            FileUtils.delete(dir);
         }
     }
 
@@ -987,10 +1009,6 @@ public class DbCompileService {
         source.setLastUpdate(System.currentTimeMillis());
 
         if (sourceService != null) sourceService.save(source);
-    }
-
-    private static File getLayersDir() {
-        return new File(YacbHolder.getStorage().getDataDirPath(), LAYERS_DIR_NAME);
     }
 
     private static void createDir(File dir) {

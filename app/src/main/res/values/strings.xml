@@ -229,21 +229,6 @@ Tokens and passwords come back only if the backup was made with them in it.</str
         <item quantity="other">%d entries</item>
     </plurals>
     <string name="settings_category_main">Main</string>
-    <string name="db_filtering_keep_master">Keep the unfiltered database</string>
-    <string name="db_filtering_keep_master_summary">Keep a copy of the downloaded files as they arrived, so that filtering them again \u2013 or undoing it \u2013 needs no new download. The copy takes about as much room as the files themselves</string>
-    <string name="db_filtering_revert_to_master">Use the unfiltered database</string>
-    <string name="db_filtering_revert_to_master_summary">Put the unfiltered database back. It can be filtered again afterwards</string>
-    <string name="db_filtering_revert_to_master_summary_unavailable">No copy is kept, so the unfiltered database is fetched from the sources again</string>
-    <string name="db_filtering_reverting">Restoring the unfiltered database\u2026</string>
-    <string name="db_filtering_reverted">The unfiltered database is in use again.</string>
-    <string name="db_filtering_revert_failed">Couldn\'t restore the unfiltered database.</string>
-    <string name="db_filtering_progress">Part %1$d of %2$d</string>
-    <string name="db_filtering_cancelling">Stopping\u2026</string>
-    <string name="db_filtering_result_cancelled">Filtering was stopped. The unfiltered database is in use.</string>
-    <string name="db_filtering_result_filtered">Removed %1$d of %2$d entries, %3$d are left.</string>
-    <string name="db_filtering_result_nothing_filtered">Nothing was filtered out: all %1$d entries match the filter, so the database is unchanged.</string>
-    <string name="db_filtering_result_no_filter">Nothing was filtered: database filtering is disabled, or no prefixes to keep are set.</string>
-    <string name="db_filtering_result_no_database">There is no database to filter, and it couldn\'t be downloaded.</string>
     <string name="silence_calls">Silence calls</string>
     <string name="silence_calls_summary">Mute the ringer for the selected callers instead of blocking them: the call still goes through, is shown by the phone app and ends up in the call log. Contacts are never silenced. Needs \"Advanced call blocking mode\" and Android 10+.</string>
     <string name="silence_calls_negative">Negative rating</string>
@@ -411,12 +396,12 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_filtering_status_filtered">Filtered, keeping %s</string>
     <string name="db_filtering_status_not_filtered">Not filtered: the database holds every number it came with</string>
     <string name="db_filtering_status_nothing_set">Filtering is on, but nothing is set to keep</string>
-    <string name="db_filtering_status_copy_kept">a copy of the unfiltered database is kept</string>
-    <string name="db_filtering_status_no_copy">no copy of the unfiltered database is kept</string>
     <string name="db_filtering_status_numbers">%s numbers</string>
     <string name="db_filtering_category_what">What is kept</string>
     <string name="db_filtering_category_apply">Apply</string>
-    <string name="db_filtering_category_storage">Storage</string>
+    <string name="db_filtering_rebuild">Build the database again</string>
+    <string name="db_filtering_rebuild_summary">Every number is held against the pattern as it is read, so what is set here takes effect the next time the database is built. Nothing is filtered out of the database that is already there</string>
+    <string name="db_filtering_rebuild_confirm">The sources are read again and the database is built from scratch, with the filter as it is set now. The database in use stays as it is until the new one is finished.</string>
     <string name="db_filtering_info">Explanation</string>
     <string name="db_filtering_info_summary">The database holds numbers from everywhere. Filtering keeps the ones that can reach you and drops the rest, which saves storage; nothing else about the app changes. It happens while the database is fetched and after every update. Every source is compiled into one table first and a copy of it is put aside; the filter then runs on that table, so filtering always starts from the unfiltered database - and when no copy is kept, the sources are asked for it again rather than a narrowed database being narrowed further</string>
     <string name="db_filtering_enabled">Filtering enabled</string>
@@ -434,9 +419,6 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_filtering_keep_short_numbers_summary">Keep numbers shorter than the specified length regardless of prefixes</string>
     <string name="db_filtering_keep_short_numbers_max_length">Length of numbers to keep</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">The maximum length (inclusive) of short numbers to keep regardless of prefixes. E.g. the value of 5 will keep numbers with length of 5 digits or shorter</string>
-    <string name="db_filtering_filter_db">Filter the database</string>
-    <string name="db_filtering_filter_db_summary">Apply the pattern now: leave out the downloaded files that hold nothing worth keeping, and build the database again. Numbers are held against the pattern as they are read, so building again is all it takes</string>
-    <string name="filtering_db">Filtering DB…</string>
     <string name="compiling_db">Building the database (%1$d/%2$d)\u2026</string>
     <string name="unpacking_db">Unpacking the database\u2026</string>
     <string name="reading_sources">Reading the sources\u2026</string>
@@ -649,7 +631,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="open_help_activity">Help</string>
     <string name="help_activity">Help</string>
     <string name="help_database_title">How the database is built</string>
-    <string name="help_database">The app knows nothing about a number by itself: everything comes from the sources you list, in the order you put them in.\n\n\u2022 The source marked as carrying the database is read first and fills the empty table. Every source after it is a layer on top: it changes what it knows about and leaves the rest alone, and it can also take numbers out again.\n\u2022 The number is the key of the table, so a number several sources know is one entry. The later source changes the fields it has something to say about; the others stay as they were.\n\u2022 A build works on a database of its own, beside the one in use. It is filled, then filtered, and only when all of that has worked does it take the place of the old one \u2013 so a build that fails leaves what worked untouched, and lookups never see a half-built database.\n\u2022 Only numbers matching the pattern you set are written down at all \u2013 the rest are skipped as the sources are read, so the database never holds nine million numbers to delete most of them again. Changing the pattern means building again, which needs no download.\n\u2022 The database itself is only downloaded when there is none, when you point the source somewhere else, or when its own schedule says so \u2013 it is tens of megabytes. \"Fetch now\" on a source fetches it whatever that says.\n\u2022 What each build did, source by source, is in the build log under Database.</string>
+    <string name="help_database">The app knows nothing about a number by itself: everything comes from the sources you list, in the order you put them in.\n\n\u2022 No source is \"the database\" and the rest additions to it: every source can hand over a whole one, and the order alone decides. The first source fills the empty table; every source after it changes what it knows about, leaves the rest alone, and can also take numbers out again.\n\u2022 The number is the key of the table, so a number several sources know is one entry. The later source changes the fields it has something to say about; the others stay as they were.\n\u2022 A build works on a database of its own, beside the one in use. Only when it is whole does it take the place of the old one \u2013 so a build that fails leaves what worked untouched, and lookups never see a half-built database.\n\u2022 Only numbers matching the pattern you set are written down at all \u2013 the rest are skipped as the sources are read, so the database never holds nine million numbers to delete most of them again. Changing the pattern means building again, which needs no download.\n\u2022 The first source\'s files are the ones the library keeps, and they are only downloaded when there are none, when you point the source somewhere else, or when its own schedule says so \u2013 it is tens of megabytes. \"Fetch now\" on a source fetches it whatever that says.\n\u2022 What each build did, source by source, is in the build log under Database.</string>
     <string name="help_matching_title">What decides about a call</string>
     <string name="help_matching">Some things say \"let it through\" and some say \"block it\", and they are not asked in the order they are listed in the settings.\n\n<b>Allowed, whatever anything else says:</b>\n\u2022 the number is in your contacts\n\u2022 the number is on your whitelist\n\u2022 the number is on the allow list of your PhoneBlock account\n\nNothing below is consulted then \u2013 a call from a contact is never blocked.\n\n<b>Otherwise it is blocked by the first of these that applies</b> (each only if you switched it on):\n1. the number is withheld\n2. the community database rates it negative\n3. it is on your blacklist\n4. PhoneBlock has it as spam, or it is on the block list of your account\n\nOn Android 11 and newer, a call the network says is not coming from the number it claims is blocked before any of this, if you switched that on.\n\nWhen the phone has not been unlocked since it was started, your contacts and lists can\'t be read. What may still block then is a setting of its own in the advanced settings.</string>
     <string name="help_lists_title">The lists themselves</string>

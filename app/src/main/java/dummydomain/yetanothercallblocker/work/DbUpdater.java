@@ -4,7 +4,6 @@ import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.PhoneBlockHelper;
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.DbCompileService;
-import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.event.SecondaryDbUpdateFinished;
@@ -38,9 +37,6 @@ public class DbUpdater {
                  * again, from what was fetched last time, without asking them again.
                  */
                 if (app != null) new DbCompileService(app, settings).reapplyLayers();
-
-                // the update brings unfiltered entries with it
-                if (app != null) new DbFilteringService(app, settings).updateFilter(false);
             } // TODO: handle other results
             settings.setLastUpdateCheckTime(System.currentTimeMillis());
         } finally {

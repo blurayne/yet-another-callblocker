@@ -34,7 +34,13 @@ public class NumbersDb extends SQLiteOpenHelper {
 
     public static final String FILE_NAME = "numbers.db";
 
-    /** The copy kept before filtering, which is what "unfiltered" means afterwards. */
+    /**
+     * What older versions kept beside the table: a copy made before it was filtered.
+     *
+     * <p>Nothing writes it any more - the filter is asked as each number is read, so nothing
+     * that doesn't belong is ever written and there is nothing to go back to. The name is
+     * still here to find the file an older version left behind and delete it.
+     */
     public static final String SHADOW_FILE_NAME = "numbers-shadow.db";
 
     /**

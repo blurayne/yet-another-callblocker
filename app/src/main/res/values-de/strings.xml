@@ -53,7 +53,7 @@
     <string name="open_help_activity">Hilfe</string>
     <string name="help_activity">Hilfe</string>
     <string name="help_database_title">Wie die Datenbank gebaut wird</string>
-    <string name="help_database">Die App weiß von sich aus nichts über eine Nummer: alles kommt aus den Quellen, die Sie angeben, in der Reihenfolge, in die Sie sie bringen.\n\n\u2022 Die Quelle, die als Träger der Datenbank markiert ist, wird zuerst gelesen und füllt die leere Tabelle. Jede weitere Quelle ist eine Schicht darüber: sie ändert, was sie kennt, und lässt den Rest in Ruhe \u2013 und sie kann Nummern auch wieder herausnehmen.\n\u2022 Die Nummer ist der Schlüssel der Tabelle. Eine Nummer, die mehrere Quellen kennen, ist ein Eintrag: die spätere Quelle ändert die Felder, zu denen sie etwas zu sagen hat, der Rest bleibt stehen.\n\u2022 Ein Aufbau arbeitet in einer eigenen Datenbank neben der benutzten. Sie wird gefüllt, dann gefiltert, und erst wenn das alles geklappt hat, tritt sie an die Stelle der alten \u2013 ein fehlgeschlagener Aufbau lässt also das Funktionierende unangetastet, und Abfragen sehen nie eine halbfertige Datenbank.\n\u2022 Nur Nummern, die auf das eingestellte Muster passen, werden überhaupt geschrieben \u2013 der Rest wird beim Lesen der Quellen übersprungen, damit die Datenbank nie neun Millionen Nummern hält, um die meisten gleich wieder zu löschen. Ein geändertes Muster heißt: neu bauen, wofür nichts heruntergeladen werden muss.\n\u2022 Die Datenbank selbst wird nur geholt, wenn keine da ist, wenn Sie die Quelle woandershin zeigen lassen oder wenn ihr eigener Zeitplan es sagt \u2013 es sind zig Megabyte. \"Abrufen\" bei einer Quelle holt sie unabhängig davon.\n\u2022 Was jeder Aufbau getan hat, Quelle für Quelle, steht im Aufbau-Protokoll unter \"Datenbank\".</string>
+    <string name="help_database">Die App weiß von sich aus nichts über eine Nummer: alles kommt aus den Quellen, die Sie angeben, in der Reihenfolge, in die Sie sie bringen.\n\n\u2022 Keine Quelle ist \"die Datenbank\" und die übrigen Zutaten dazu: jede Quelle kann eine ganze Datenbank liefern, und allein die Reihenfolge entscheidet. Die erste Quelle füllt die leere Tabelle; jede weitere ändert, was sie kennt, lässt den Rest in Ruhe \u2013 und kann Nummern auch wieder herausnehmen.\n\u2022 Die Nummer ist der Schlüssel der Tabelle. Eine Nummer, die mehrere Quellen kennen, ist ein Eintrag: die spätere Quelle ändert die Felder, zu denen sie etwas zu sagen hat, der Rest bleibt stehen.\n\u2022 Ein Aufbau arbeitet in einer eigenen Datenbank neben der benutzten. Erst wenn sie vollständig ist, tritt sie an die Stelle der alten \u2013 ein fehlgeschlagener Aufbau lässt also das Funktionierende unangetastet, und Abfragen sehen nie eine halbfertige Datenbank.\n\u2022 Nur Nummern, die auf das eingestellte Muster passen, werden überhaupt geschrieben \u2013 der Rest wird beim Lesen der Quellen übersprungen, damit die Datenbank nie neun Millionen Nummern hält, um die meisten gleich wieder zu löschen. Ein geändertes Muster heißt: neu bauen, wofür nichts heruntergeladen werden muss.\n\u2022 Die Dateien der ersten Quelle sind die, welche die Bibliothek behält; sie werden nur geholt, wenn keine da sind, wenn Sie die Quelle woandershin zeigen lassen oder wenn ihr eigener Zeitplan es sagt \u2013 es sind zig Megabyte. \"Abrufen\" bei einer Quelle holt sie unabhängig davon.\n\u2022 Was jeder Aufbau getan hat, Quelle für Quelle, steht im Aufbau-Protokoll unter \"Datenbank\".</string>
     <string name="help_matching_title">Was über einen Anruf entscheidet</string>
     <string name="help_matching">Manches sagt \"durchlassen\" und manches \"blockieren\", und gefragt wird nicht in der Reihenfolge, in der es in den Einstellungen steht.\n\n<b>Erlaubt, was immer sonst gilt:</b>\n\u2022 die Nummer steht in Ihren Kontakten\n\u2022 die Nummer steht auf Ihrer Weißen Liste\n\u2022 die Nummer steht auf der Erlaubt-Liste Ihres PhoneBlock-Kontos\n\nDann wird nichts von dem darunter noch gefragt \u2013 ein Anruf aus den Kontakten wird nie blockiert.\n\n<b>Sonst blockiert das Erste, was zutrifft</b> (jeweils nur, wenn Sie es eingeschaltet haben):\n1. die Nummer ist unterdrückt\n2. die Community-Datenbank bewertet sie negativ\n3. sie steht auf Ihrer Schwarzen Liste\n4. PhoneBlock führt sie als Spam, oder sie steht auf der Sperrliste Ihres Kontos\n\nAb Android 11 wird ein Anruf, von dem das Netz sagt, dass er nicht von der angezeigten Nummer kommt, schon vor all dem blockiert \u2013 wenn Sie das eingeschaltet haben.\n\nSolange das Telefon seit dem Einschalten nicht entsperrt wurde, sind Kontakte und Listen nicht lesbar. Was dann trotzdem blockieren darf, ist eine eigene Einstellung unter \"Erweitert\".</string>
     <string name="help_lists_title">Die Listen selbst</string>
@@ -84,7 +84,6 @@
     <!-- Datenbank -->
     <string name="main_db_downloading">Datenbank wird heruntergeladen …</string>
     <string name="secondary_db_updating">Datenbank wird aktualisiert …</string>
-    <string name="filtering_db">Datenbank wird gefiltert …</string>
     <string name="compiling_db">Datenbank wird gebaut (%1$d/%2$d)\u2026</string>
     <string name="unpacking_db">Datenbank wird entpackt\u2026</string>
     <string name="reading_sources">Quellen werden eingelesen\u2026</string>
@@ -581,12 +580,12 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_filtering_status_filtered">Gefiltert, behalten wird %s</string>
     <string name="db_filtering_status_not_filtered">Nicht gefiltert: die Datenbank enthält alles, womit sie kam</string>
     <string name="db_filtering_status_nothing_set">Filterung ist an, aber es ist nichts zum Behalten eingetragen</string>
-    <string name="db_filtering_status_copy_kept">eine Kopie der ungefilterten Datenbank ist vorhanden</string>
-    <string name="db_filtering_status_no_copy">es ist keine Kopie der ungefilterten Datenbank vorhanden</string>
     <string name="db_filtering_status_numbers">%s Nummern</string>
     <string name="db_filtering_category_what">Was behalten wird</string>
     <string name="db_filtering_category_apply">Anwenden</string>
-    <string name="db_filtering_category_storage">Speicherplatz</string>
+    <string name="db_filtering_rebuild">Datenbank neu bauen</string>
+    <string name="db_filtering_rebuild_summary">Jede Nummer wird beim Lesen gegen das Muster gehalten, was hier eingestellt ist, wirkt also beim nächsten Bauen der Datenbank. Aus der vorhandenen Datenbank wird nichts herausgefiltert</string>
+    <string name="db_filtering_rebuild_confirm">Die Quellen werden erneut gelesen und die Datenbank wird von Grund auf gebaut, mit dem Filter, wie er jetzt eingestellt ist. Die genutzte Datenbank bleibt, wie sie ist, bis die neue fertig ist.</string>
     <string name="db_filtering_info">Erklärung</string>
     <string name="db_filtering_info_summary">Die Datenbank enthält Nummern aus aller Welt. Beim Filtern bleiben die, die Sie erreichen können, der Rest fällt weg; das spart Speicherplatz und ändert sonst nichts an der App. Gefiltert wird beim Holen der Datenbank und nach jeder Aktualisierung. Alle Quellen werden zuerst zu einer Tabelle zusammengebaut und davon eine Kopie beiseitegelegt; gefiltert wird dann diese Tabelle, also immer ausgehend von der ungefilterten Datenbank – und ist keine Kopie vorhanden, wird bei den Quellen neu geholt, statt eine schon eingeschränkte Tabelle weiter einzuschränken</string>
     <string name="db_filtering_enabled">Filterung eingeschaltet</string>
@@ -604,23 +603,6 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_filtering_keep_short_numbers_summary">Nummern bis zur angegebenen Länge unabhängig von den Vorwahlen behalten</string>
     <string name="db_filtering_keep_short_numbers_max_length">Länge der zu behaltenden Nummern</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">Die größte Länge (einschließlich), bis zu der kurze Nummern unabhängig von den Vorwahlen behalten werden. Beim Wert 5 werden zum Beispiel Nummern mit höchstens 5 Ziffern behalten</string>
-    <string name="db_filtering_keep_master">Ungefilterte Datenbank behalten</string>
-    <string name="db_filtering_keep_master_summary">Eine Kopie der heruntergeladenen Dateien behalten, wie sie ankamen, damit erneutes Filtern – oder das Zurücknehmen – kein neues Laden bedeutet. Die Kopie braucht etwa so viel Platz wie die Dateien selbst</string>
-    <string name="db_filtering_filter_db">Datenbank jetzt filtern</string>
-    <string name="db_filtering_filter_db_summary">Das Muster jetzt anwenden: heruntergeladene Dateien weglassen, in denen nichts Behaltenswertes steht, und die Datenbank neu bauen. Nummern werden beim Lesen gegen das Muster gehalten, mehr als Neubauen braucht es nicht</string>
-    <string name="db_filtering_revert_to_master">Ungefilterte Datenbank verwenden</string>
-    <string name="db_filtering_revert_to_master_summary">Die ungefilterte Datenbank zurückspielen. Sie kann danach erneut gefiltert werden</string>
-    <string name="db_filtering_revert_to_master_summary_unavailable">Es ist keine Kopie vorhanden, die ungefilterte Datenbank wird bei den Quellen neu geholt</string>
-    <string name="db_filtering_reverting">Ungefilterte Datenbank wird wiederhergestellt …</string>
-    <string name="db_filtering_reverted">Die ungefilterte Datenbank wird wieder verwendet.</string>
-    <string name="db_filtering_revert_failed">Die ungefilterte Datenbank konnte nicht wiederhergestellt werden.</string>
-    <string name="db_filtering_progress">Teil %1$d von %2$d</string>
-    <string name="db_filtering_cancelling">Wird abgebrochen …</string>
-    <string name="db_filtering_result_cancelled">Die Filterung wurde abgebrochen. Die ungefilterte Datenbank wird verwendet.</string>
-    <string name="db_filtering_result_filtered">%1$d von %2$d Einträgen entfernt, %3$d bleiben übrig.</string>
-    <string name="db_filtering_result_nothing_filtered">Nichts wurde entfernt: Alle %1$d Einträge passen zum Filter, die Datenbank ist unverändert.</string>
-    <string name="db_filtering_result_no_filter">Es wurde nicht gefiltert: Die Filterung ist ausgeschaltet, oder es sind keine Vorwahlen eingetragen.</string>
-    <string name="db_filtering_result_no_database">Es gibt keine Datenbank zum Filtern, und sie konnte nicht heruntergeladen werden.</string>
 
     <!-- Datenbank verwalten -->
     <string name="db_management">Datenbank</string>

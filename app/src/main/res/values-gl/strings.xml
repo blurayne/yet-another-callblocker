@@ -142,9 +142,6 @@
     <string name="db_filtering_keep_short_numbers">Manter números curtos</string>
     <string name="db_filtering_keep_short_numbers_summary">Manter números máis curtos que a lonxitude indicada independentemente do prefixo</string>
     <string name="db_filtering_keep_short_numbers_max_length">Lonxitude dos números a manter</string>
-    <string name="db_filtering_filter_db">Filtrar a base de datos</string>
-    <string name="db_filtering_filter_db_summary">Executar agora o filtrado da base de datos (para filtrar datos existentes)</string>
-    <string name="filtering_db">Fitrando BD…</string>
     <string name="no_number">&lt;sen número&gt;</string>
     <string name="save">Gardar</string>
     <plurals name="selected_count">

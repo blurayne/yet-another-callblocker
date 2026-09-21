@@ -21,16 +21,11 @@ import dummydomain.yetanothercallblocker.PhoneBlockHelper;
 import dummydomain.yetanothercallblocker.R;
 import dummydomain.yetanothercallblocker.data.DbCompileService;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
-import dummydomain.yetanothercallblocker.data.DbFilteringService;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.event.DbCompileProgressEvent;
-import dummydomain.yetanothercallblocker.event.DbFilterRevertedEvent;
-import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
-import dummydomain.yetanothercallblocker.event.DbFilteringInProgressEvent;
-import dummydomain.yetanothercallblocker.event.DbFilteringProgressEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
 import dummydomain.yetanothercallblocker.event.PhoneBlockUpdateFinishedEvent;
@@ -43,8 +38,6 @@ public class TaskService extends IntentService {
 
     public static final String TASK_DOWNLOAD_MAIN_DB = "download_main_db";
     public static final String TASK_UPDATE_SECONDARY_DB = "update_secondary_db";
-    public static final String TASK_FILTER_DB = "filter_db";
-    public static final String TASK_REVERT_DB_FILTER = "revert_db_filter";
     public static final String TASK_UPDATE_PHONE_BLOCK = "update_phone_block";
 
     /** Fetch the database again even if the one on the phone would have done. */
@@ -106,19 +99,9 @@ public class TaskService extends IntentService {
                         updateSecondaryDb();
                         break;
 
-                    case TASK_FILTER_DB:
-                        updateNotification(getString(R.string.filtering_db));
-                        filterDb();
-                        break;
-
                     case TASK_UPDATE_PHONE_BLOCK:
                         updateNotification(getString(R.string.phone_block_updating));
                         updatePhoneBlock();
-                        break;
-
-                    case TASK_REVERT_DB_FILTER:
-                        updateNotification(getString(R.string.db_filtering_reverting));
-                        revertDbFilter();
                         break;
 
                     default:
@@ -204,10 +187,6 @@ public class TaskService extends IntentService {
                                     phaseTitleResId, current, total));
                         }
                     });
-
-            // what was just fetched is unfiltered, so the filter has to be applied again
-            updateNotification(getString(R.string.filtering_db));
-            new DbFilteringService(this, App.getSettings()).updateFilter(true);
         } catch (Throwable e) {
             /*
              * Everything, an OutOfMemoryError included: a build that ends in a message is
@@ -301,22 +280,6 @@ public class TaskService extends IntentService {
         new DbUpdater().update();
     }
 
-    private void filterDb() {
-        // the automatic filtering after an update reports nothing: this is the one the user started
-        DbFilteringInProgressEvent sticky = new DbFilteringInProgressEvent();
-
-        postStickyEvent(sticky);
-        try {
-            DbFilteringService.Result result = new DbFilteringService(this, App.getSettings())
-                    .filter((current, total) ->
-                            postEvent(new DbFilteringProgressEvent(current, total)));
-
-            postEvent(new DbFilteringFinishedEvent(result));
-        } finally {
-            removeStickyEvent(sticky);
-        }
-    }
-
     private void updatePhoneBlock() {
         PhoneBlockService service = new PhoneBlockService(App.getSettings(),
                 YacbHolder.getPhoneBlockList(), YacbHolder.getPhoneBlockPersonalLists());
@@ -364,11 +327,6 @@ public class TaskService extends IntentService {
 
             sourceService.save(source);
         }
-    }
-
-    private void revertDbFilter() {
-        postEvent(new DbFilterRevertedEvent(
-                new DbFilteringService(this, App.getSettings()).revertToMaster()));
     }
 
 }

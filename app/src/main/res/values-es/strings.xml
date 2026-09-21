@@ -211,9 +211,6 @@
     <string name="yes">Sí</string>
     <string name="add_web_review">Añadir reseña (web)</string>
     <string name="db_filtering_thorough">Filtrado exhaustivo</string>
-    <string name="filtering_db">Filtrando la Base de datos…</string>
-    <string name="db_filtering_filter_db_summary">Ejecutar ahora el filtrado de la base de datos (para filtrar los datos existentes)</string>
-    <string name="db_filtering_filter_db">Filtrar la base de datos</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">La longitud máxima (inclusive) de los números cortos que se mantendrá sin tener en cuenta los prefijos. Por ejemplo, el valor de 5 mantendrá los números con una longitud de 5 dígitos o menos</string>
     <string name="db_filtering_keep_short_numbers_max_length">Longitud de los números a conservar</string>
     <string name="db_filtering_keep_short_numbers_summary">Mantenga los números más cortos que la longitud especificada independientemente de los prefijos</string>

@@ -228,7 +228,4 @@
     <string name="db_filtering_keep_short_numbers_summary">Сохранять номера, короче указанной длины, вне зависимости от префиксов</string>
     <string name="db_filtering_keep_short_numbers_max_length">Длина номеров для сохранения</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">Максимальная длина (включительная) коротких номеров, которые нужно сохранить вне зависимости от префиксов. Например, значение 5 сохранит номера длиной 5 цифр и короче</string>
-    <string name="db_filtering_filter_db">Отфильтровать базу</string>
-    <string name="db_filtering_filter_db_summary">Запустить фильтрацию базы сейчас (чтобы отфильтровать существующие данные)</string>
-    <string name="filtering_db">Фильтрация базы номеров…</string>
 </resources>

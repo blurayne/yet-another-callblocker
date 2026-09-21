@@ -210,9 +210,6 @@
     <string name="blocked_call_notifications_disable_confirmation">Desativar mesmo assim</string>
     <string name="blocked_call_notifications_disable_message">Você pode acidentalmente perder uma chamada se as chamadas forem bloqueadas sem notificações</string>
     <string name="show_notifications_for_blocked_calls">Notificar sobre chamadas bloqueadas</string>
-    <string name="filtering_db">Filtrando o BD…</string>
-    <string name="db_filtering_filter_db_summary">Execute a filtragem do banco de dados agora (para filtrar os dados existentes)</string>
-    <string name="db_filtering_filter_db">Filtrar o banco de dados</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">O comprimento máximo (inclusivo) de números curtos a serem mantidos, independentemente dos prefixos. Por exemplo. O valor de 5 manterá os números com comprimento de 5 dígitos ou menos</string>
     <string name="db_filtering_keep_short_numbers_max_length">Comprimento dos números para manter</string>
     <string name="db_filtering_keep_short_numbers_summary">Mantenha os números menores do que o comprimento especificado, independentemente dos prefixos</string>

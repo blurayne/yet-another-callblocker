@@ -42,7 +42,6 @@ import dummydomain.yetanothercallblocker.data.BlacklistService;
 import dummydomain.yetanothercallblocker.data.CallDecisionLog;
 import dummydomain.yetanothercallblocker.data.Whitelist;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
-import dummydomain.yetanothercallblocker.event.DbFilteringFinishedEvent;
 import dummydomain.yetanothercallblocker.event.DbCompileProgressEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadFinishedEvent;
 import dummydomain.yetanothercallblocker.event.MainDbDownloadingEvent;
@@ -227,11 +226,6 @@ public class RootSettingsFragment extends BaseSettingsFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onSecondaryDbUpdateFinished(SecondaryDbUpdateFinished event) {
-        if (isAdded()) updateSourcePreferences();
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
-    public void onDbFilteringFinished(DbFilteringFinishedEvent event) {
         if (isAdded()) updateSourcePreferences();
     }
 

@@ -64,7 +64,6 @@
     <string name="default_phone_app_unset">在默认电话设置中，选择另一个电话应用</string>
     <string name="number_pattern_incorrect">错误模式</string>
     <string name="monitoring_service_description">监控手机后台状态</string>
-    <string name="filtering_db">数据过滤</string>
     <string name="info_in_blacklist">在黑名单上</string>
     <string name="lookup_hint_input_number">手机号码</string>
     <string name="db_management_update_db">升级数据库</string>

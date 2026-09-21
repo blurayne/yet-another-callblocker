@@ -95,7 +95,6 @@ public class BackupService {
             Settings.PREF_PHONE_BLOCK_LAST_FULL_UPDATE_TIME,
             Settings.PREF_PHONE_BLOCK_NEXT_UPDATE_TIME,
             Settings.PREF_PHONE_BLOCK_PERSONAL_NEXT_UPDATE_TIME,
-            Settings.PREF_DB_FILTERED,
             Settings.PREF_DB_FILTERING_PREFIXES_PREFILLED));
 
     /**

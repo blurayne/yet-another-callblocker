@@ -82,8 +82,6 @@
     <string name="save_logcat_on_crash"></string>
     <string name="settings_screen_db_filtering">தரவுத்தளம் வடிகட்டல்</string>
     <string name="db_filtering_thorough"></string>
-    <string name="db_filtering_filter_db">தரவுத்தளத்தை வடிகட்டு</string>
-    <string name="filtering_db">தரவுத்தளத்தை வடிகட்டுகிறது…</string>
     <string name="open_blacklist_activity">கரும்பட்டியல்</string>
     <string name="title_blacklist_activity">கரும்பட்டியல்</string>
     <string name="blacklist_item_date_no_info">தகவலில்லை</string>

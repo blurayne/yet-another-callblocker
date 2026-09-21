@@ -207,9 +207,6 @@
     <string name="notification_channel_group_name_services">Dịch vụ</string>
     <string name="notification_channel_group_name_blocked_calls">Cuộc gọi bị chặn</string>
     <string name="notification_channel_group_name_incoming_calls">Cuộc gọi đến</string>
-    <string name="filtering_db">Đang lọc CSDL…</string>
-    <string name="db_filtering_filter_db_summary">Chạy việc lọc cơ sở dữ liệu ngay (để lọc dữ liệu hiện có)</string>
-    <string name="db_filtering_filter_db">Lọc cơ sở dữ liệu</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">Độ dài tối đa của các số ngắn để giữ lại mà không tính đến các tiền tố. Vd: giá trị 5 sẽ giữ lại các số có độ dài 5 chữ số hoặc ngắn hơn</string>
     <string name="db_filtering_keep_short_numbers_max_length">Độ dài các số để giữ lại</string>
     <string name="db_filtering_keep_short_numbers_summary">Giữ các số ngắn hơn độ dài được chỉ định mà không tính đến các tiền tố</string>

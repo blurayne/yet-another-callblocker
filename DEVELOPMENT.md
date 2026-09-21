@@ -165,6 +165,28 @@ database into the APK). It attaches the APKs and their checksums to the run as a
 findings in the job log (the project doesn't fail the build on them), and checks that the
 caller ID provider survived the manifest merge. Pushing a `v*` tag additionally publishes the APKs as a GitHub release.
 
+
+## What a source may be packed in
+
+A source hands over either the database itself or a layer on top of it, and it may hand it
+over packed. What arrives is decided by looking at its first bytes rather than at its name,
+because a file server calls everything `application/octet-stream` and a file name is not a
+promise.
+
+* **The database** is a set of files - a few thousand `data_slice_*.dat` and the metadata
+  beside them - so the whole archive is unpacked into the directory the app reads them from.
+  A **zip** is handed to the library, which has always unpacked its own; a **tar**, a
+  **tar.gz** or a **gzipped file** is unpacked by the app. Folders inside the archive are
+  dropped: the same database is packed flat by one command and under a folder of its own by
+  the next, and the app has no use for the difference.
+* **A layer** is one file, so a **plain file**, a **gzipped** one, or the one `.dat` inside a
+  **tar**, **tar.gz** or **zip** is read out of it.
+
+The database is only counted as fetched once it can be read. An archive that holds nothing
+the app recognises unpacks into an empty directory, and before that was noticed it was moved
+into the place of the database that worked.
+
+
 ## The custom provider API
 
 A provider in the app is normally an address that is opened in a browser. One can instead be

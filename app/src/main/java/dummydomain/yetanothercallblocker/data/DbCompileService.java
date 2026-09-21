@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import dummydomain.yetanothercallblocker.BuildConfig;
 import dummydomain.yetanothercallblocker.R;
 import dummydomain.yetanothercallblocker.Settings;
+import dummydomain.yetanothercallblocker.data.source.ArchiveUtils;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceHttp;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
@@ -271,7 +272,15 @@ public class DbCompileService {
             // the client asks the service which source it is fetching, to log in as that one
             sourceService.setFetchingSource(source);
 
-            downloaded = YacbHolder.getDbManager().downloadMainDb(source.getUrl());
+            /*
+             * The library unpacks a zip and nothing else, which is what its own database is
+             * served as. A source that hands the same files over as a tar.gz is unpacked
+             * here instead - the files are the same, only the wrapping is different, and a
+             * source shouldn't have to repack a database to be usable.
+             */
+            downloaded = Boolean.FALSE.equals(looksLikeZip(source))
+                    ? unpackBase(source)
+                    : YacbHolder.getDbManager().downloadMainDb(source.getUrl());
         } catch (Exception e) {
             LOG.error("downloadBase() failed", e);
             error = e.getClass().getSimpleName()
@@ -306,14 +315,152 @@ public class DbCompileService {
         return null;
     }
 
-    /** Clears what an interrupted download left beside the database. */
-    private static void dropLeftovers() {
+    /**
+     * Whether what is behind the address is a zip, which is all the library can unpack.
+     *
+     * <p>Asked with the first bytes rather than by the name: a file is called what whoever
+     * put it there felt like calling it, and every one of these formats says what it is in
+     * its first four bytes.
+     *
+     * @return null when the question couldn't be asked at all; then the library has its go,
+     * which is what happened before there was a question
+     */
+    private Boolean looksLikeZip(NumberSource source) {
+        DeferredInit.initNetwork();
+
+        OkHttpClient client = SourceHttp.decorate(new OkHttpClient.Builder()
+                        .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                        .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                        .build(),
+                source, sourceService.getSecret(source.getId()), false);
+
+        Request.Builder builder = new Request.Builder()
+                .url(source.getUrl())
+                .header("User-Agent", "YetAnotherCallBlocker/" + BuildConfig.VERSION_NAME)
+                // packed in flight would say nothing about what the file itself is
+                .header("Accept-Encoding", "identity");
+
+        /*
+         * The first bytes are all this needs, so they are what is asked for - and a server
+         * that won't serve a part of a file is asked for the whole one and hung up on after
+         * four bytes, which costs about as little.
+         */
+        byte[] magic = readFirstBytes(client,
+                builder.header("Range", "bytes=0-15").build());
+
+        if (magic == null) magic = readFirstBytes(client, builder.removeHeader("Range").build());
+
+        if (magic == null) return null;
+
+        boolean zip = magic[0] == 'P' && magic[1] == 'K' && magic[2] == 3 && magic[3] == 4;
+
+        LOG.debug("looksLikeZip() {}", zip);
+
+        return zip;
+    }
+
+    /** The first four bytes of what an address serves, or null when they can't be had. */
+    private static byte[] readFirstBytes(OkHttpClient client, Request request) {
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                LOG.debug("readFirstBytes() the server answered {}", response.code());
+                return null;
+            }
+
+            ResponseBody body = response.body();
+            if (body == null) return null;
+
+            byte[] magic = new byte[4];
+
+            try (InputStream inputStream = body.byteStream()) {
+                int read = 0;
+                while (read < magic.length) {
+                    int count = inputStream.read(magic, read, magic.length - read);
+                    if (count == -1) break;
+
+                    read += count;
+                }
+
+                return read == magic.length ? magic : null;
+            }
+        } catch (Exception e) {
+            LOG.warn("readFirstBytes() couldn't ask", e);
+            return null;
+        }
+    }
+
+    /**
+     * Fetches the database and unpacks it into the place the app reads it from.
+     *
+     * <p>The new one is unpacked beside the old one and only takes its place once it is
+     * whole, so a download that is cut short leaves what was there working.
+     */
+    private boolean unpackBase(NumberSource source) {
+        File dataDir = new File(YacbHolder.getStorage().getDataDirPath());
+
+        String name = dirName();
+        if (name == null) return false;
+
+        File dir = new File(dataDir, name);
+        File tempDir = new File(dataDir, name + "-tmp");
+        File oldDir = new File(dataDir, name + "-old");
+        File archive = new File(dataDir, name + "-download.part");
+
+        try {
+            if (!download(source, archive, false)) return false;
+
+            FileUtils.delete(tempDir);
+            createDir(tempDir);
+
+            int files;
+            try (InputStream inputStream
+                         = new BufferedInputStream(new FileInputStream(archive))) {
+                files = ArchiveUtils.unpackAll(inputStream, tempDir, "data_slice_0.dat");
+            }
+
+            LOG.info("unpackBase() unpacked {} files", files);
+
+            if (files == 0) return false;
+
+            FileUtils.delete(oldDir);
+
+            if (dir.exists() && !dir.renameTo(oldDir)) {
+                LOG.warn("unpackBase() couldn't move the old database out of the way");
+                return false;
+            }
+
+            if (!tempDir.renameTo(dir)) {
+                LOG.warn("unpackBase() couldn't put the new database in place");
+
+                if (oldDir.exists()) oldDir.renameTo(dir); // leave what worked where it was
+                return false;
+            }
+
+            FileUtils.delete(oldDir);
+
+            return true;
+        } catch (Exception e) {
+            LOG.error("unpackBase() failed", e);
+            return false;
+        } finally {
+            FileUtils.delete(archive);
+            FileUtils.delete(tempDir);
+        }
+    }
+
+    /** What the directory the database lives in is called, without the slash. */
+    private static String dirName() {
         String prefix = SiaConstants.SIA_PATH_PREFIX;
 
         int slash = prefix.indexOf('/');
-        if (slash <= 0) return;
 
-        String name = prefix.substring(0, slash);
+        return slash > 0 ? prefix.substring(0, slash) : null;
+    }
+
+    /** Clears what an interrupted download left beside the database. */
+    private static void dropLeftovers() {
+        String name = dirName();
+        if (name == null) return;
 
         File dataDir = new File(YacbHolder.getStorage().getDataDirPath());
 
@@ -377,20 +524,31 @@ public class DbCompileService {
 
     /** Fetches the source into a file, unpacked on the way if it arrives packed. */
     private boolean download(NumberSource source, File target) {
+        return download(source, target, true);
+    }
+
+    /**
+     * Fetches the source into a file.
+     *
+     * @param unpack whether a packed answer is unpacked on the way. A layer is one file and
+     *               is read as one, so it is; the database is a few thousand and is unpacked
+     *               into a directory afterwards, so it isn't.
+     */
+    private boolean download(NumberSource source, File target, boolean unpack) {
         DeferredInit.initNetwork();
 
         OkHttpClient client = SourceHttp.decorate(new OkHttpClient.Builder()
                         .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                         .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                         .build(),
-                source, sourceService.getSecret(source.getId()));
+                source, sourceService.getSecret(source.getId()), unpack);
 
         Request request = new Request.Builder()
                 .url(source.getUrl())
                 .header("User-Agent", "YetAnotherCallBlocker/" + BuildConfig.VERSION_NAME)
                 .build();
 
-        createDir(getLayersDir());
+        createDir(target.getParentFile());
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
@@ -597,6 +755,8 @@ public class DbCompileService {
     }
 
     private static void createDir(File dir) {
+        if (dir == null) return;
+
         if (!dir.isDirectory() && !dir.mkdirs()) LOG.warn("createDir() couldn't create {}", dir);
     }
 

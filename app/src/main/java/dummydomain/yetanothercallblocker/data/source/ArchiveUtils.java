@@ -3,8 +3,11 @@ package dummydomain.yetanothercallblocker.data.source;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -71,6 +74,119 @@ public class ArchiveUtils {
             default:
                 return in;
         }
+    }
+
+    /**
+     * Unpacks everything an archive holds into a directory.
+     *
+     * <p>The community database is not one file but a few thousand, so a source that hands it
+     * over packed hands over the whole set - and every one of them has to end up where the
+     * app looks for them. That is what this does, and it is a different job from
+     * {@link #open(InputStream)}, which finds the one file a layer consists of.
+     *
+     * <p>The folders inside the archive are dropped and every file lands directly in the
+     * directory: the same database is packed flat by one command and under a folder of its
+     * own by the next, the app has no use for the difference, and a name that walks out of
+     * the directory with {@code ..} can't be written anywhere it shouldn't be.
+     *
+     * @param fallbackName what the file is called when the archive turns out to be one file
+     * @return how many files were written
+     */
+    public static int unpackAll(InputStream inputStream, File targetDir, String fallbackName)
+            throws IOException {
+        if (!targetDir.isDirectory() && !targetDir.mkdirs()) {
+            throw new IOException("couldn't create " + targetDir);
+        }
+
+        BufferedInputStream in = new BufferedInputStream(inputStream, HEADER_SIZE * 2);
+
+        switch (detect(in)) {
+            case ZIP:
+                return unpackZip(in, targetDir);
+
+            case TAR:
+                return unpackTar(in, targetDir);
+
+            case TAR_GZIP:
+                return unpackTar(new BufferedInputStream(
+                        new GZIPInputStream(in), HEADER_SIZE * 2), targetDir);
+
+            case GZIP:
+                return write(new GZIPInputStream(in), new File(targetDir, fallbackName)) ? 1 : 0;
+
+            default:
+                return write(in, new File(targetDir, fallbackName)) ? 1 : 0;
+        }
+    }
+
+    private static int unpackZip(InputStream in, File targetDir) throws IOException {
+        int written = 0;
+
+        ZipInputStream zip = new ZipInputStream(in);
+
+        ZipEntry entry;
+        while ((entry = zip.getNextEntry()) != null) {
+            if (entry.isDirectory()) continue;
+
+            String name = baseName(entry.getName());
+            if (name.isEmpty()) continue;
+
+            if (write(zip, new File(targetDir, name))) written++;
+        }
+
+        return written;
+    }
+
+    private static int unpackTar(InputStream in, File targetDir) throws IOException {
+        int written = 0;
+
+        byte[] header = new byte[HEADER_SIZE];
+
+        while (readFully(in, header)) {
+            String entryName = readString(header, 0, 100);
+            if (entryName.isEmpty()) break; // the two empty blocks that end a tar
+
+            long size = readOctal(header, 124, 12);
+            char type = (char) (header[156] == 0 ? '0' : header[156]);
+
+            long padded = (size + HEADER_SIZE - 1) / HEADER_SIZE * HEADER_SIZE;
+
+            String name = baseName(entryName);
+
+            if ((type == '0' || type == '\0') && size > 0 && !name.isEmpty()) {
+                if (write(new BoundedInputStream(in, size), new File(targetDir, name))) written++;
+
+                skip(in, padded - size);
+            } else {
+                skip(in, padded);
+            }
+        }
+
+        return written;
+    }
+
+    /** The name without the folders it was in, which is where the database wants it. */
+    private static String baseName(String name) {
+        String cleaned = name.replace('\\', '/');
+
+        int slash = cleaned.lastIndexOf('/');
+        if (slash >= 0) cleaned = cleaned.substring(slash + 1);
+
+        return cleaned.equals(".") || cleaned.equals("..") ? "" : cleaned;
+    }
+
+    /** Writes what the stream holds into a file; the stream itself is left open. */
+    private static boolean write(InputStream in, File file) throws IOException {
+        try (OutputStream out = new FileOutputStream(file)) {
+            byte[] buffer = new byte[8192];
+
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+        }
+
+        return true;
     }
 
     /** The database as bytes; for sources small enough that it doesn't matter. */

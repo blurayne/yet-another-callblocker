@@ -23,6 +23,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -187,6 +188,64 @@ public class NumberSourcesActivity extends AppCompatActivity {
                 .show();
     }
 
+    /** The row's own menu: what can be done to one source that isn't done on its form. */
+    private void showMenu(View anchor, NumberSource source) {
+        PopupMenu menu = new PopupMenu(this, anchor);
+        menu.inflate(R.menu.number_source_item);
+
+        menu.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.menu_edit) {
+                startActivity(EditNumberSourceActivity.getIntent(this, source.getId()));
+            } else if (id == R.id.menu_duplicate) {
+                duplicate(source);
+            } else if (id == R.id.menu_delete) {
+                confirmDelete(source);
+            } else {
+                return false;
+            }
+
+            return true;
+        });
+
+        menu.show();
+    }
+
+    /** One more like this one, at the end of the list, called "... (copy)". */
+    private void duplicate(NumberSource source) {
+        if (sourceService == null) return;
+
+        NumberSource copy = sourceService.duplicate(source.getId(), copyName(this, source));
+        if (copy == null) return;
+
+        reload();
+
+        Toast.makeText(this, getString(R.string.source_duplicated, copy.getName()),
+                Toast.LENGTH_SHORT).show();
+    }
+
+    /** What a copy of the source is called, before a number is added for a name in use. */
+    static String copyName(Context context, NumberSource source) {
+        String name = !TextUtils.isEmpty(source.getName())
+                ? source.getName().trim()
+                : context.getString(getTypeName(source.getType()));
+
+        return context.getString(R.string.source_copy_name, name);
+    }
+
+    private void confirmDelete(NumberSource source) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.are_you_sure)
+                .setMessage(R.string.source_delete_message)
+                .setPositiveButton(R.string.source_delete, (d, w) -> {
+                    if (sourceService != null) sourceService.remove(source.getId());
+                    reload();
+                })
+                .setNegativeButton(R.string.back, null)
+                .show();
+    }
+
     /** What the row says about a source: its part in the database, how often, how it last went. */
     private String getStatus(NumberSource source) {
         List<String> parts = new ArrayList<>(3);
@@ -344,6 +403,7 @@ public class NumberSourcesActivity extends AppCompatActivity {
             final Button testButton, fetchButton;
             final SwitchCompat enabledSwitch;
             final ImageView dragHandle;
+            final View moreButton;
 
             /** Kept, because binding a recycled row has to put it aside for a moment. */
             final CompoundButton.OnCheckedChangeListener enabledListener = (v, checked) -> {
@@ -368,6 +428,12 @@ public class NumberSourcesActivity extends AppCompatActivity {
                 fetchButton = itemView.findViewById(R.id.fetchButton);
                 enabledSwitch = itemView.findViewById(R.id.enabledSwitch);
                 dragHandle = itemView.findViewById(R.id.dragHandle);
+                moreButton = itemView.findViewById(R.id.moreButton);
+
+                moreButton.setOnClickListener(v -> {
+                    NumberSource source = getSource();
+                    if (source != null) showMenu(v, source);
+                });
 
                 dragHandle.setOnTouchListener((v, event) -> {
                     if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {

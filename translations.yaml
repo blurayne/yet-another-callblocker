@@ -2001,7 +2001,7 @@ error:
   zh-rCN: 错误
   zh-rTW: 錯誤
 are_you_sure:
-  comment: RootSettingsFragment dialog title; WhitelistActivity dialog title; InfoDialogHelper dialog title; +3 more
+  comment: RootSettingsFragment dialog title; WhitelistActivity dialog title; InfoDialogHelper dialog title; +4 more
   en: Are you sure?
   de: Sind Sie sicher?
   ar: هل أنت متأكد؟
@@ -2447,19 +2447,31 @@ source_never_fetched:
   en: never fetched
   de: noch nie geholt
 source_delete:
-  comment: activity_edit_number_source.xml title; activity_edit_provider.xml title; EditNumberSourceActivity dialog text; +1 more
+  comment: number_source_item.xml title; activity_edit_number_source.xml title; activity_edit_provider.xml title; +3 more
   en: Delete
   de: Löschen
 source_duplicate:
-  comment: activity_edit_number_source.xml title
+  comment: number_source_item.xml title; activity_edit_number_source.xml title
   en: Duplicate
   de: Duplizieren
+source_copy_name:
+  comment: NumberSourcesActivity
+  en: '%s (copy)'
+  de: '%s (Kopie)'
+source_more:
+  comment: number_source_item.xml description
+  en: More
+  de: Mehr
+source_edit:
+  comment: number_source_item.xml title
+  en: Edit
+  de: Bearbeiten
 source_duplicated:
-  comment: EditNumberSourceActivity toast
+  comment: EditNumberSourceActivity toast; NumberSourcesActivity toast
   en: Copied as \"%s\"
   de: Kopiert als \"%s\"
 source_delete_message:
-  comment: EditNumberSourceActivity dialog title
+  comment: EditNumberSourceActivity dialog title; NumberSourcesActivity dialog title
   en: Remove this source? The numbers it brought are dropped with it; nothing you wrote yourself is touched.
   de: Diese Quelle entfernen? Die Nummern, die sie mitgebracht hat, verschwinden mit ihr; selbst Eingetragenes bleibt unberührt.
 source_reorder:

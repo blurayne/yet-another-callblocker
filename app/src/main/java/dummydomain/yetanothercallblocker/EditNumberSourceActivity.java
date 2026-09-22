@@ -265,31 +265,11 @@ public class EditNumberSourceActivity extends AppCompatActivity {
 
     /** The name with a number after it when something else already has it. */
     private String freeName(String name) {
-        if (!isNameTaken(source, name)) return name;
-
-        for (int i = 2; i < 100; i++) {
-            String candidate = name + " " + i;
-
-            if (!isNameTaken(source, candidate)) return candidate;
-        }
-
-        return name;
+        return sourceService != null ? sourceService.freeName(source, name) : name;
     }
 
-    /** Whether another source is already called that, however it is capitalised. */
     private boolean isNameTaken(NumberSource target, String name) {
-        if (sourceService == null) return false;
-
-        for (NumberSource other : sourceService.getSources()) {
-            if (other.getId().equals(target.getId())) continue;
-
-            if (name.equalsIgnoreCase(
-                    other.getName() != null ? other.getName().trim() : null)) {
-                return true;
-            }
-        }
-
-        return false;
+        return sourceService != null && sourceService.isNameTaken(target, name);
     }
 
     /**
@@ -303,17 +283,9 @@ public class EditNumberSourceActivity extends AppCompatActivity {
     public void onDuplicateClicked(MenuItem item) {
         if (sourceService == null) return;
 
-        NumberSource original = sourceService.findById(source.getId());
-        if (original == null) return;
-
-        NumberSource copy = original.copy();
-
-        copy.setName(freeName(!TextUtils.isEmpty(original.getName())
-                ? original.getName().trim()
-                : getString(SourceNames.getTypeName(original.getType()))));
-
-        sourceService.save(copy);
-        sourceService.setSecret(copy.getId(), sourceService.getSecret(original.getId()));
+        NumberSource copy = sourceService.duplicate(source.getId(),
+                NumberSourcesActivity.copyName(this, source));
+        if (copy == null) return;
 
         Toast.makeText(this, getString(R.string.source_duplicated, copy.getName()),
                 Toast.LENGTH_SHORT).show();

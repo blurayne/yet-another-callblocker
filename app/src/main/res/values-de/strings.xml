@@ -392,6 +392,9 @@
     <string name="source_never_fetched">noch nie geholt</string>
     <string name="source_delete">Löschen</string>
     <string name="source_duplicate">Duplizieren</string>
+    <string name="source_copy_name">%s (Kopie)</string>
+    <string name="source_more">Mehr</string>
+    <string name="source_edit">Bearbeiten</string>
     <string name="source_duplicated">Kopiert als \"%s\"</string>
     <string name="source_delete_message">Diese Quelle entfernen? Die Nummern, die sie mitgebracht hat, verschwinden mit ihr; selbst Eingetragenes bleibt unberührt.</string>
     <string name="source_reorder">Verschieben</string>

@@ -93,4 +93,13 @@
         android:layout_marginLeft="8dp"
         android:contentDescription="@string/source_enabled" />
 
+    <ImageButton
+        android:id="@+id/moreButton"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="@string/source_more"
+        android:src="@drawable/ic_more_vert_24dp"
+        android:tint="?android:attr/textColorSecondary" />
+
 </LinearLayout>

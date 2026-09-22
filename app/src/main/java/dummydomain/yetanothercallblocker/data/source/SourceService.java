@@ -115,6 +115,58 @@ public class SourceService {
         return null;
     }
 
+    /** Whether another source is already called that, however it is capitalised. */
+    public boolean isNameTaken(NumberSource target, String name) {
+        if (TextUtils.isEmpty(name)) return false;
+
+        for (NumberSource other : getSources()) {
+            if (target != null && other.getId().equals(target.getId())) continue;
+
+            if (name.equalsIgnoreCase(
+                    other.getName() != null ? other.getName().trim() : null)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** The name itself when nobody has it, or the first "name 2", "name 3" nobody has. */
+    public String freeName(NumberSource target, String name) {
+        if (!isNameTaken(target, name)) return name;
+
+        for (int i = 2; i < 100; i++) {
+            String candidate = name + " " + i;
+
+            if (!isNameTaken(target, candidate)) return candidate;
+        }
+
+        return name;
+    }
+
+    /**
+     * Makes a second source out of one that is saved, under the name given, and saves it.
+     *
+     * <p>The copy keeps the address, the login, the schedule and the options, and the
+     * secret with them; it has fetched nothing yet, and goes to the end of the list.
+     *
+     * @return the copy, or null when there is no such source
+     */
+    public NumberSource duplicate(String id, String name) {
+        NumberSource original = findById(id);
+        if (original == null) return null;
+
+        NumberSource copy = original.copy();
+        copy.setName(freeName(copy, name));
+
+        save(copy);
+        setSecret(copy.getId(), getSecret(original.getId()));
+
+        LOG.info("duplicate() {} copied as {}", original, copy);
+
+        return copy;
+    }
+
     /** Adds a source, or replaces the one with the same id. */
     public void save(NumberSource source) {
         List<NumberSource> sources = getSources();

@@ -2488,7 +2488,7 @@ source_test_ok_content:
   de: 'funktioniert: %1$s mit %2$s'
 source_content_sia:
   comment: SourceTestHelper
-  en: the community database's own files
+  en: the community database\'s own files
   de: den Dateien der Community-Datenbank
 source_content_sqlite:
   comment: SourceTestHelper

@@ -15,6 +15,7 @@ thing a translator actually needs and the thing the XML never says.
     ./tools/strings.py import                 # translations.yaml -> res/values*/strings.xml
     ./tools/strings.py export --languages en,de
     ./tools/strings.py usage db_build_done    # just where one key is used
+    ./tools/strings.py check                  # what aapt would refuse
 
 What is stored is the text exactly as it stands between the tags - the escapes Android
 wants (\\', \\n, \\u2026) and the markup some strings carry (<b>) included. Nothing is
@@ -355,6 +356,45 @@ def import_(path=YAML_FILE, languages=None):
               % ", ".join(sorted(missing)), file=sys.stderr)
 
 
+def check():
+    """What aapt would refuse, said before a build goes red over it.
+
+    An apostrophe or a double quote that isn't escaped stops the resource compiler, and the
+    error it gives names the wrong cause ("Invalid unicode escape sequence"). It is also what
+    a shell or a Python heredoc quietly eats while a string is being edited from a script,
+    which is how one got in.
+    """
+    value_re = re.compile(r"<(string|item)(?:\s[^>]*)?>(.*?)</\1>", re.S)
+    name_re = re.compile(r'name="([^"]+)"')
+    unescaped_re = re.compile(r"""(?<!\\)['"]""")
+
+    bad = []
+
+    for lang, path in sorted(string_files().items()):
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+
+        for match in value_re.finditer(text):
+            value = match.group(2)
+
+            # a value wrapped in double quotes is taken literally by aapt, apostrophes and all
+            if value.startswith('"') and value.endswith('"'):
+                continue
+
+            if unescaped_re.search(value):
+                name = name_re.search(match.group(0))
+
+                bad.append("%s: %s: %s" % (os.path.relpath(path, ROOT),
+                                           name.group(1) if name else "?", value[:60]))
+
+    for line in bad:
+        print(line)
+
+    print("%d string%s aapt would refuse" % (len(bad), "" if len(bad) == 1 else "s"))
+
+    return 1 if bad else 0
+
+
 def usage(keys):
     where = usages()
 
@@ -377,6 +417,8 @@ def main():
     used = commands.add_parser("usage", help="where a key is used")
     used.add_argument("keys", nargs="+")
 
+    commands.add_parser("check", help="what aapt would refuse")
+
     args = parser.parse_args()
 
     languages = args.languages.split(",") if getattr(args, "languages", None) else None
@@ -385,6 +427,8 @@ def main():
         export(languages, args.file)
     elif args.command == "import":
         import_(args.file, languages)
+    elif args.command == "check":
+        sys.exit(check())
     else:
         usage(args.keys)
 

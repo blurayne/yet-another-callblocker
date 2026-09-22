@@ -182,7 +182,7 @@
     <string name="source_test_ok">works</string>
     <string name="source_test_ok_format">works, and looks like %s</string>
     <string name="source_test_ok_content">works: %1$s holding %2$s</string>
-    <string name="source_content_sia">the community database's own files</string>
+    <string name="source_content_sia">the community database\'s own files</string>
     <string name="source_content_sqlite">a SQLite database</string>
     <string name="source_test_no_url">no address to go to</string>
     <string name="source_test_bad_url">the address can\'t be used</string>

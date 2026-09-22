@@ -77,7 +77,12 @@ installs what it needs):
 ./tools/strings.py export                # res/values*/strings.xml -> translations.yaml
 ./tools/strings.py import                # translations.yaml -> res/values*/strings.xml
 ./tools/strings.py usage db_build_done   # where a key is used
+./tools/strings.py check                 # what aapt would refuse
 ```
+
+Run `check` after editing strings from a script. An apostrophe that lost its backslash stops
+the resource compiler with an error naming the wrong cause ("Invalid unicode escape
+sequence"), and a Python or shell heredoc eats `\'` silently.
 
 One entry per key with every language together and a `comment` saying where in the app it
 is used. The text is stored exactly as it stands between the tags, escapes and markup

@@ -40,8 +40,8 @@ public class TaskService extends IntentService {
     public static final String TASK_UPDATE_SECONDARY_DB = "update_secondary_db";
     public static final String TASK_UPDATE_PHONE_BLOCK = "update_phone_block";
 
-    /** Fetch the database again even if the one on the phone would have done. */
-    private static final String EXTRA_FORCE = "force";
+    /** What started the build, which decides which sources are fetched before it. */
+    private static final String EXTRA_TRIGGER = "trigger";
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskService.class);
 
@@ -55,17 +55,18 @@ public class TaskService extends IntentService {
     private int phaseTitleResId = R.string.sources_compiling;
 
     public static void start(Context context, String task) {
-        start(context, task, false);
+        start(context, task, DbCompileService.Trigger.BUILD);
     }
 
     /**
-     * @param force for "fetch this source now": what is on the phone is fetched again rather
-     *              than kept because it is there
+     * @param trigger what this is: the schedule coming round, someone asking for a build, or
+     *                someone asking for one source now
      */
-    public static void start(Context context, String task, boolean force) {
+    public static void start(Context context, String task,
+                             DbCompileService.Trigger trigger) {
         Intent intent = new Intent(context, TaskService.class);
         intent.setAction(task);
-        intent.putExtra(EXTRA_FORCE, force);
+        intent.putExtra(EXTRA_TRIGGER, trigger.name());
 
         try {
             ContextCompat.startForegroundService(context, intent);
@@ -91,7 +92,7 @@ public class TaskService extends IntentService {
                 switch (action) {
                     case TASK_DOWNLOAD_MAIN_DB:
                         updateNotification(getString(R.string.main_db_downloading));
-                        downloadMainDb(intent.getBooleanExtra(EXTRA_FORCE, false));
+                        downloadMainDb(triggerOf(intent));
                         break;
 
                     case TASK_UPDATE_SECONDARY_DB:
@@ -150,8 +151,20 @@ public class TaskService extends IntentService {
                         getApplicationContext(), title, current, total));
     }
 
-    /** Builds the database from the sources: the first one, then every layer on top. */
-    private void downloadMainDb(boolean force) {
+    /** What the intent says started this, or a plain build when it says nothing. */
+    private static DbCompileService.Trigger triggerOf(Intent intent) {
+        String name = intent != null ? intent.getStringExtra(EXTRA_TRIGGER) : null;
+
+        try {
+            return name != null
+                    ? DbCompileService.Trigger.valueOf(name) : DbCompileService.Trigger.BUILD;
+        } catch (IllegalArgumentException e) {
+            return DbCompileService.Trigger.BUILD;
+        }
+    }
+
+    /** Builds the database from the sources, in the order the user put them in. */
+    private void downloadMainDb(DbCompileService.Trigger trigger) {
         MainDbDownloadingEvent sticky = new MainDbDownloadingEvent();
 
         DbCompileService.Result result = null;
@@ -163,7 +176,7 @@ public class TaskService extends IntentService {
         postStickyEvent(sticky);
         try {
             result = new DbCompileService(this, App.getSettings())
-                    .compile(force, new DbCompileService.ProgressListener() {
+                    .compile(trigger, new DbCompileService.ProgressListener() {
                         @Override
                         public void onPhase(int titleResId) {
                             // there are four of them in a build; each one is worth saying

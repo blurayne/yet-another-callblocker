@@ -355,8 +355,9 @@
     <string name="source_secret_notice">Bleibt auf diesem Telefon: Eine Sicherung enthält die Quelle, aber nie ihr Passwort.</string>
     <string name="source_drop_files">Dateien nach dem Bauen verwerfen</string>
     <string name="source_drop_files_summary">Was diese Quelle geliefert hat, wegwerfen, sobald ihre Nummern in der Datenbank stehen, um den Platz zurückzubekommen. Der nächste Aufbau holt es erneut \u2013 bleibt dies aus, werden die Dateien wieder gelesen statt neu geladen.</string>
-    <string name="source_updates">Automatisch holen</string>
-    <string name="source_updates_manual">Nur auf Zuruf</string>
+    <string name="source_updates">Automatische Aktualisierung</string>
+    <string name="source_updates_manual">Manuell</string>
+    <string name="source_updates_once">Einmalig</string>
     <string name="source_updates_daily">Täglich</string>
     <string name="source_updates_weekly">Wöchentlich</string>
     <string name="source_updates_monthly">Monatlich</string>
@@ -638,8 +639,8 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_management_category_keeping_it_current">Aktuell halten</string>
     <string name="db_management_build">Neu bauen</string>
     <string name="db_management_build_summary">Jede eingeschaltete Quelle holen und die Datenbank daraus bauen</string>
-    <string name="db_management_update">Nach Aktualisierungen sehen</string>
-    <string name="db_management_update_summary">Die Gemeinschaftsdatenbank fragen, was sich seit dem letzten Mal geändert hat</string>
+    <string name="db_management_update">Aktualisieren</string>
+    <string name="db_management_update_summary">Die Quellen holen, deren Zeitplan fällig ist, den Rest lesen, wie er ist, und die Datenbank neu bauen</string>
     <string name="db_management_category_moving_it">Sichern</string>
     <string name="db_management_export_summary">Die gebaute Datenbank in das Sicherungsverzeichnis schreiben, damit das nächste Telefon blockieren kann, ohne erst eine zu bauen</string>
     <string name="db_management_import_summary">Sie von dort zurücklesen und das Vorhandene ersetzen</string>

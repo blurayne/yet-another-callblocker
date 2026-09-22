@@ -34,6 +34,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
+import dummydomain.yetanothercallblocker.data.DbCompileService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceNames;
@@ -245,6 +246,7 @@ public class NumberSourcesActivity extends AppCompatActivity {
 
     static int getUpdatesName(NumberSource.Updates updates) {
         switch (updates) {
+            case ONCE: return R.string.source_updates_once;
             case DAILY: return R.string.source_updates_daily;
             case WEEKLY: return R.string.source_updates_weekly;
             case MONTHLY: return R.string.source_updates_monthly;
@@ -454,7 +456,7 @@ public class NumberSourcesActivity extends AppCompatActivity {
                 TaskService.start(NumberSourcesActivity.this, database
                                 ? TaskService.TASK_DOWNLOAD_MAIN_DB
                                 : TaskService.TASK_UPDATE_PHONE_BLOCK,
-                        database);
+                        DbCompileService.Trigger.FORCED);
             }
 
             /**

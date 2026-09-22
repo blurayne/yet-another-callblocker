@@ -159,8 +159,9 @@
     <string name="source_secret_notice">Kept on this phone only: a backup holds the source but never its password.</string>
     <string name="source_drop_files">Drop the files after building</string>
     <string name="source_drop_files_summary">Throw away what this source handed over once its numbers are in the database, to get the room back. The next build fetches it again \u2013 leave this off and the files are read again instead of downloaded.</string>
-    <string name="source_updates">Fetch by itself</string>
-    <string name="source_updates_manual">Only when I say so</string>
+    <string name="source_updates">Automatic update</string>
+    <string name="source_updates_manual">Manual</string>
+    <string name="source_updates_once">Once</string>
     <string name="source_updates_daily">Daily</string>
     <string name="source_updates_weekly">Weekly</string>
     <string name="source_updates_monthly">Monthly</string>
@@ -603,8 +604,8 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_management_category_keeping_it_current">Keeping it current</string>
     <string name="db_management_build">Build it again</string>
     <string name="db_management_build_summary">Fetch every source that is switched on and build the database from them</string>
-    <string name="db_management_update">Look for updates</string>
-    <string name="db_management_update_summary">Ask the community database for what has changed since the last time</string>
+    <string name="db_management_update">Update</string>
+    <string name="db_management_update_summary">Fetch the sources whose schedule has come round, read the rest as they are, and build the database again</string>
     <string name="db_management_category_moving_it">Backing it up</string>
     <string name="db_management_export_summary">Write the built database into the backup directory, so that the next phone can block a call without building one first</string>
     <string name="db_management_import_summary">Read it back from there, replacing what is here</string>

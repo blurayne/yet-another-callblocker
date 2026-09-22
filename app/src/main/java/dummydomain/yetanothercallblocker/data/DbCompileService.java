@@ -73,6 +73,36 @@ public class DbCompileService {
     private static final int CONNECT_TIMEOUT_SECONDS = 30;
     private static final int READ_TIMEOUT_SECONDS = 120;
 
+    /**
+     * What started a build, which is the whole of what decides who gets fetched.
+     *
+     * <p>A build always reads every source into a new table. Whether a source is fetched
+     * first is another question, and this is the answer to it: the same run started three
+     * ways asks three different sets of sources, and none of them is "all of them" by
+     * accident.
+     */
+    public enum Trigger {
+        /**
+         * The schedule came round.
+         *
+         * <p>Only the sources that have a schedule, and only the ones whose turn it is. A
+         * source that is fetched when the user says so is not fetched by the clock.
+         */
+        SCHEDULED,
+
+        /**
+         * Someone asked for the database to be built.
+         *
+         * <p>Everything with a reason to be fetched: the ones whose schedule is up, and the
+         * ones that are only ever fetched when asked - being asked is what this is. Not the
+         * ones set to be fetched once, which have been.
+         */
+        BUILD,
+
+        /** Someone asked for this source, now. Whatever is on the phone, it is fetched. */
+        FORCED
+    }
+
     /** How a compile went. */
     public enum Status {
         /** The database was built. */
@@ -155,14 +185,13 @@ public class DbCompileService {
      * @param listener notified as the sources are fetched, may be null
      */
     public Result compile(ProgressListener listener) {
-        return compile(false, listener);
+        return compile(Trigger.BUILD, listener);
     }
 
     /**
-     * @param force fetches the database again even when the one on the phone would do; what
-     *              "fetch this source now" means when the user asks for it by hand
+     * @param trigger what started this, which is what decides who gets fetched
      */
-    public Result compile(boolean force, ProgressListener listener) {
+    public Result compile(Trigger trigger, ProgressListener listener) {
         LOG.debug("compile() started");
 
         long startTime = System.currentTimeMillis();
@@ -206,7 +235,7 @@ public class DbCompileService {
              */
             boolean files = source.getType() != NumberSource.Type.PHONE_BLOCK;
 
-            if (files && !force && !needsDownload(source, isPrimary)) {
+            if (files && !needsDownload(source, isPrimary, trigger)) {
                 LOG.debug("compile() {} is there and not due", tagOf(source));
 
                 /*
@@ -546,13 +575,19 @@ public class DbCompileService {
     /**
      * Whether a source has to be fetched again.
      *
-     * <p>When nothing of it is on the phone; when it has been pointed somewhere else since,
-     * because then what is here is the old address's and building from it would quietly
-     * ignore the change; and when its own schedule says so. Every source is asked this, not
-     * only the one the library keeps: any of them can be tens of megabytes, and none of them
-     * is worth fetching again because a build was started.
+     * <p>Two answers come before the schedule and before whoever asked. There is nothing of
+     * it on the phone, so there is nothing to build from and it is fetched whatever anyone
+     * says. Or it has been pointed somewhere else since, and what is here came from the old
+     * address - building from that would quietly ignore the change.
+     *
+     * <p>Past those, it is the schedule and who is asking. A source that is only ever
+     * fetched when asked is fetched when someone asks for a build, and left alone by the
+     * clock. One set to be fetched once has been, and is left alone by both. One with a
+     * schedule is fetched when its turn has come, whichever of the two started the run.
      */
-    private boolean needsDownload(NumberSource source, boolean primary) {
+    private boolean needsDownload(NumberSource source, boolean primary, Trigger trigger) {
+        if (trigger == Trigger.FORCED) return true;
+
         File here = primary
                 ? new File(new File(YacbHolder.getStorage().getDataDirPath(),
                         SiaConstants.SIA_PATH_PREFIX), "data_slice_info.dat")
@@ -565,7 +600,16 @@ public class DbCompileService {
             return true;
         }
 
-        return source.isDue(System.currentTimeMillis());
+        switch (source.getUpdates()) {
+            case MANUAL:
+                return trigger == Trigger.BUILD;
+
+            case ONCE:
+                return false; // there is something here, so the one time has been
+
+            default:
+                return source.isDue(System.currentTimeMillis());
+        }
     }
 
     /**

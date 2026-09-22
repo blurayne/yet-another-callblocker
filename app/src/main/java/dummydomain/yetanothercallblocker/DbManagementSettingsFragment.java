@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dummydomain.yetanothercallblocker.data.DatabaseBackup;
+import dummydomain.yetanothercallblocker.data.DbCompileService;
 import dummydomain.yetanothercallblocker.data.DbImporterExporter;
 import dummydomain.yetanothercallblocker.data.SiaConstants;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
@@ -140,8 +141,15 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
             return true;
         });
 
+        /*
+         * The same build as the one below, asked a different question: only the sources
+         * whose schedule has come round are fetched first, and the rest are read as they
+         * are. It used to ask the community database's own server what had changed, which
+         * is the one source in the list nobody put there.
+         */
         requirePreference(PREF_UPDATE).setOnPreferenceClickListener(preference -> {
-            TaskService.start(requireContext(), TaskService.TASK_UPDATE_SECONDARY_DB);
+            TaskService.start(requireContext(), TaskService.TASK_DOWNLOAD_MAIN_DB,
+                    DbCompileService.Trigger.SCHEDULED);
             return true;
         });
 

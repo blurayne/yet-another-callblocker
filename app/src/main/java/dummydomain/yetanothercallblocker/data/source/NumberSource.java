@@ -33,7 +33,18 @@ public class NumberSource {
 
     /** How often the source is asked, by itself. */
     public enum Updates {
-        MANUAL, DAILY, WEEKLY, MONTHLY;
+        /** Only when asked: by hand, or by a build that reads the sources again. */
+        MANUAL,
+        /**
+         * Once, and then never again by itself.
+         *
+         * <p>For a list that is what it is - somebody's collection, a file that was put
+         * somewhere for this phone to pick up. It is fetched while there is nothing of it
+         * here, and after that it is left alone: not by the schedule, and not by a build
+         * either. Asking for it by hand still fetches it.
+         */
+        ONCE,
+        DAILY, WEEKLY, MONTHLY;
 
         /** How long a source of this kind may go unasked, or 0 when only the user asks. */
         public long getInterval() {
@@ -43,6 +54,11 @@ public class NumberSource {
                 case MONTHLY: return 30L * 24 * 60 * 60 * 1000;
                 default: return 0;
             }
+        }
+
+        /** Whether this one comes round by itself at all. */
+        public boolean isScheduled() {
+            return getInterval() != 0;
         }
     }
 
@@ -245,15 +261,14 @@ public class NumberSource {
     }
 
     /**
-     * Whether the source is due to be asked again.
+     * Whether the source's own schedule says it is time.
      *
-     * <p>Once when there is nothing yet, and after that on the schedule the user chose:
-     * a source can be tens of megabytes, which is not something to ask for daily by accident.
+     * <p>Only about the schedule: whether there is anything of it on the phone is a question
+     * about the phone and is asked there. A source that comes round by itself has gone long
+     * enough unasked; one that doesn't, never has.
      */
     public boolean isDue(long now) {
         if (!enabled) return false;
-
-        if (lastUpdate <= 0) return true; // there is nothing yet
 
         long interval = updates.getInterval();
         if (interval == 0) return false; // only when the user says so

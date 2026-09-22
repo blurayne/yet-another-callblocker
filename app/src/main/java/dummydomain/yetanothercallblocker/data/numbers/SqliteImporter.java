@@ -19,7 +19,7 @@ import java.io.InputStream;
  * <p>The shape is the one the update packages are built in: a {@code numbers} table keyed by
  * the number with the four counts and a category, a {@code categories} table saying what the
  * category numbers mean, a {@code deletions} table of numbers to take out of whatever is
- * underneath, and {@code meta} for the version.
+ * underneath, a {@code featured} table of business names, and {@code meta} for the version.
  *
  * <p>The categories are the reason this isn't a plain copy. Two databases built by different
  * people number their categories differently - the same name is 3 in one and 11 in the other
@@ -60,13 +60,17 @@ public class SqliteImporter {
         /** And how many the filter kept out. */
         final long skipped;
 
+        /** How many business names it brought, beside the numbers. */
+        final long names;
+
         /** What the file says it is, or 0 when it doesn't say. */
         final int version;
 
-        Result(long read, long deletions, long skipped, int version) {
+        Result(long read, long deletions, long skipped, long names, int version) {
             this.read = read;
             this.deletions = deletions;
             this.skipped = skipped;
+            this.names = names;
             this.version = version;
         }
 
@@ -132,7 +136,10 @@ public class SqliteImporter {
 
             long deletions = readDeletions(source, writer);
 
-            return new Result(counts[0] + deletions, deletions, counts[1], versionOf(source));
+            long names = readNames(source, writer, sourceId, filter);
+
+            return new Result(counts[0] + deletions, deletions, counts[1], names,
+                    versionOf(source));
         } finally {
             source.close();
         }
@@ -242,6 +249,54 @@ public class SqliteImporter {
         }
 
         return deleted;
+    }
+
+    /** The tables a file may keep its business names in, in the order they are looked for. */
+    private static final String[] NAME_TABLES = {"featured", "names"};
+
+    /**
+     * The business names the file has for its numbers.
+     *
+     * <p>Read after the deletions, so that a name this file brings is not one it takes out
+     * again in the same breath. A later source overwrites a name an earlier one gave, which
+     * is the same rule the numbers follow: the order decides. Filtered like the numbers,
+     * because a name for a number the filter keeps out is a name nothing will ask for.
+     *
+     * @return how many went in
+     */
+    private static long readNames(SQLiteDatabase source, NumbersWriter writer, int sourceId,
+                                  NumbersFilter filter) {
+        for (String table : NAME_TABLES) {
+            long names = 0;
+
+            try (Cursor cursor = source.rawQuery(
+                    "SELECT number, name FROM " + table + " WHERE name IS NOT NULL", null)) {
+                while (cursor.moveToNext()) {
+                    long number = cursor.getLong(0);
+
+                    if (filter != null && !filter.keep(number)) continue;
+
+                    String name = cursor.getString(1);
+                    if (name == null) continue;
+
+                    name = name.trim();
+                    if (name.isEmpty()) continue;
+
+                    writer.putName(number, name, sourceId);
+                    names++;
+                }
+            } catch (Exception e) {
+                // a file without the table has no names to bring; the next name is tried
+                LOG.debug("readNames() no {} table in this one", table, e);
+                continue;
+            }
+
+            LOG.info("readNames() {} names from {}", names, table);
+
+            return names;
+        }
+
+        return 0;
     }
 
     /** What the file says it is, by whichever of the version keys it carries. */

@@ -312,6 +312,12 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
             parts.add(getString(R.string.db_filtering_status_numbers,
                     NumberFormat.getInstance().format(info.count)));
 
+            // only when some source brought any; most don't, and "0 names" says nothing
+            if (info.names > 0) {
+                parts.add(getString(R.string.db_management_status_names,
+                        NumberFormat.getInstance().format(info.names)));
+            }
+
             // the file exists either way; its size only says something once it holds numbers
             if (info.size > 0) {
                 parts.add(Formatter.formatShortFileSize(requireContext(), info.size));

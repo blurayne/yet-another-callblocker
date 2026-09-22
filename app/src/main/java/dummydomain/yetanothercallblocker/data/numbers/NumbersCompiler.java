@@ -408,6 +408,12 @@ public class NumbersCompiler {
                             log.line(input.tag, context.getString(R.string.build_log_filtered),
                                     counts.skipped);
                         }
+
+                        // only a source that brings names has a line about them
+                        if (run.sourceNames() > 0) {
+                            log.line(input.tag, context.getString(R.string.build_log_names),
+                                    run.sourceNames());
+                        }
                     }
 
                     if (sourceListener != null) sourceListener.onSourceFinished(source, counts);
@@ -429,6 +435,7 @@ public class NumbersCompiler {
 
             long numbers = NumbersDb.getCount(db);
             NumbersDb.setMeta(db, NumbersDb.META_COUNT, String.valueOf(numbers));
+            NumbersDb.setMeta(db, NumbersDb.META_NAMES, String.valueOf(NumbersDb.getNamesCount(db)));
 
             /*
              * Now that nothing more is going in: one pass over what is there, rather than a
@@ -505,6 +512,9 @@ public class NumbersCompiler {
         private long sourceDeletedRows;
         private long sourceSkipped;
 
+        /** Business names the source being read brought along, which are not numbers. */
+        private long sourceNames;
+
         /** What this source is called in the log, and where that log is. */
         private String tag;
         private BuildLog log;
@@ -537,8 +547,13 @@ public class NumbersCompiler {
             sourceNumbers = 0;
             sourceDeletions = 0;
             sourceSkipped = 0;
+            sourceNames = 0;
             sourceDeletedRows = writer.getDeletedRows();
             lastLogged = 0;
+        }
+
+        long sourceNames() {
+            return sourceNames;
         }
 
         long sourceNumbers() {
@@ -695,8 +710,9 @@ public class NumbersCompiler {
             sourceNumbers += result.read - result.deletions;
             sourceDeletions += result.deletions;
             sourceSkipped += result.skipped;
+            sourceNames += result.names;
 
-            pending += result.read;
+            pending += result.read + result.names;
             entries += result.read;
             files++;
 
@@ -1007,18 +1023,22 @@ public class NumbersCompiler {
     public static class Info {
 
         public final long count;
+        /** Business names beside the numbers, from the sources that bring any. */
+        public final long names;
         public final long compiledTime;
         public final boolean filtered;
         public final long size;
         /** Whether the table could be read at all; it can't while it is being written. */
         public final boolean readable;
 
-        Info(long count, long compiledTime, boolean filtered, long size) {
-            this(count, compiledTime, filtered, size, true);
+        Info(long count, long names, long compiledTime, boolean filtered, long size) {
+            this(count, names, compiledTime, filtered, size, true);
         }
 
-        Info(long count, long compiledTime, boolean filtered, long size, boolean readable) {
+        Info(long count, long names, long compiledTime, boolean filtered, long size,
+             boolean readable) {
             this.count = count;
+            this.names = names;
             this.compiledTime = compiledTime;
             this.filtered = filtered;
             this.size = size;
@@ -1042,11 +1062,14 @@ public class NumbersCompiler {
 
             String count = NumbersDb.getMeta(db, NumbersDb.META_COUNT, null);
 
+            String names = NumbersDb.getMeta(db, NumbersDb.META_NAMES, null);
+
             String compiled = NumbersDb.getMeta(db, NumbersDb.META_COMPILED, null);
 
             boolean filtered = "1".equals(NumbersDb.getMeta(db, NumbersDb.META_FILTERED, "0"));
 
             return new Info(count != null ? Long.parseLong(count) : -1,
+                    names != null ? Long.parseLong(names) : 0,
                     compiled != null ? Long.parseLong(compiled) : 0,
                     filtered, getSize());
         } catch (Exception e) {
@@ -1057,7 +1080,7 @@ public class NumbersCompiler {
              */
             LOG.warn("getInfo()", e);
 
-            return new Info(-1, 0, false, 0, false);
+            return new Info(-1, 0, 0, false, 0, false);
         } finally {
             helper.close();
         }

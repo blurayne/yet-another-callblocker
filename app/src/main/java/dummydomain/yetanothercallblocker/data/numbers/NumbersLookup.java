@@ -33,6 +33,7 @@ public class NumbersLookup {
     private static final Logger LOG = LoggerFactory.getLogger(NumbersLookup.class);
 
     private static final String[] COLUMNS = {"flags", "score"};
+    private static final String[] NAME_COLUMNS = {"name"};
 
     private final Context context;
 
@@ -105,6 +106,47 @@ public class NumbersLookup {
             return itemOf(number, flags, cursor.getInt(1));
         } catch (Exception e) {
             LOG.warn("get() couldn't look {} up", number, e);
+            return null;
+        }
+    }
+
+    /**
+     * The business name a source had for the number, or null when none had one.
+     *
+     * <p>Kept apart from {@link #get(long)} because a name is only wanted for a screen, and
+     * a call is answered without one. One seek in the names table, which is keyed the same
+     * way as the numbers; the name is whatever the last source in the order said.
+     *
+     * @param numberString international, with or without the plus
+     */
+    public String getName(String numberString) {
+        if (numberString == null || numberString.isEmpty()) return null;
+
+        if (numberString.startsWith("+")) numberString = numberString.substring(1);
+
+        try {
+            return getName(Long.parseLong(numberString));
+        } catch (NumberFormatException e) {
+            LOG.debug("getName() not a number: {}", numberString);
+            return null;
+        }
+    }
+
+    public synchronized String getName(long number) {
+        if (number <= 0) return null;
+
+        SQLiteDatabase db = open();
+        if (db == null) return null;
+
+        try (Cursor cursor = db.query("names", NAME_COLUMNS, "number = ?",
+                new String[]{String.valueOf(number)}, null, null, null, "1")) {
+            if (!cursor.moveToFirst()) return null;
+
+            String name = cursor.getString(0);
+
+            return name != null && !name.isEmpty() ? name : null;
+        } catch (Exception e) {
+            LOG.warn("getName() couldn't look {} up", number, e);
             return null;
         }
     }

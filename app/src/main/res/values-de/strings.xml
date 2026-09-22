@@ -129,6 +129,7 @@
     <string name="build_log_inserted">Eingefügte Einträge:</string>
     <string name="build_log_updated">Aktualisierte Einträge:</string>
     <string name="build_log_deleted">Entfernte Einträge:</string>
+    <string name="build_log_names">Firmennamen:</string>
     <string name="build_log_filtered">Herausgefiltert:</string>
     <string name="build_log_ingesting">Datei %1$d von %2$d wird gelesen</string>
     <string name="build_log_ingesting_files">%1$d Dateien werden gelesen</string>
@@ -659,6 +660,7 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_management_status_empty">Noch nichts gebaut</string>
     <string name="db_management_status_unreadable">Derzeit nicht lesbar</string>
     <string name="db_management_status_built">gebaut %s</string>
+    <string name="db_management_status_names">%s Firmennamen</string>
     <string name="db_management_sources">Quellen</string>
     <string name="db_management_sources_summary">Die Datenbank wird aus den Quellen gebaut, in deren Reihenfolge</string>
     <string name="db_management_category_keeping_it_current">Aktuell halten</string>

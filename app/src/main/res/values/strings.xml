@@ -474,6 +474,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="build_log_inserted">Inserted records:</string>
     <string name="build_log_updated">Updated records:</string>
     <string name="build_log_deleted">Deleted records:</string>
+    <string name="build_log_names">Business names:</string>
     <string name="build_log_filtered">Filtered out:</string>
     <string name="build_log_ingesting">Ingesting file %1$d of %2$d</string>
     <string name="build_log_ingesting_files">Ingesting %1$d files</string>
@@ -624,6 +625,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_management_status_empty">Nothing built yet</string>
     <string name="db_management_status_unreadable">Can\'t be read right now</string>
     <string name="db_management_status_built">built %s</string>
+    <string name="db_management_status_names">%s business names</string>
     <string name="db_management_sources">Sources</string>
     <string name="db_management_sources_summary">The database is built from the sources, in the order they are in</string>
     <string name="db_management_category_keeping_it_current">Keeping it current</string>

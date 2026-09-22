@@ -5249,6 +5249,10 @@ build_log_deleted:
   comment: NumbersCompiler build log
   en: 'Deleted records:'
   de: 'Entfernte Einträge:'
+build_log_names:
+  comment: NumbersCompiler build log
+  en: 'Business names:'
+  de: 'Firmennamen:'
 build_log_filtered:
   comment: NumbersCompiler build log
   en: 'Filtered out:'
@@ -6332,6 +6336,10 @@ db_management_status_built:
   comment: RootSettingsFragment; DbManagementSettingsFragment
   en: built %s
   de: gebaut %s
+db_management_status_names:
+  comment: DbManagementSettingsFragment
+  en: '%s business names'
+  de: '%s Firmennamen'
 db_management_sources:
   comment: db_management_preferences.xml title
   en: Sources

@@ -214,8 +214,26 @@ public class LookupNumberActivity extends AppCompatActivity {
                         ? lookup.get(purePhoneNumber)
                         : YacbHolder.getCommunityDatabase().getDbItemByNumber(purePhoneNumber);
 
-                FeaturedDatabaseItem featuredItem = YacbHolder.getFeaturedDatabase()
-                        .getDbItemByNumber(purePhoneNumber);
+                // and the name the same way: the table's sources first, the library after
+                String tableName = lookup != null && lookup.isReady()
+                        ? lookup.getName(purePhoneNumber) : null;
+
+                FeaturedDatabaseItem featuredItem;
+
+                if (!TextUtils.isEmpty(tableName)) {
+                    long number;
+                    try {
+                        number = Long.parseLong(purePhoneNumber.startsWith("+")
+                                ? purePhoneNumber.substring(1) : purePhoneNumber);
+                    } catch (NumberFormatException e) {
+                        number = 0;
+                    }
+
+                    featuredItem = new FeaturedDatabaseItem(number, tableName);
+                } else {
+                    featuredItem = YacbHolder.getFeaturedDatabase()
+                            .getDbItemByNumber(purePhoneNumber);
+                }
 
                 return new Pair<>(item, featuredItem);
             }

@@ -78,6 +78,9 @@ public class NumbersDb extends SQLiteOpenHelper {
      */
     public static final String META_COUNT = "count";
 
+    /** How many business names it holds, written down for the same reason. */
+    public static final String META_NAMES = "names";
+
     /** The tables themselves; what a build fills. */
     private static final String[] TABLES_SQL = {
             "CREATE TABLE sources ("
@@ -366,6 +369,16 @@ public class NumbersDb extends SQLiteOpenHelper {
     public static void setMeta(SQLiteDatabase db, String key, String value) {
         db.execSQL("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)",
                 new Object[]{key, value});
+    }
+
+    /** How many business names the database holds, or 0 when it can't say. */
+    public static long getNamesCount(SQLiteDatabase db) {
+        try (Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM names", null)) {
+            return cursor.moveToFirst() ? cursor.getLong(0) : 0;
+        } catch (Exception e) {
+            LOG.warn("getNamesCount()", e);
+            return 0;
+        }
     }
 
     /** How many numbers the database holds, or -1 when it can't say. */

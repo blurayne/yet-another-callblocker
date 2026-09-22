@@ -60,6 +60,20 @@ public class NumberInfoService {
         this.numbersLookup = numbersLookup;
     }
 
+    /** The number as the databases key it, or 0 when it isn't one. */
+    private static long parseNumber(String normalizedNumber) {
+        if (normalizedNumber == null) return 0;
+
+        String digits = normalizedNumber.startsWith("+")
+                ? normalizedNumber.substring(1) : normalizedNumber;
+
+        try {
+            return Long.parseLong(digits);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     public void setPhoneBlockList(PhoneBlockList phoneBlockList) {
         this.phoneBlockList = phoneBlockList;
     }
@@ -149,7 +163,19 @@ public class NumberInfoService {
         }
         LOG.trace("getNumberInfo() communityItem={}", numberInfo.communityDatabaseItem);
 
-        if (featuredDatabase != null) {
+        /*
+         * The name, from the same table first: a source that hands over a database brings
+         * its business names with it, and they are read into the table beside the numbers.
+         * The library's own featured files are what the primary source brought, and are
+         * asked when the table has no name - they aren't in it.
+         */
+        String tableName = numbersLookup != null && numbersLookup.isReady()
+                ? numbersLookup.getName(normalizedNumber) : null;
+
+        if (!TextUtils.isEmpty(tableName)) {
+            numberInfo.featuredDatabaseItem = new FeaturedDatabaseItem(
+                    parseNumber(normalizedNumber), tableName);
+        } else if (featuredDatabase != null) {
             numberInfo.featuredDatabaseItem = featuredDatabase.getDbItemByNumber(normalizedNumber);
         }
         LOG.trace("getNumberInfo() featuredItem={}", numberInfo.featuredDatabaseItem);

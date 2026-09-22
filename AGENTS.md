@@ -66,3 +66,22 @@ prefer additive files, keep the existing code style (slf4j logging, `Settings` g
 Whether the caller ID actually appears depends on the phone app: the AOSP Dialer and the Google
 phone app query remote contacts directories for numbers that aren't in the contacts, some vendor
 phone apps (Samsung, MIUI) don't. That, and the overlay, can only be checked on a device.
+
+## Strings
+
+All translations live in one file, `translations.yaml`, written and read by
+`tools/strings.py` (a [uv](https://docs.astral.sh/uv/) script - run it directly, it
+installs what it needs):
+
+```
+./tools/strings.py export                # res/values*/strings.xml -> translations.yaml
+./tools/strings.py import                # translations.yaml -> res/values*/strings.xml
+./tools/strings.py usage db_build_done   # where a key is used
+```
+
+One entry per key with every language together and a `comment` saying where in the app it
+is used. The text is stored exactly as it stands between the tags, escapes and markup
+included, so an export followed by an import leaves the tree byte for byte unchanged -
+which is the test worth running after touching the tool.
+
+`strings.xml` stays the source of truth for the build; re-export after editing it by hand.

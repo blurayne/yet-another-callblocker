@@ -164,6 +164,16 @@ public class NumberInfoUtils {
         return getDefaultCallerIdName(context, numberInfo);
     }
 
+    /** The business name the databases have for the number, or null when they have none. */
+    public static String getBusinessName(NumberInfo numberInfo) {
+        if (numberInfo == null || numberInfo.noNumber) return null;
+
+        FeaturedDatabaseItem featuredItem = numberInfo.featuredDatabaseItem;
+
+        return featuredItem != null && !TextUtils.isEmpty(featuredItem.getName())
+                ? featuredItem.getName() : null;
+    }
+
     /** What the app shows when the user hasn't said what to show. */
     static String getDefaultCallerIdName(Context context, NumberInfo numberInfo) {
         if (numberInfo == null || numberInfo.noNumber) return null;

@@ -40,6 +40,16 @@
                 tools:text="Telemarketing" />
 
             <TextView
+                android:id="@+id/business"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:visibility="gone"
+                tools:text="Bäckerei Müller"
+                tools:visibility="visible" />
+
+            <TextView
                 android:id="@+id/label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

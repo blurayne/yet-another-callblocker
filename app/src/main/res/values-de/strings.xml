@@ -391,6 +391,8 @@
     <string name="source_version">Version %d</string>
     <string name="source_never_fetched">noch nie geholt</string>
     <string name="source_delete">Löschen</string>
+    <string name="source_duplicate">Duplizieren</string>
+    <string name="source_duplicated">Kopiert als \"%s\"</string>
     <string name="source_delete_message">Diese Quelle entfernen? Die Nummern, die sie mitgebracht hat, verschwinden mit ihr; selbst Eingetragenes bleibt unberührt.</string>
     <string name="source_reorder">Verschieben</string>
     <string name="sources_order_hint">In dieser Reihenfolge wird die Datenbank gebaut: Die erste eingeschaltete Quelle bringt die Datenbank selbst, jede darunter legt ihre Nummern darüber und kann auch Nummern wieder herausnehmen. Zum Verschieben am Griff ziehen.</string>
@@ -528,7 +530,7 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="caller_id_overlay">Anruferinfo einblenden</string>
     <string name="caller_id_overlay_summary">Die Informationen zum Anrufer über dem Anrufbildschirm einblenden. Verwenden Sie das, wenn Ihre Telefon-App die Anruferinfo oben ignoriert. Benötigt die Berechtigung „Über anderen Apps einblenden“.</string>
     <string name="caller_id_template">Anzeige in der Telefon-App</string>
-    <string name="caller_id_template_summary">Wie die App es selbst schreibt. Eigene Fassung mit {name}, {info}, {number}, {contact}, {category}, {rating}, {negative}, {positive}, {neutral}, {list} und {phoneblock}. Die erste Zeile steht dort, wo der Name steht, der Rest daneben.</string>
+    <string name="caller_id_template_summary">Wie die App es selbst schreibt. Eigene Fassung mit {name}, {info}, {number}, {contact}, {business}, {category}, {rating}, {negative}, {positive}, {neutral}, {list} und {phoneblock}. Die erste Zeile steht dort, wo der Name steht, der Rest daneben.</string>
     <string name="caller_id_template_default">Wie die App es selbst schreibt</string>
     <string name="caller_id_template_field">Eigene Fassung</string>
     <string name="caller_id_template_preview">So sieht ein Anruf aus</string>

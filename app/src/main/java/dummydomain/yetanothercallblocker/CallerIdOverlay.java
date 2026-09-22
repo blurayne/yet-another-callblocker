@@ -131,6 +131,20 @@ public class CallerIdOverlay {
 
         view.<TextView>findViewById(R.id.name).setText(name);
 
+        /*
+         * The business name, when the databases have one and the top line is something else:
+         * by default it is the top line, but a template of the user's own may have put the
+         * category or the rating there, and the name is still worth a line.
+         */
+        TextView businessView = view.findViewById(R.id.business);
+        String business = NumberInfoUtils.getBusinessName(numberInfo);
+        if (!TextUtils.isEmpty(business) && !business.equals(name)) {
+            businessView.setText(business);
+            businessView.setVisibility(View.VISIBLE);
+        } else {
+            businessView.setVisibility(View.GONE);
+        }
+
         view.<TextView>findViewById(R.id.number).setText(!numberInfo.noNumber
                 ? numberInfo.number : context.getString(R.string.no_number));
 

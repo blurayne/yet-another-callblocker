@@ -44,6 +44,9 @@ public class CallerIdTemplate {
     /** The contact's name, when the number is in the contacts. */
     public static final String CONTACT = "{contact}";
 
+    /** The business name the databases have for the number, when they have one. */
+    public static final String BUSINESS = "{business}";
+
     /** What the community database says the number is used for. */
     public static final String CATEGORY = "{category}";
 
@@ -85,6 +88,7 @@ public class CallerIdTemplate {
         text = replace(text, NUMBER, numberInfo.number);
         text = replace(text, CONTACT, numberInfo.contactItem != null
                 ? numberInfo.contactItem.displayName : null);
+        text = replace(text, BUSINESS, NumberInfoUtils.getBusinessName(numberInfo));
         text = replace(text, CATEGORY, getCategory(context, item));
         text = replace(text, RATING, getRating(context, numberInfo));
         text = replace(text, NEGATIVE, item != null

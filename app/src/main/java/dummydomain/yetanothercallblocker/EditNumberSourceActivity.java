@@ -140,9 +140,11 @@ public class EditNumberSourceActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_edit_number_source, menu);
 
-        // a source that was never saved has nothing to delete
-        menu.findItem(R.id.menu_delete).setVisible(
-                sourceService != null && sourceService.findById(source.getId()) != null);
+        // a source that was never saved has nothing to delete, and nothing to copy either
+        boolean saved = sourceService != null && sourceService.findById(source.getId()) != null;
+
+        menu.findItem(R.id.menu_delete).setVisible(saved);
+        menu.findItem(R.id.menu_duplicate).setVisible(saved);
 
         return true;
     }
@@ -288,6 +290,36 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         }
 
         return false;
+    }
+
+    /**
+     * Makes a second source out of this one, and opens it.
+     *
+     * <p>Copied as saved, not as the form has it: the form may hold half an edit, and what
+     * the user asked for is "one more like this", which is the one on disk. The copy goes to
+     * the end of the list with a name of its own and the same secret; it has fetched nothing
+     * yet, so its row starts out blank.
+     */
+    public void onDuplicateClicked(MenuItem item) {
+        if (sourceService == null) return;
+
+        NumberSource original = sourceService.findById(source.getId());
+        if (original == null) return;
+
+        NumberSource copy = original.copy();
+
+        copy.setName(freeName(!TextUtils.isEmpty(original.getName())
+                ? original.getName().trim()
+                : getString(SourceNames.getTypeName(original.getType()))));
+
+        sourceService.save(copy);
+        sourceService.setSecret(copy.getId(), sourceService.getSecret(original.getId()));
+
+        Toast.makeText(this, getString(R.string.source_duplicated, copy.getName()),
+                Toast.LENGTH_SHORT).show();
+
+        startActivity(getIntent(this, copy.getId()));
+        finish();
     }
 
     public void onDeleteClicked(MenuItem item) {

@@ -2450,6 +2450,14 @@ source_delete:
   comment: activity_edit_number_source.xml title; activity_edit_provider.xml title; EditNumberSourceActivity dialog text; +1 more
   en: Delete
   de: Löschen
+source_duplicate:
+  comment: activity_edit_number_source.xml title
+  en: Duplicate
+  de: Duplizieren
+source_duplicated:
+  comment: EditNumberSourceActivity toast
+  en: Copied as \"%s\"
+  de: Kopiert als \"%s\"
 source_delete_message:
   comment: EditNumberSourceActivity dialog title
   en: Remove this source? The numbers it brought are dropped with it; nothing you wrote yourself is touched.
@@ -2978,8 +2986,8 @@ caller_id_template:
   de: Anzeige in der Telefon-App
 caller_id_template_summary:
   comment: caller_id_template_preferences.xml summary
-  en: The app\'s own wording. Write your own with {name}, {info}, {number}, {contact}, {category}, {rating}, {negative}, {positive}, {neutral}, {list} and {phoneblock}. The first line goes where the name goes, the rest next to it.
-  de: Wie die App es selbst schreibt. Eigene Fassung mit {name}, {info}, {number}, {contact}, {category}, {rating}, {negative}, {positive}, {neutral}, {list} und {phoneblock}. Die erste Zeile steht dort, wo der Name steht, der Rest daneben.
+  en: The app\'s own wording. Write your own with {name}, {info}, {number}, {contact}, {business}, {category}, {rating}, {negative}, {positive}, {neutral}, {list} and {phoneblock}. The first line goes where the name goes, the rest next to it.
+  de: Wie die App es selbst schreibt. Eigene Fassung mit {name}, {info}, {number}, {contact}, {business}, {category}, {rating}, {negative}, {positive}, {neutral}, {list} und {phoneblock}. Die erste Zeile steht dort, wo der Name steht, der Rest daneben.
 caller_id_template_default:
   comment: CallerIdTemplateSettingsFragment summary; RootSettingsFragment
   en: The app\'s own wording

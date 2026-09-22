@@ -173,6 +173,8 @@
     <string name="source_version">version %d</string>
     <string name="source_never_fetched">never fetched</string>
     <string name="source_delete">Delete</string>
+    <string name="source_duplicate">Duplicate</string>
+    <string name="source_duplicated">Copied as \"%s\"</string>
     <string name="source_delete_message">Remove this source? The numbers it brought are dropped with it; nothing you wrote yourself is touched.</string>
     <string name="source_reorder">Move</string>
     <string name="sources_order_hint">The database is built in this order: the first source that is switched on brings the database itself, every source below it adds its numbers on top and can take numbers out again. Drag a source by its handle to move it.</string>
@@ -303,7 +305,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="caller_id_overlay">Caller info overlay</string>
     <string name="caller_id_overlay_summary">Draw the caller info over the incoming call screen. Use this if your phone app ignores the caller ID above. Requires the \"display over other apps\" permission.</string>
     <string name="caller_id_template">What the phone app shows</string>
-    <string name="caller_id_template_summary">The app\'s own wording. Write your own with {name}, {info}, {number}, {contact}, {category}, {rating}, {negative}, {positive}, {neutral}, {list} and {phoneblock}. The first line goes where the name goes, the rest next to it.</string>
+    <string name="caller_id_template_summary">The app\'s own wording. Write your own with {name}, {info}, {number}, {contact}, {business}, {category}, {rating}, {negative}, {positive}, {neutral}, {list} and {phoneblock}. The first line goes where the name goes, the rest next to it.</string>
     <string name="caller_id_template_default">The app\'s own wording</string>
     <string name="caller_id_template_field">Your wording</string>
     <string name="caller_id_template_preview">What a caller looks like</string>

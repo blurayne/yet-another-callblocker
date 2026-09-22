@@ -226,6 +226,29 @@ public class NumberSource {
         lastUpdate = 0;
     }
 
+    /**
+     * The same source again under a new id: the address, the login, the schedule, everything
+     * the user set - and nothing of what a fetch found out, because this one has fetched
+     * nothing yet. The secret is kept apart from the source and is copied by whoever asks
+     * for the copy.
+     */
+    public NumberSource copy() {
+        try {
+            JSONObject json = toJson();
+            json.remove(KEY_ID);
+
+            NumberSource copy = fromJson(json);
+
+            copy.forgetFetched();
+            copy.lastCheck = 0;
+            copy.lastResult = null;
+
+            return copy;
+        } catch (JSONException e) {
+            throw new IllegalStateException(e); // our own fields, which always serialize
+        }
+    }
+
     /** Whether this source hands over files at all, which is what there would be to drop. */
     public boolean hasFiles() {
         return type == Type.DATABASE;

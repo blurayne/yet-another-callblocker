@@ -5242,7 +5242,7 @@ build_log_reading_database:
   en: Reading the database
   de: Die Datenbank wird gelesen
 build_log_is_a_database:
-  comment: DbCompileService build log
+  comment: DbCompileService
   en: A SQLite database, not the library\'s own files
   de: Eine SQLite-Datenbank, nicht die Dateien der Bibliothek
 build_log_header_wrong:
@@ -5253,6 +5253,26 @@ build_log_header_missing:
   comment: DbCompileService build log
   en: '%1$s is missing'
   de: '%1$s fehlt'
+build_log_archive_holds:
+  comment: DbCompileService build log
+  en: The archive holds %1$s, starting with \"%2$s\"
+  de: Im Archiv liegt %1$s, beginnend mit \"%2$s\"
+build_log_archive_empty:
+  comment: DbCompileService build log
+  en: Nothing could be read out of the archive
+  de: Aus dem Archiv war nichts zu lesen
+build_log_downloaded_of:
+  comment: DbCompileService build log
+  en: Downloaded %1$s of %2$s
+  de: '%1$s von %2$s geladen'
+build_log_downloaded:
+  comment: DbCompileService
+  en: Downloaded %1$s
+  de: '%1$s geladen'
+build_log_not_the_librarys:
+  comment: DbCompileService
+  en: Files the library won\'t read; built into the table anyway
+  de: Dateien, welche die Bibliothek nicht liest; sie wandern trotzdem in die Tabelle
 build_log_ingesting_rows:
   comment: NumbersCompiler build log
   en: Ingesting row

@@ -475,6 +475,11 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="build_log_is_a_database">A SQLite database, not the library\'s own files</string>
     <string name="build_log_header_wrong">%1$s starts with \"%2$s\"; expected %3$s</string>
     <string name="build_log_header_missing">%1$s is missing</string>
+    <string name="build_log_archive_holds">The archive holds %1$s, starting with \"%2$s\"</string>
+    <string name="build_log_archive_empty">Nothing could be read out of the archive</string>
+    <string name="build_log_downloaded_of">Downloaded %1$s of %2$s</string>
+    <string name="build_log_downloaded">Downloaded %1$s</string>
+    <string name="build_log_not_the_librarys">Files the library won\'t read; built into the table anyway</string>
     <string name="build_log_ingesting_rows">Ingesting row</string>
     <string name="build_log_ingesting_threads">Ingesting %1$d files on %2$d threads</string>
     <string name="build_log_indexing">Indexing\u2026</string>

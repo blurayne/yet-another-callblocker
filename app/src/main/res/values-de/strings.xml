@@ -131,6 +131,11 @@
     <string name="build_log_is_a_database">Eine SQLite-Datenbank, nicht die Dateien der Bibliothek</string>
     <string name="build_log_header_wrong">%1$s beginnt mit \"%2$s\"; erwartet wurde %3$s</string>
     <string name="build_log_header_missing">%1$s fehlt</string>
+    <string name="build_log_archive_holds">Im Archiv liegt %1$s, beginnend mit \"%2$s\"</string>
+    <string name="build_log_archive_empty">Aus dem Archiv war nichts zu lesen</string>
+    <string name="build_log_downloaded_of">%1$s von %2$s geladen</string>
+    <string name="build_log_downloaded">%1$s geladen</string>
+    <string name="build_log_not_the_librarys">Dateien, welche die Bibliothek nicht liest; sie wandern trotzdem in die Tabelle</string>
     <string name="build_log_ingesting_rows">Zeile wird gelesen:</string>
     <string name="build_log_ingesting_threads">%1$d Dateien werden mit %2$d Threads gelesen</string>
     <string name="build_log_indexing">Index wird gebaut\u2026</string>

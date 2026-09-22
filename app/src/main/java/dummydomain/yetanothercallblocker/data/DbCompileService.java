@@ -72,6 +72,16 @@ public class DbCompileService {
     /** And where each source keeps what it handed over, one directory each. */
     private static final String SOURCES_DIR_NAME = "sources";
 
+    /** How much of an archive is fetched to see what is in it, when nothing was unpacked. */
+    private static final int HEADERS_PEEK_BYTES = 2 * 1024 * 1024;
+
+    /** How many of its entries are walked, and how many of those are worth saying. */
+    private static final int HEADERS_MAX_ENTRIES = 256;
+    private static final int HEADERS_TO_SAY = 12;
+
+    /** How much has to arrive before the download says so again. */
+    private static final long PROGRESS_EVERY_BYTES = 512 * 1024;
+
     private static final int CONNECT_TIMEOUT_SECONDS = 30;
     private static final int READ_TIMEOUT_SECONDS = 120;
 
@@ -501,7 +511,7 @@ public class DbCompileService {
             return downloadBase(source, listener);
         }
 
-        return downloadIntoDir(source, getSourceDir(source));
+        return downloadIntoDir(source, getSourceDir(source), listener);
     }
 
     /** Asks the address what it holds and writes the answer down on the source. */
@@ -529,9 +539,10 @@ public class DbCompileService {
      * database, and what decides what it does to the table is where it stands in the list,
      * not how much it brought.
      */
-    private String downloadIntoDir(NumberSource source, File dir) {
+    private String downloadIntoDir(NumberSource source, File dir,
+                                   ProgressListener listener) {
         if (TextUtils.isEmpty(source.getUrl())) {
-            note(source, context.getString(R.string.source_result_no_address));
+            noteFailed(source, context.getString(R.string.source_result_no_address));
             return context.getString(R.string.source_result_no_address);
         }
 
@@ -541,8 +552,8 @@ public class DbCompileService {
         File tempDir = new File(dir.getParentFile(), source.getId() + "-tmp");
 
         try {
-            if (!download(source, archive, false)) {
-                note(source, context.getString(R.string.source_result_failed));
+            if (!download(source, archive, false, listener)) {
+                noteFailed(source, context.getString(R.string.source_result_failed));
                 return context.getString(R.string.source_result_failed);
             }
 
@@ -556,7 +567,7 @@ public class DbCompileService {
             }
 
             if (files == 0) {
-                note(source, context.getString(R.string.source_result_not_a_database));
+                noteFailed(source, context.getString(R.string.source_result_not_a_database));
                 return context.getString(R.string.source_result_not_a_database);
             }
 
@@ -565,7 +576,7 @@ public class DbCompileService {
             if (!tempDir.renameTo(dir)) {
                 LOG.warn("downloadIntoDir() couldn't put {} in place", dir);
 
-                note(source, context.getString(R.string.source_result_failed));
+                noteFailed(source, context.getString(R.string.source_result_failed));
                 return context.getString(R.string.source_result_failed);
             }
 
@@ -581,7 +592,7 @@ public class DbCompileService {
         } catch (Exception e) {
             LOG.error("downloadIntoDir() failed", e);
 
-            note(source, context.getString(R.string.source_result_failed));
+            noteFailed(source, context.getString(R.string.source_result_failed));
 
             return e.getClass().getSimpleName()
                     + (e.getLocalizedMessage() != null ? ": " + e.getLocalizedMessage() : "");
@@ -609,7 +620,7 @@ public class DbCompileService {
         if (ok) {
             noteFetched(source, context.getString(R.string.source_result_numbers, result.size));
         } else {
-            note(source, context.getString(R.string.source_result_failed));
+            noteFailed(source, context.getString(R.string.source_result_failed));
         }
 
         return ok;
@@ -624,7 +635,9 @@ public class DbCompileService {
      * to something neither name. Naming the file and what stands in it turns an afternoon
      * into a minute.
      */
-    private void logHeaders(File dir, String tag) {
+    private boolean logHeaders(File dir, String tag) {
+        boolean looked = false;
+
         String[][] wanted = {
                 {"data_slice_info.dat", "YACBSIAI", "MDI"},
                 {"data_slice_0.dat", "YABF", "MTZF", "MTZD"},
@@ -640,6 +653,8 @@ public class DbCompileService {
                         expected[0]));
                 continue;
             }
+
+            looked = true;
 
             String found = readHeader(file);
 
@@ -658,6 +673,59 @@ public class DbCompileService {
 
             buildLog.line(tag, context.getString(R.string.build_log_header_wrong,
                     file.getName(), found, names.toString()));
+        }
+
+        return looked;
+    }
+
+    /**
+     * Opens the archive itself and names what is in it.
+     *
+     * <p>For when nothing was unpacked: the library does its own unpacking for a zip and can
+     * refuse before a single file is written, which leaves the directory holding whatever
+     * was there before - or nothing at all - and no way to see what the source actually
+     * sent. So the source is asked again for the first few megabytes and those are walked
+     * entry by entry, reading the first bytes of each and skipping the rest.
+     */
+    private void logArchiveHeaders(NumberSource source, String tag) {
+        DeferredInit.initNetwork();
+
+        OkHttpClient client = SourceHttp.decorate(new OkHttpClient.Builder()
+                        .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                        .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                        .build(),
+                source, sourceService != null ? sourceService.getSecret(source.getId()) : null,
+                false);
+
+        Request request = new Request.Builder()
+                .url(source.getUrl())
+                .header("User-Agent", "YetAnotherCallBlocker/" + BuildConfig.VERSION_NAME)
+                .header("Range", "bytes=0-" + (HEADERS_PEEK_BYTES - 1))
+                // packed in flight as well would say nothing about the files themselves
+                .header("Accept-Encoding", "identity")
+                .build();
+
+        int[] said = {0};
+
+        try (Response response = client.newCall(request).execute()) {
+            ResponseBody body = response.body();
+            if (body == null) return;
+
+            try (InputStream in = body.byteStream()) {
+                ArchiveUtils.headers(in, HEADERS_MAX_ENTRIES, (name, header) -> {
+                    if (said[0]++ >= HEADERS_TO_SAY) return;
+
+                    buildLog.line(tag, context.getString(R.string.build_log_archive_holds,
+                            name.isEmpty() ? "?" : name,
+                            header.isEmpty() ? "?" : header));
+                });
+            }
+        } catch (Exception e) {
+            LOG.warn("logArchiveHeaders() couldn't look inside", e);
+        }
+
+        if (said[0] == 0) {
+            buildLog.line(tag, context.getString(R.string.build_log_archive_empty));
         }
     }
 
@@ -756,7 +824,7 @@ public class DbCompileService {
         LOG.debug("downloadBase() {}", source.getUrl());
 
         if (TextUtils.isEmpty(source.getUrl())) {
-            note(source, context.getString(R.string.source_result_no_address));
+            noteFailed(source, context.getString(R.string.source_result_no_address));
             return context.getString(R.string.source_result_no_address);
         }
 
@@ -794,7 +862,7 @@ public class DbCompileService {
         }
 
         if (!downloaded) {
-            note(source, context.getString(R.string.source_result_failed));
+            noteFailed(source, context.getString(R.string.source_result_failed));
             return error != null ? error
                     : context.getString(R.string.source_result_failed);
         }
@@ -811,9 +879,16 @@ public class DbCompileService {
         if (!YacbHolder.getCommunityDatabase().isOperational()) {
             LOG.warn("downloadBase() what arrived isn't slice files");
 
-            // and what it is instead, file by file, because "not a database" says nothing
-            logHeaders(new File(YacbHolder.getStorage().getDataDirPath(),
-                    SiaConstants.SIA_PATH_PREFIX), tagOf(source));
+            /*
+             * And what it is instead, because "not a database" says nothing. What landed is
+             * looked at first; when nothing did - the unpacking is the library's and it may
+             * have refused before writing anything - the archive itself is opened and its
+             * files are named where they lie.
+             */
+            if (!logHeaders(new File(YacbHolder.getStorage().getDataDirPath(),
+                    SiaConstants.SIA_PATH_PREFIX), tagOf(source))) {
+                logArchiveHeaders(source, tagOf(source));
+            }
 
             /*
              * Which is not the same as it being nothing. The same address can hand over one
@@ -824,21 +899,29 @@ public class DbCompileService {
              * The cost is one extra download, once: what it turns out to be is written on
              * the source, and from then on it is fetched straight into that place.
              */
-            String failure = downloadIntoDir(source, getSourceDir(source));
+            String failure = downloadIntoDir(source, getSourceDir(source), listener);
 
-            if (failure == null
-                    && source.getContent() == ArchiveUtils.Content.SQLITE) {
-                LOG.info("downloadBase() it is a SQLite database rather than slice files");
+            if (failure == null) {
+                /*
+                 * And it is usable after all - as a SQLite database, or as slice files that
+                 * the library wouldn't take but the table can be built from either way. Not
+                 * the library's, so the featured names and the country data stay missing;
+                 * the numbers, which is what a call is answered with, are there.
+                 */
+                LOG.info("downloadBase() usable as {} out of a place of its own",
+                        source.getContent());
 
-                buildLog.line(tagOf(source),
-                        context.getString(R.string.build_log_is_a_database));
+                buildLog.line(tagOf(source), context.getString(
+                        source.getContent() == ArchiveUtils.Content.SQLITE
+                                ? R.string.build_log_is_a_database
+                                : R.string.build_log_not_the_librarys));
 
                 return null;
             }
 
             LOG.error("downloadBase() what arrived can't be read as a database");
 
-            note(source, context.getString(R.string.source_result_not_a_database));
+            noteFailed(source, context.getString(R.string.source_result_not_a_database));
             return context.getString(R.string.db_build_not_readable);
         }
 
@@ -945,7 +1028,7 @@ public class DbCompileService {
         File archive = new File(dataDir, name + "-download.part");
 
         try {
-            if (!download(source, archive, false)) return false;
+            if (!download(source, archive, false, listener)) return false;
 
             phase(listener, R.string.unpacking_db);
 
@@ -1015,13 +1098,45 @@ public class DbCompileService {
     }
 
     /**
+     * Says how far the download has got, now and then.
+     *
+     * <p>Every few hundred kilobytes rather than every buffer: the notification is redrawn
+     * by someone else's process and the log is a file, and neither is worth touching eight
+     * thousand times for one source.
+     *
+     * @return when it last said, which is what to pass in next time
+     */
+    private long sayProgress(NumberSource source, long written, long total, long lastSaid,
+                             ProgressListener listener) {
+        if (lastSaid != 0 && written - lastSaid < PROGRESS_EVERY_BYTES) return lastSaid;
+
+        if (listener != null && total > 0) {
+            // as tenths of a percent, because a notification counts in whole steps
+            listener.onProgress((int) (written * 1000 / total), 1000);
+        }
+
+        buildLog.line(tagOf(source), total > 0
+                ? context.getString(R.string.build_log_downloaded_of,
+                        megabytes(written), megabytes(total))
+                : context.getString(R.string.build_log_downloaded, megabytes(written)));
+
+        return written;
+    }
+
+    /** A size a person reads rather than a number of bytes. */
+    private static String megabytes(long bytes) {
+        return String.format(java.util.Locale.getDefault(), "%.1f MB", bytes / 1048576.0);
+    }
+
+    /**
      * Fetches the source into a file.
      *
      * @param unpack whether a packed answer is unpacked on the way. What a source hands over
      *               is unpacked into a directory of its own afterwards, whether it is one
      *               file or a few hundred thousand, so it isn't.
      */
-    private boolean download(NumberSource source, File target, boolean unpack) {
+    private boolean download(NumberSource source, File target, boolean unpack,
+                             ProgressListener listener) {
         DeferredInit.initNetwork();
 
         OkHttpClient client = SourceHttp.decorate(new OkHttpClient.Builder()
@@ -1046,14 +1161,30 @@ public class DbCompileService {
             ResponseBody body = response.body();
             if (body == null) return false;
 
+            /*
+             * How much of it there is, when the server says. A source can be tens of
+             * megabytes over a connection that is having a bad day, and a build that says
+             * nothing for four minutes looks exactly like one that has died.
+             */
+            long total = body.contentLength();
+
             try (InputStream inputStream = body.byteStream();
                  OutputStream outputStream = new FileOutputStream(target)) {
                 byte[] buffer = new byte[8192];
 
+                long written = 0;
+                long lastSaid = 0;
+
                 int read;
                 while ((read = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, read);
+
+                    written += read;
+
+                    lastSaid = sayProgress(source, written, total, lastSaid, listener);
                 }
+
+                sayProgress(source, written, total, 0, listener);
             }
 
             return true;
@@ -1344,6 +1475,20 @@ public class DbCompileService {
         source.setLastCheck(System.currentTimeMillis());
 
         if (sourceService != null) sourceService.save(source);
+    }
+
+    /**
+     * The same, for a fetch that didn't work.
+     *
+     * <p>What the source said about itself described what it had handed over, and it has
+     * handed over nothing: the count, the version and the kind of thing behind the address
+     * are about data that is gone or was never there. A row that goes on saying "400.000
+     * numbers" about an address answering 404 is worse than one that says nothing.
+     */
+    private void noteFailed(NumberSource source, String result) {
+        source.forgetFetched();
+
+        note(source, result);
     }
 
     /** The same, for a source that has just handed something over. */

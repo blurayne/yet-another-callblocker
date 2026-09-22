@@ -196,6 +196,16 @@ public class EditNumberSourceActivity extends AppCompatActivity {
                 source.setContent(result.content);
 
                 if (sourceService != null) sourceService.save(source);
+            } else if (!result.isOk()) {
+                /*
+                 * And a test that failed is an answer too: whatever the row was claiming
+                 * about this source described an address that doesn't answer like that any
+                 * more, so it stops claiming it.
+                 */
+                source.forgetFetched();
+                source.setLastResult(message);
+
+                if (sourceService != null) sourceService.save(source);
             }
         });
     }
@@ -227,6 +237,13 @@ public class EditNumberSourceActivity extends AppCompatActivity {
             return false;
         }
         urlTextField.setError(null);
+
+        /*
+         * A new address makes everything the source said about itself wrong: the count, the
+         * version and the kind of thing behind it all describe what the old one handed over.
+         * Better to say nothing until the new one has been asked.
+         */
+        if (!url.equals(target.getUrl())) target.forgetFetched();
 
         target.setName(name);
         target.setUrl(url);

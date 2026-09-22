@@ -275,6 +275,120 @@ public class ArchiveUtils {
         }
     }
 
+    /** Told what each file inside an archive is called and what its first bytes are. */
+    public interface EntryHeader {
+        void onEntry(String name, String header);
+    }
+
+    /**
+     * Walks an archive and says what each file in it is called and what it starts with.
+     *
+     * <p>For when something refuses a set of files and the only useful question is what is
+     * actually in them. Nothing is unpacked and nothing is kept: each entry's first bytes
+     * are read, the rest of it is skipped, and a stream that stops in the middle - a partial
+     * download, on purpose - simply ends the walk.
+     *
+     * @param maxEntries how many to look at before giving up; an archive can hold thousands
+     */
+    public static void headers(InputStream inputStream, int maxEntries, EntryHeader visitor)
+            throws IOException {
+        BufferedInputStream in = new BufferedInputStream(inputStream, HEADER_SIZE * 2);
+
+        switch (detect(in)) {
+            case ZIP:
+                headersOfZip(in, maxEntries, visitor);
+                break;
+
+            case TAR:
+                headersOfTar(in, maxEntries, visitor);
+                break;
+
+            case TAR_GZIP:
+                headersOfTar(new BufferedInputStream(
+                        new GZIPInputStream(in), HEADER_SIZE * 2), maxEntries, visitor);
+                break;
+
+            case GZIP:
+                visitor.onEntry("", headerOf(new GZIPInputStream(in)));
+                break;
+
+            default:
+                visitor.onEntry("", headerOf(in));
+                break;
+        }
+    }
+
+    private static void headersOfZip(InputStream in, int maxEntries, EntryHeader visitor) {
+        ZipInputStream zip = new ZipInputStream(in);
+
+        try {
+            for (int i = 0; i < maxEntries; i++) {
+                ZipEntry entry = zip.getNextEntry();
+                if (entry == null) break;
+
+                if (entry.isDirectory()) continue;
+
+                visitor.onEntry(baseName(entry.getName()), headerOf(zip));
+            }
+        } catch (IOException e) {
+            // a stream that stops in the middle has said everything it is going to
+            LOG.debug("headersOfZip() the archive ended", e);
+        }
+    }
+
+    private static void headersOfTar(InputStream in, int maxEntries, EntryHeader visitor) {
+        byte[] header = new byte[HEADER_SIZE];
+
+        try {
+            for (int i = 0; i < maxEntries; i++) {
+                if (!readFully(in, header)) break;
+
+                String entryName = readString(header, 0, 100);
+                if (entryName.isEmpty()) break;
+
+                long size = readOctal(header, 124, 12);
+                char type = (char) (header[156] == 0 ? '0' : header[156]);
+
+                long padded = (size + HEADER_SIZE - 1) / HEADER_SIZE * HEADER_SIZE;
+
+                if ((type == '0' || type == '\0') && size > 0) {
+                    BoundedInputStream entry = new BoundedInputStream(in, size);
+
+                    visitor.onEntry(baseName(entryName), headerOf(entry));
+
+                    skip(entry, size); // whatever of it the header didn't take
+                    skip(in, padded - size);
+                } else {
+                    skip(in, padded);
+                }
+            }
+        } catch (IOException e) {
+            LOG.debug("headersOfTar() the archive ended", e);
+        }
+    }
+
+    /**
+     * The first bytes of a file, as the characters they stand for.
+     *
+     * <p>Every mark these files carry is letters, so the first byte that isn't one is where
+     * the mark ends - which keeps a binary file from being read out as noise.
+     */
+    private static String headerOf(InputStream in) throws IOException {
+        byte[] bytes = peekFully(in, 8);
+
+        StringBuilder text = new StringBuilder(bytes.length);
+
+        for (byte value : bytes) {
+            char c = (char) (value & 0xff);
+
+            if (c < 'A' || c > 'z') break;
+
+            text.append(c);
+        }
+
+        return text.toString();
+    }
+
     /** What an archive's entry names say it holds. */
     private static Content ofName(String name) {
         String lower = name.toLowerCase(java.util.Locale.ROOT);

@@ -210,6 +210,22 @@ public class NumberSource {
         this.content = content != null ? content : ArchiveUtils.Content.UNKNOWN;
     }
 
+    /**
+     * Forgets everything that describes what was fetched, leaving what the user typed.
+     *
+     * <p>For a fetch that failed and for an address that changed: the count, the version and
+     * the kind of thing behind it all describe data that is either gone or was never this
+     * source's. A row that goes on saying "400.000 numbers, version 1800" about an address
+     * that answers 404 is worse than one that says nothing.
+     */
+    public void forgetFetched() {
+        entries = 0;
+        version = 0;
+        fetchedUrl = null;
+        content = ArchiveUtils.Content.UNKNOWN;
+        lastUpdate = 0;
+    }
+
     /** Whether this source hands over files at all, which is what there would be to drop. */
     public boolean hasFiles() {
         return type == Type.DATABASE;

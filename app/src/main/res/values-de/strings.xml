@@ -99,6 +99,11 @@
     <string name="db_build_table_failed">Die Nummern ließen sich nicht in die Tabelle schreiben. Womöglich ist kein Platz mehr auf dem Telefon.</string>
     <string name="db_build_table_failed_reason">Die Nummern ließen sich nicht in die Tabelle schreiben: %s</string>
     <string name="db_build_interrupted">Der Aufbau wurde nicht fertig \u2013 die App lief nicht mehr, während sie daran war.</string>
+    <string name="db_build_sources_failed_title">Gebaut, aber nicht aus allen Quellen</string>
+    <string name="db_build_sources_failed">%1$d von %2$d Quellen konnten nicht geholt werden:\n%3$s</string>
+    <string name="auto_update_failed_title">Die automatische Aktualisierung ist schiefgegangen</string>
+    <string name="update_failed_title">Die Aktualisierung ist schiefgegangen</string>
+    <string name="phone_block_update_failed_title">PhoneBlock konnte nicht aktualisiert werden</string>
     <string name="background_work">Im Hintergrund arbeiten</string>
     <string name="background_work_allowed">Erlaubt</string>
     <string name="background_work_optimized">Die Akkuverwaltung entscheidet, wann diese App laufen darf</string>
@@ -211,6 +216,7 @@
     <string name="notification_channel_name_monitoring_service">Überwachungsdienst</string>
     <string name="notification_channel_name_tasks">Aufgaben</string>
     <string name="notification_channel_name_warnings">Warnungen</string>
+    <string name="notification_channel_name_errors">Fehler</string>
     <string name="notification_incoming_call_positive">Positiv bewerteter Anruf</string>
     <string name="notification_incoming_call_neutral">Neutral bewerteter Anruf</string>
     <string name="notification_incoming_call_negative">Negativ bewerteter Anruf</string>

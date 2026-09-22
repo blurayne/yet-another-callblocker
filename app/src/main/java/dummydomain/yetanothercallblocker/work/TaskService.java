@@ -287,10 +287,26 @@ public class TaskService extends IntentService {
         if (!ok) LOG.error("showBuildFinished() the database was not built: {}", text);
 
         NotificationHelper.showDbBuildFinished(getApplicationContext(), title, text, ok);
+
+        /*
+         * Built, but not from everyone: that is a success with part of the story missing,
+         * and the part that is missing is exactly what someone has to hear about. So it is
+         * said separately, as the error it is, with each source's own reason - which the
+         * build log and the source's row now carry in full.
+         */
+        if (ok && result.failed > 0) {
+            NotificationHelper.showError(getApplicationContext(),
+                    getString(R.string.db_build_sources_failed_title),
+                    getString(R.string.db_build_sources_failed, result.failed,
+                            result.sources + result.failed,
+                            TextUtils.join("\n", result.failures)));
+        }
     }
 
     private void updateSecondaryDb() {
-        new DbUpdater().update();
+        // whatever went wrong on the way is said, here as for the run nobody started
+        NotificationHelper.showErrors(getApplicationContext(),
+                getString(R.string.update_failed_title), new DbUpdater().update());
     }
 
     private void updatePhoneBlock() {
@@ -304,6 +320,13 @@ public class TaskService extends IntentService {
         PhoneBlockHelper.checkTokenIfDue(getApplicationContext(), App.getSettings());
 
         noteSources(result);
+
+        // asked for by hand, so the answer is owed even if the screen was left meanwhile
+        if (result.status == PhoneBlockService.Status.FAILED) {
+            NotificationHelper.showError(getApplicationContext(),
+                    getString(R.string.phone_block_update_failed_title),
+                    getString(R.string.phone_block_update_failed));
+        }
 
         postEvent(new PhoneBlockUpdateFinishedEvent(result));
     }

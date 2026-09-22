@@ -14,6 +14,7 @@
     <string name="notification_channel_name_monitoring_service">Monitoring service</string>
     <string name="notification_channel_name_tasks">Tasks</string>
     <string name="notification_channel_name_warnings">Warnings</string>
+    <string name="notification_channel_name_errors">Errors</string>
 
     <string name="notification_incoming_call_contact">Contact</string>
     <string name="notification_incoming_call_positive">Positive call</string>
@@ -443,6 +444,11 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_build_table_failed">The numbers couldn\'t be written into the table. There may be no room left on the phone.</string>
     <string name="db_build_table_failed_reason">The numbers couldn\'t be written into the table: %s</string>
     <string name="db_build_interrupted">The build never finished \u2013 the app stopped running while it was working.</string>
+    <string name="db_build_sources_failed_title">Built, but not from every source</string>
+    <string name="db_build_sources_failed">%1$d of %2$d sources couldn\'t be fetched:\n%3$s</string>
+    <string name="auto_update_failed_title">The automatic update went wrong</string>
+    <string name="update_failed_title">The update went wrong</string>
+    <string name="phone_block_update_failed_title">PhoneBlock couldn\'t be updated</string>
     <string name="background_work">Working in the background</string>
     <string name="background_work_allowed">Allowed</string>
     <string name="background_work_optimized">The battery saver decides when this app may run</string>

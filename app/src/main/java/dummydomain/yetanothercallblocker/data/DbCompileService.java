@@ -139,15 +139,27 @@ public class DbCompileService {
         /** What went wrong, in words, or null when nothing did. */
         public final String reason;
 
+        /**
+         * Which sources couldn't be fetched and why, one line each, for a build that went
+         * on without them. A database built from four sources out of five is a success
+         * with a fifth of the story missing, and the notification has to tell that part.
+         */
+        public final List<String> failures;
+
         Result(Status status, int sources, int failed) {
-            this(status, sources, failed, null);
+            this(status, sources, failed, null, null);
         }
 
         Result(Status status, int sources, int failed, String reason) {
+            this(status, sources, failed, reason, null);
+        }
+
+        Result(Status status, int sources, int failed, String reason, List<String> failures) {
             this.status = status;
             this.sources = sources;
             this.failed = failed;
             this.reason = reason;
+            this.failures = failures != null ? failures : new ArrayList<String>();
         }
 
         public boolean isOk() {
@@ -224,6 +236,9 @@ public class DbCompileService {
         int total = sources.size();
         int failed = 0;
 
+        // who couldn't be fetched and why, for the notification at the end
+        List<String> failures = new ArrayList<>();
+
         /*
          * The one whose files the library keeps - the featured names and what the app knows
          * about countries are read from there, and there is one such place. It is the first
@@ -273,6 +288,7 @@ public class DbCompileService {
 
             if (failure != null) {
                 failed++;
+                failures.add(tagOf(source) + ": " + failure);
 
                 LOG.warn("compile() {} couldn't be fetched: {}", tagOf(source), failure);
 
@@ -305,7 +321,7 @@ public class DbCompileService {
         String tableFailure = buildNumbersTable(sources, primary, listener, totals);
 
         if (tableFailure != null) {
-            return new Result(Status.FAILED, total - failed, failed, tableFailure);
+            return new Result(Status.FAILED, total - failed, failed, tableFailure, failures);
         }
 
         LOG.info("compile() built the database from {} of {} sources", total - failed, total);
@@ -314,7 +330,7 @@ public class DbCompileService {
 
         logSummary(totals[0], total - failed, total, startTime);
 
-        return new Result(Status.COMPILED, total - failed, failed);
+        return new Result(Status.COMPILED, total - failed, failed, null, failures);
     }
 
     /**

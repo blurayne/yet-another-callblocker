@@ -366,6 +366,10 @@ notification_channel_name_warnings:
   comment: NotificationHelper
   en: Warnings
   de: Warnungen
+notification_channel_name_errors:
+  comment: NotificationHelper
+  en: Errors
+  de: Fehler
 notification_incoming_call_contact:
   comment: NotificationHelper
   en: Contact
@@ -2805,7 +2809,7 @@ phone_block_update_not_due:
   en: The list was updated recently. It holds %1$d numbers.
   de: Die Liste wurde erst vor Kurzem aktualisiert. Sie enthält %1$d Nummern.
 phone_block_update_failed:
-  comment: NumberSourcesActivity
+  comment: NumberSourcesActivity; TaskService; DbUpdater
   en: The list couldn\'t be updated. If the server asks for a token, add one above.
   de: Die Liste konnte nicht aktualisiert werden. Falls der Server ein Token verlangt, tragen Sie oben eines ein.
 phone_block_status:
@@ -5125,6 +5129,26 @@ db_build_interrupted:
   comment: App
   en: The build never finished \u2013 the app stopped running while it was working.
   de: Der Aufbau wurde nicht fertig \u2013 die App lief nicht mehr, während sie daran war.
+db_build_sources_failed_title:
+  comment: TaskService notification
+  en: Built, but not from every source
+  de: Gebaut, aber nicht aus allen Quellen
+db_build_sources_failed:
+  comment: TaskService
+  en: '%1$d of %2$d sources couldn\''t be fetched:\n%3$s'
+  de: '%1$d von %2$d Quellen konnten nicht geholt werden:\n%3$s'
+auto_update_failed_title:
+  comment: UpdateWorker notification
+  en: The automatic update went wrong
+  de: Die automatische Aktualisierung ist schiefgegangen
+update_failed_title:
+  comment: TaskService notification
+  en: The update went wrong
+  de: Die Aktualisierung ist schiefgegangen
+phone_block_update_failed_title:
+  comment: TaskService notification
+  en: PhoneBlock couldn\'t be updated
+  de: PhoneBlock konnte nicht aktualisiert werden
 background_work:
   comment: db_management_preferences.xml title; DbManagementSettingsFragment dialog title
   en: Working in the background

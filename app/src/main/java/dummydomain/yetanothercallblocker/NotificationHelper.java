@@ -44,6 +44,9 @@ public class NotificationHelper {
     /** The phone not letting the app work while nobody is looking at it. */
     private static final int NOTIFICATION_ID_BACKGROUND_WORK = 8;
 
+    /** Something that went wrong and would otherwise go unnoticed. */
+    private static final int NOTIFICATION_ID_ERROR = 9;
+
     private static final String CHANNEL_GROUP_ID_INCOMING_CALLS = "incoming_calls";
     private static final String CHANNEL_GROUP_ID_BLOCKED_CALLS = "blocked_calls";
     private static final String CHANNEL_GROUP_ID_SERVICES = "services";
@@ -57,6 +60,16 @@ public class NotificationHelper {
     private static final String CHANNEL_ID_MONITORING_SERVICE = "monitoring_service";
     private static final String CHANNEL_ID_TASKS = "tasks";
     private static final String CHANNEL_ID_WARNINGS = "warnings";
+
+    /**
+     * Errors, on a channel of their own.
+     *
+     * <p>Not the tasks channel: that one is quiet by design, because the progress of a job
+     * the user started is not news. An error is. It is also not gated by any setting of the
+     * app's own - "say when the updates run" is about the running, not the failing - so the
+     * one place it can be turned down is where Android lets every channel be turned down.
+     */
+    private static final String CHANNEL_ID_ERRORS = "errors";
 
     private static boolean notificationChannelsInitialized;
 
@@ -244,13 +257,19 @@ public class NotificationHelper {
      */
     public static void showDbBuildFinished(Context context, String title, String text,
                                            boolean ok) {
+        if (!ok) {
+            // a build that failed is an error like any other, and goes where those go
+            showError(context, title, text);
+            return;
+        }
+
         initNotificationChannels(context);
 
         PendingIntent contentIntent = pendingActivity(context,
                 new Intent(context, SettingsActivity.class));
 
         Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_TASKS)
-                .setSmallIcon(ok ? R.drawable.ic_check_24dp : R.drawable.ic_error_24dp)
+                .setSmallIcon(R.drawable.ic_check_24dp)
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
                 .setContentTitle(title)
@@ -259,6 +278,51 @@ public class NotificationHelper {
                 .build();
 
         notify(context, NOTIFICATION_ID_DB_BUILD_FINISHED, notification);
+
+        // whatever was wrong the last time is over, and an error that stays would say otherwise
+        hideError(context);
+    }
+
+    /** Takes an error back, for the run that went right after it. */
+    public static void hideError(Context context) {
+        NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_ERROR);
+    }
+
+    /**
+     * Says that something went wrong, whatever the app's own settings say about noise.
+     *
+     * <p>Whether a job announces that it is running is the user's choice; whether it
+     * announces that it failed is not, because the alternative is a database that quietly
+     * stopped updating three weeks ago. So this ignores every switch the app has and goes
+     * out on the errors channel, where Android lets the user decide what it may do.
+     *
+     * <p>One at a time: a newer error replaces an older one rather than piling up, and
+     * tapping it opens the settings, which is where the sources say what went wrong.
+     */
+    public static void showError(Context context, String title, String text) {
+        initNotificationChannels(context);
+
+        PendingIntent contentIntent = pendingActivity(context,
+                new Intent(context, SettingsActivity.class));
+
+        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_ERRORS)
+                .setSmallIcon(R.drawable.ic_error_24dp)
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .build();
+
+        notify(context, NOTIFICATION_ID_ERROR, notification);
+    }
+
+    /** The same, for several things that went wrong in one run, one per line. */
+    public static void showErrors(Context context, String title, List<String> texts) {
+        if (texts == null || texts.isEmpty()) return;
+
+        showError(context, title, TextUtils.join("\n", texts));
     }
 
     private static NotificationWithInfo createIncomingCallNotification(
@@ -558,6 +622,14 @@ public class NotificationHelper {
                     CHANNEL_ID_WARNINGS,
                     context.getString(R.string.notification_channel_name_warnings),
                     NotificationManager.IMPORTANCE_DEFAULT
+            );
+            channel.setGroup(channelGroupServices.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_ERRORS,
+                    context.getString(R.string.notification_channel_name_errors),
+                    NotificationManager.IMPORTANCE_HIGH
             );
             channel.setGroup(channelGroupServices.getId());
             channels.add(channel);

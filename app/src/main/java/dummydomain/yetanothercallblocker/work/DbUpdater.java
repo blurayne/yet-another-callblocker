@@ -1,7 +1,11 @@
 package dummydomain.yetanothercallblocker.work;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import dummydomain.yetanothercallblocker.App;
 import dummydomain.yetanothercallblocker.PhoneBlockHelper;
+import dummydomain.yetanothercallblocker.R;
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.DbCompileService;
 import dummydomain.yetanothercallblocker.data.PhoneBlockService;
@@ -18,11 +22,17 @@ import static dummydomain.yetanothercallblocker.EventUtils.removeStickyEvent;
 
 public class DbUpdater {
 
-    public void update() {
+    /**
+     * @return what went wrong, one line each, or nothing when nothing did. The caller is
+     *         the one with a notification to put it in; this only knows what happened.
+     */
+    public List<String> update() {
         App app = App.getInstance();
         Settings settings = App.getSettings();
 
         boolean updated = false;
+
+        List<String> problems = new ArrayList<>();
 
         SecondaryDbUpdatingEvent sticky = new SecondaryDbUpdatingEvent();
 
@@ -49,7 +59,12 @@ public class DbUpdater {
                 DbCompileService compileService = new DbCompileService(app, settings);
 
                 if (isAnySourceDue()) {
-                    compileService.compile(DbCompileService.Trigger.SCHEDULED, null);
+                    DbCompileService.Result result
+                            = compileService.compile(DbCompileService.Trigger.SCHEDULED, null);
+
+                    // a build that went wrong, or went on without someone, is worth a word
+                    if (!result.isOk() && result.reason != null) problems.add(result.reason);
+                    problems.addAll(result.failures);
                 } else if (updated) {
                     /*
                      * A number is looked up in the table the sources were built into, so an
@@ -68,11 +83,19 @@ public class DbUpdater {
         // the community list has its own pace, which it keeps track of itself
         PhoneBlockService phoneBlockService = new PhoneBlockService(settings,
                 YacbHolder.getPhoneBlockList(), YacbHolder.getPhoneBlockPersonalLists());
-        phoneBlockService.update(false);
+
+        // not configured is not a problem; a configured account that won't answer is
+        if (phoneBlockService.update(false).status == PhoneBlockService.Status.FAILED
+                && app != null) {
+            problems.add(app.getString(R.string.phone_block_update_failed));
+        }
+
         phoneBlockService.updatePersonalLists(false);
 
         // the token is checked here because this is what runs daily
         if (app != null) PhoneBlockHelper.checkTokenIfDue(app, settings);
+
+        return problems;
     }
 
     /**

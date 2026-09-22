@@ -55,6 +55,24 @@ provider survived the manifest merge, and publishes a GitHub release for `v*` ta
 Release signing is optional and driven by the `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`,
 `KEY_ALIAS` and `KEY_PASSWORD` secrets - see [BUILDING.md](BUILDING.md).
 
+## SIA and YACB magics
+
+Both are accepted everywhere; nothing has to be rewritten before the app is pointed at it.
+SIA ships `MTZF` / `MTZD` slices, `MTZX` featured slices, an `MTZEND` trailer, an `MDI` info
+header and `+` as the slice-list separator; a rewritten file carries `YABF`, `YABX`,
+`YABEND`, `YACBSIAI` and `*`. A half-rewritten file works too, and `CP` (the divider before
+the deletions) is the same in both.
+
+| what | where the check is |
+|---|---|
+| slice magic, trailer | `data/numbers/SliceReader.java`, and the library's `CommunityDatabaseDataSlice` / `AbstractDatabaseDataSlice` |
+| featured slice magic | the library's `FeaturedDatabaseDataSlice` |
+| info header | the library's `AbstractDatabase.loadInfoData` |
+| list separator | the library's `DatabaseDataSliceNode.init` |
+
+The library is `com.gitlab.xynngh:LibPhoneNumberInfo`, pinned in `app/build.gradle`; it
+accepts both at the pinned revision, so this is a property of that pin rather than of us.
+
 ## Upstream
 
 `upstream` is the GitLab repo, mirrored to `origin/master`. Keep changes rebaseable on it:

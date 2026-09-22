@@ -14,6 +14,12 @@ import java.io.InputStream;
  *
  * <p>Nothing is held: entries are handed to the visitor as they are read, so a slice of any
  * size costs one buffer.
+ *
+ * <p>Both names of every mark are accepted, because the same file has two. What SIA ships is
+ * marked MTZF, a delta slice MTZD and the trailer MTZEND; a file that has been through a
+ * rewrite carries YABF and YABEND instead. The bytes between them are the same either way -
+ * a delta is a slice whose deletions happen to be the interesting part - so a slice is read
+ * without caring which it is, and a file that was rewritten halfway is read too.
  */
 public class SliceReader {
 

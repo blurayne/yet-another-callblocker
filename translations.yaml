@@ -2499,23 +2499,23 @@ source_test_no_url:
   en: no address to go to
   de: keine Adresse, zu der man gehen k\u00f6nnte
 source_test_bad_url:
-  comment: SourceTestHelper
+  comment: SourceTestHelper; DbCompileService
   en: the address can\'t be used
   de: die Adresse l\u00e4sst sich nicht verwenden
 source_test_unauthorized:
-  comment: SourceTestHelper
+  comment: SourceTestHelper; DbCompileService
   en: the login was rejected (HTTP %d)
   de: die Anmeldung wurde abgelehnt (HTTP %d)
 source_test_http_error:
-  comment: SourceTestHelper
+  comment: SourceTestHelper; DbCompileService
   en: the server answered HTTP %d
   de: der Server antwortete mit HTTP %d
 source_test_unreachable:
-  comment: SourceTestHelper
+  comment: SourceTestHelper; DbCompileService
   en: 'not reachable: %s'
   de: 'nicht erreichbar: %s'
 source_test_empty:
-  comment: SourceTestHelper
+  comment: SourceTestHelper; DbCompileService
   en: the server answered, but sent nothing
   de: der Server antwortete, schickte aber nichts
 source_format_plain:
@@ -2531,7 +2531,7 @@ source_format_tar:
   en: a tar archive
   de: ein tar-Archiv
 source_format_tar_gzip:
-  comment: SourceTestHelper
+  comment: SourceTestHelper; DbCompileService; DbCompileService build log
   en: a tar.gz archive
   de: ein tar.gz-Archiv
 source_format_zip:
@@ -5198,7 +5198,7 @@ build_log_run:
   en: Building the database
   de: Datenbank wird gebaut
 build_log_downloading:
-  comment: DbCompileService build log
+  comment: DbCompileService
   en: Downloading\u2026
   de: Wird heruntergeladen\u2026
 build_log_failed:
@@ -5269,6 +5269,30 @@ build_log_downloaded:
   comment: DbCompileService
   en: Downloaded %1$s
   de: '%1$s geladen'
+build_log_downloading_from:
+  comment: DbCompileService build log
+  en: Downloading %s
+  de: 'Wird heruntergeladen: %s'
+build_log_answer:
+  comment: DbCompileService build log
+  en: 'Answer: %s'
+  de: 'Antwort: %s'
+build_log_unpacked:
+  comment: DbCompileService build log
+  en: Unpacked %1$d files from %2$s holding %3$s
+  de: '%1$d Dateien entpackt aus %2$s mit %3$s'
+build_log_archive_no_files:
+  comment: DbCompileService
+  en: '%s, but there are no files in it'
+  de: '%s, aber es sind keine Dateien darin'
+build_log_couldnt_replace:
+  comment: DbCompileService
+  en: Couldn\'t put the new files in the place of the old ones
+  de: Die neuen Dateien konnten nicht an die Stelle der alten gesetzt werden
+build_log_library_refused:
+  comment: DbCompileService build log
+  en: The library couldn\'t load what arrived; looking at what it is
+  de: Die Bibliothek konnte das Angekommene nicht laden; es wird nachgesehen, was es ist
 build_log_not_the_librarys:
   comment: DbCompileService
   en: Files the library won\'t read; built into the table anyway

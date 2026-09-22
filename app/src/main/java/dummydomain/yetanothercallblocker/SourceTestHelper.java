@@ -100,12 +100,12 @@ public class SourceTestHelper {
         }
     }
 
-    private static int getContentName(ArchiveUtils.Content content) {
+    public static int getContentName(ArchiveUtils.Content content) {
         return content == ArchiveUtils.Content.SQLITE
                 ? R.string.source_content_sqlite : R.string.source_content_sia;
     }
 
-    private static int getFormatName(ArchiveUtils.Format format) {
+    public static int getFormatName(ArchiveUtils.Format format) {
         switch (format) {
             case GZIP: return R.string.source_format_gzip;
             case TAR: return R.string.source_format_tar;

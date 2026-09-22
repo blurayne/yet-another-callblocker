@@ -135,6 +135,12 @@
     <string name="build_log_archive_empty">Aus dem Archiv war nichts zu lesen</string>
     <string name="build_log_downloaded_of">%1$s von %2$s geladen</string>
     <string name="build_log_downloaded">%1$s geladen</string>
+    <string name="build_log_downloading_from">Wird heruntergeladen: %s</string>
+    <string name="build_log_answer">Antwort: %s</string>
+    <string name="build_log_unpacked">%1$d Dateien entpackt aus %2$s mit %3$s</string>
+    <string name="build_log_archive_no_files">%s, aber es sind keine Dateien darin</string>
+    <string name="build_log_couldnt_replace">Die neuen Dateien konnten nicht an die Stelle der alten gesetzt werden</string>
+    <string name="build_log_library_refused">Die Bibliothek konnte das Angekommene nicht laden; es wird nachgesehen, was es ist</string>
     <string name="build_log_not_the_librarys">Dateien, welche die Bibliothek nicht liest; sie wandern trotzdem in die Tabelle</string>
     <string name="build_log_ingesting_rows">Zeile wird gelesen:</string>
     <string name="build_log_ingesting_threads">%1$d Dateien werden mit %2$d Threads gelesen</string>

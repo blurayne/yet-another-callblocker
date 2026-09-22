@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import dummydomain.yetanothercallblocker.BuildConfig;
 import dummydomain.yetanothercallblocker.R;
+import dummydomain.yetanothercallblocker.SourceTestHelper;
 import dummydomain.yetanothercallblocker.Settings;
 import dummydomain.yetanothercallblocker.data.source.ArchiveUtils;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
@@ -36,6 +37,7 @@ import dummydomain.yetanothercallblocker.data.numbers.SqliteImporter;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.sia.utils.FileUtils;
 import dummydomain.yetanothercallblocker.utils.DeferredInit;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -263,7 +265,9 @@ public class DbCompileService {
                 continue;
             }
 
-            buildLog.line(tagOf(source), context.getString(R.string.build_log_downloading));
+            buildLog.line(tagOf(source), source.getType() == NumberSource.Type.DATABASE
+                    ? context.getString(R.string.build_log_downloading_from, source.getUrl())
+                    : context.getString(R.string.build_log_downloading));
 
             String failure = fetch(source, isPrimary, listener);
 
@@ -520,6 +524,14 @@ public class DbCompileService {
 
         SourceTester.Result result = SourceTester.test(source, secret);
 
+        /*
+         * Said in the log whatever it was: an address that is mistyped fails right here,
+         * and "not reachable: UnknownHostException: blurayne.github.oi" is the whole
+         * diagnosis, where "couldn't be fetched" would have been the start of one.
+         */
+        buildLog.line(tagOf(source), context.getString(R.string.build_log_answer,
+                SourceTestHelper.getMessage(context, result)));
+
         if (!result.isOk() || result.content == ArchiveUtils.Content.UNKNOWN) {
             LOG.info("probeContent() {} didn't say what it holds", tagOf(source));
             return;
@@ -552,24 +564,39 @@ public class DbCompileService {
         File tempDir = new File(dir.getParentFile(), source.getId() + "-tmp");
 
         try {
-            if (!download(source, archive, false, listener)) {
-                noteFailed(source, context.getString(R.string.source_result_failed));
-                return context.getString(R.string.source_result_failed);
+            String failure = download(source, archive, false, listener);
+
+            if (failure != null) {
+                noteFailed(source, failure);
+                return failure;
             }
 
             FileUtils.delete(tempDir);
             createDir(tempDir);
 
+            ArchiveUtils.Format format;
             int files;
-            try (InputStream inputStream
+            try (BufferedInputStream inputStream
                          = new BufferedInputStream(new FileInputStream(archive))) {
+                format = ArchiveUtils.detect(inputStream);
                 files = ArchiveUtils.unpackAll(inputStream, tempDir, "data_slice_0.dat");
             }
 
             if (files == 0) {
+                String reason = context.getString(R.string.build_log_archive_no_files,
+                        context.getString(SourceTestHelper.getFormatName(format)));
+
                 noteFailed(source, context.getString(R.string.source_result_not_a_database));
-                return context.getString(R.string.source_result_not_a_database);
+                return reason;
             }
+
+            ArchiveUtils.Content content = SqliteImporter.find(tempDir) != null
+                    ? ArchiveUtils.Content.SQLITE : ArchiveUtils.Content.SIA;
+
+            // what it was and what it held, because "1055 files" alone answers neither
+            buildLog.line(tagOf(source), context.getString(R.string.build_log_unpacked,
+                    files, context.getString(SourceTestHelper.getFormatName(format)),
+                    context.getString(SourceTestHelper.getContentName(content))));
 
             FileUtils.delete(dir);
 
@@ -583,8 +610,7 @@ public class DbCompileService {
             source.setFetchedUrl(source.getUrl());
 
             // what actually arrived has the last word about what this source hands over
-            source.setContent(SqliteImporter.find(dir) != null
-                    ? ArchiveUtils.Content.SQLITE : ArchiveUtils.Content.SIA);
+            source.setContent(content);
 
             noteFetched(source, context.getString(R.string.source_result_files, files));
 
@@ -592,10 +618,11 @@ public class DbCompileService {
         } catch (Exception e) {
             LOG.error("downloadIntoDir() failed", e);
 
-            noteFailed(source, context.getString(R.string.source_result_failed));
+            String reason = describe(e);
 
-            return e.getClass().getSimpleName()
-                    + (e.getLocalizedMessage() != null ? ": " + e.getLocalizedMessage() : "");
+            noteFailed(source, reason);
+
+            return reason;
         } finally {
             FileUtils.delete(archive);
             FileUtils.delete(tempDir);
@@ -838,7 +865,6 @@ public class DbCompileService {
          */
         dropLeftovers();
 
-        boolean downloaded = false;
         String error = null;
         try {
             // the client asks the service which source it is fetching, to log in as that one
@@ -850,21 +876,31 @@ public class DbCompileService {
              * here instead - the files are the same, only the wrapping is different, and a
              * source shouldn't have to repack a database to be usable.
              */
-            downloaded = Boolean.FALSE.equals(looksLikeZip(source))
-                    ? unpackBase(source, listener)
-                    : YacbHolder.getDbManager().downloadMainDb(source.getUrl());
+            if (Boolean.FALSE.equals(looksLikeZip(source))) {
+                error = unpackBase(source, listener);
+            } else if (!YacbHolder.getDbManager().downloadMainDb(source.getUrl())) {
+                /*
+                 * The library says no and nothing else, so what it said no to is looked at
+                 * here: the archive is opened and its files named, which is where a wrong
+                 * mark in one of them shows up.
+                 */
+                buildLog.line(tagOf(source),
+                        context.getString(R.string.build_log_library_refused));
+
+                logArchiveHeaders(source, tagOf(source));
+
+                error = context.getString(R.string.source_result_failed);
+            }
         } catch (Exception e) {
             LOG.error("downloadBase() failed", e);
-            error = e.getClass().getSimpleName()
-                    + (e.getLocalizedMessage() != null ? ": " + e.getLocalizedMessage() : "");
+            error = describe(e);
         } finally {
             sourceService.setFetchingSource(null);
         }
 
-        if (!downloaded) {
-            noteFailed(source, context.getString(R.string.source_result_failed));
-            return error != null ? error
-                    : context.getString(R.string.source_result_failed);
+        if (error != null) {
+            noteFailed(source, error);
+            return error;
         }
 
         /*
@@ -1016,11 +1052,11 @@ public class DbCompileService {
      * <p>The new one is unpacked beside the old one and only takes its place once it is
      * whole, so a download that is cut short leaves what was there working.
      */
-    private boolean unpackBase(NumberSource source, ProgressListener listener) {
+    private String unpackBase(NumberSource source, ProgressListener listener) {
         File dataDir = new File(YacbHolder.getStorage().getDataDirPath());
 
         String name = dirName();
-        if (name == null) return false;
+        if (name == null) return context.getString(R.string.source_result_failed);
 
         File dir = new File(dataDir, name);
         File tempDir = new File(dataDir, name + "-tmp");
@@ -1028,7 +1064,8 @@ public class DbCompileService {
         File archive = new File(dataDir, name + "-download.part");
 
         try {
-            if (!download(source, archive, false, listener)) return false;
+            String failure = download(source, archive, false, listener);
+            if (failure != null) return failure;
 
             phase(listener, R.string.unpacking_db);
 
@@ -1043,28 +1080,36 @@ public class DbCompileService {
 
             LOG.info("unpackBase() unpacked {} files", files);
 
-            if (files == 0) return false;
+            if (files == 0) {
+                return context.getString(R.string.build_log_archive_no_files,
+                        context.getString(R.string.source_format_tar_gzip));
+            }
+
+            buildLog.line(tagOf(source), context.getString(R.string.build_log_unpacked,
+                    files, context.getString(R.string.source_format_tar_gzip),
+                    context.getString(SourceTestHelper.getContentName(
+                            ArchiveUtils.Content.SIA))));
 
             FileUtils.delete(oldDir);
 
             if (dir.exists() && !dir.renameTo(oldDir)) {
                 LOG.warn("unpackBase() couldn't move the old database out of the way");
-                return false;
+                return context.getString(R.string.build_log_couldnt_replace);
             }
 
             if (!tempDir.renameTo(dir)) {
                 LOG.warn("unpackBase() couldn't put the new database in place");
 
                 if (oldDir.exists()) oldDir.renameTo(dir); // leave what worked where it was
-                return false;
+                return context.getString(R.string.build_log_couldnt_replace);
             }
 
             FileUtils.delete(oldDir);
 
-            return true;
+            return null;
         } catch (Exception e) {
             LOG.error("unpackBase() failed", e);
-            return false;
+            return describe(e);
         } finally {
             FileUtils.delete(archive);
             FileUtils.delete(tempDir);
@@ -1135,9 +1180,14 @@ public class DbCompileService {
      *               is unpacked into a directory of its own afterwards, whether it is one
      *               file or a few hundred thousand, so it isn't.
      */
-    private boolean download(NumberSource source, File target, boolean unpack,
-                             ProgressListener listener) {
+    private String download(NumberSource source, File target, boolean unpack,
+                            ProgressListener listener) {
         DeferredInit.initNetwork();
+
+        // an address that can't even be parsed is the commonest typo there is
+        if (HttpUrl.parse(source.getUrl()) == null) {
+            return context.getString(R.string.source_test_bad_url) + ": " + source.getUrl();
+        }
 
         OkHttpClient client = SourceHttp.decorate(new OkHttpClient.Builder()
                         .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
@@ -1155,11 +1205,17 @@ public class DbCompileService {
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 LOG.warn("download() the server answered {}", response.code());
-                return false;
+
+                // the two that mean "you", and everything else with its number
+                return response.code() == 401 || response.code() == 403
+                        ? context.getString(R.string.source_test_unauthorized, response.code())
+                        : context.getString(R.string.source_test_http_error, response.code())
+                                + (TextUtils.isEmpty(response.message())
+                                        ? "" : " " + response.message());
             }
 
             ResponseBody body = response.body();
-            if (body == null) return false;
+            if (body == null) return context.getString(R.string.source_test_empty);
 
             /*
              * How much of it there is, when the server says. A source can be tens of
@@ -1185,13 +1241,24 @@ public class DbCompileService {
                 }
 
                 sayProgress(source, written, total, 0, listener);
+
+                if (written == 0) return context.getString(R.string.source_test_empty);
             }
 
-            return true;
+            return null;
         } catch (Exception e) {
             LOG.warn("download() failed", e);
-            return false;
+            return context.getString(R.string.source_test_unreachable, describe(e));
         }
+    }
+
+    /** An exception in the words a log line has room for: its kind, and what it said. */
+    private static String describe(Exception e) {
+        String message = e.getLocalizedMessage();
+
+        return TextUtils.isEmpty(message)
+                ? e.getClass().getSimpleName()
+                : e.getClass().getSimpleName() + ": " + message;
     }
 
     /**

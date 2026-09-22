@@ -112,6 +112,15 @@ public class LogcatActivity extends AppCompatActivity {
     /** So that a refresh doesn't blank what is on screen and start again. */
     private boolean loaded;
 
+    /**
+     * Set while this scrolls the view itself.
+     *
+     * <p>A scroll the view does to keep up is not a reader scrolling away, and must not be
+     * read as one: it goes to the end and would leave following on anyway, but the frames
+     * on the way there are positions that aren't the end.
+     */
+    private boolean scrollingItself;
+
     /** What is on screen, to leave it alone when the log hasn't changed. */
     private String shown;
 
@@ -154,13 +163,22 @@ public class LogcatActivity extends AppCompatActivity {
                 new ViewTreeObserver.OnScrollChangedListener() {
                     @Override
                     public void onScrollChanged() {
-                        /*
-                         * Whoever did the scrolling, the answer is the same: this one goes to
-                         * the end, so it leaves following on; a finger that goes anywhere else
-                         * turns it off, and one that comes back turns it on again.
-                         */
-                        following = atBottom();
+                        // a finger that goes anywhere but the end turns following off,
+                        // and one that comes back turns it on again; the view's own
+                        // scrolling says nothing about what the reader wants
+                        if (!scrollingItself) following = atBottom();
                     }
+                });
+
+        /*
+         * The moment the text has grown is the moment to be at its end again - after the
+         * layout that made it taller and before the frame that would show the old place.
+         * Doing it here rather than a post() later is the difference between a view that
+         * keeps up and one that visibly jumps every second.
+         */
+        logTextView.addOnLayoutChangeListener(
+                (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    if (following && bottom - top != oldBottom - oldTop) scrollToEndNow();
                 });
 
         filterEditText.addTextChangedListener(new TextWatcher() {
@@ -226,6 +244,7 @@ public class LogcatActivity extends AppCompatActivity {
     public void onRefreshClicked(MenuItem item) {
         following = true; // asking for it again is asking for the end of it
 
+        scrollToEndNow();
         load();
     }
 
@@ -328,28 +347,41 @@ public class LogcatActivity extends AppCompatActivity {
          */
         if (text.equals(shown)) return;
 
+        /*
+         * A log grows at the end, so what is new is what comes after what is already on
+         * screen - and only that is put there. Replacing the whole text every second lays
+         * the whole thing out again and lands the reader wherever that leaves them; adding
+         * a line moves nothing that was already there.
+         */
+        if (shown != null && text.length() > shown.length() && text.startsWith(shown)) {
+            logTextView.append(text.substring(shown.length()));
+        } else {
+            logTextView.setText(text);
+        }
+
         shown = text;
 
-        logTextView.setText(text);
-
-        // the end of it is where the last thing that happened is
-        if (following) scrollToEnd();
+        // the layout listener takes it from here when the text got taller; when it didn't
+        // - a filter that matched nothing new - there is nothing to scroll to
     }
 
     /**
-     * Puts the view at the end, in one go.
+     * Puts the view at the end, this instant.
      *
      * <p>Not {@link ScrollView#fullScroll}: that one slides there over several frames, and
-     * every frame of it is a position that isn't the end - which is what decides whether
-     * this is still following.
+     * every frame of it is a position that isn't the end. And not a post(): that is a frame
+     * later, which is one frame of the old place on screen - the jump.
      */
-    private void scrollToEnd() {
-        scrollView.post(() -> {
-            View content = scrollView.getChildCount() != 0 ? scrollView.getChildAt(0) : null;
-            if (content == null) return;
+    private void scrollToEndNow() {
+        View content = scrollView.getChildCount() != 0 ? scrollView.getChildAt(0) : null;
+        if (content == null) return;
 
+        scrollingItself = true;
+        try {
             scrollView.scrollTo(0, Math.max(0, content.getBottom() - scrollView.getHeight()));
-        });
+        } finally {
+            scrollingItself = false;
+        }
     }
 
     private List<String> read() {

@@ -1851,7 +1851,7 @@ add_web_review:
   zh-rCN: 在网上添加评论
   zh-rTW: 新增評論（網絡）
 back:
-  comment: RootSettingsFragment; DbFilteringSettingsFragment dialog text; DbFilteringSettingsFragment; +6 more
+  comment: RootSettingsFragment; DbFilteringSettingsFragment dialog text; DbFilteringSettingsFragment; +7 more
   en: Back
   de: Zurück
   ar: خلف
@@ -2300,12 +2300,12 @@ source_preset_custom:
   de: Etwas anderes\u2026
 source_fetch:
   comment: number_source_item.xml text; activity_edit_number_source.xml text; NumberSourcesActivity
-  en: Fetch now
-  de: Jetzt abrufen
+  en: Update now
+  de: Jetzt aktualisieren
 source_download:
   comment: NumberSourcesActivity
-  en: Fetch now
-  de: Jetzt abrufen
+  en: Update now
+  de: Jetzt aktualisieren
 sources_none_enabled:
   comment: NumberSourcesActivity toast; DbCompileService build log; TaskService
   en: No source is switched on, so nothing was fetched.
@@ -5153,6 +5153,34 @@ db_build_interrupted:
   comment: App
   en: The build never finished \u2013 the app stopped running while it was working.
   de: Der Aufbau wurde nicht fertig \u2013 die App lief nicht mehr, während sie daran war.
+db_build_cancelled:
+  comment: TaskNotices; TaskService notification
+  en: Build stopped
+  de: Aufbau abgebrochen
+db_build_cancelled_text:
+  comment: TaskService
+  en: Stopped as asked. The database in use is the one from before.
+  de: Wie gewünscht abgebrochen. In Gebrauch ist die Datenbank von vorher.
+build_log_cancelled:
+  comment: DbCompileService build log
+  en: Stopped as asked
+  de: Wie gewünscht abgebrochen
+build_running_title:
+  comment: BuildStarter dialog title
+  en: A build is still running
+  de: Es läuft noch ein Aufbau
+build_running_message:
+  comment: BuildStarter dialog title
+  en: The database is being built right now. Stop it, or stop it and run this instead?
+  de: Die Datenbank wird gerade gebaut. Nur abbrechen, oder abbrechen und stattdessen das hier ausführen?
+build_running_replace:
+  comment: BuildStarter dialog text
+  en: Replace
+  de: Ersetzen
+build_running_stop:
+  comment: BuildStarter
+  en: Only stop
+  de: Nur abbrechen
 db_build_sources_failed_title:
   comment: TaskService notification
   en: Built, but not from every source

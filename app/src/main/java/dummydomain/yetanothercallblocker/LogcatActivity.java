@@ -50,6 +50,9 @@ public class LogcatActivity extends AppCompatActivity {
     /** Which log this screen is showing. */
     private static final String PARAM_BUILD_LOG = "buildLog";
 
+    /** How long the line of dots gets before it starts over. */
+    private static final int MAX_DOTS = 40;
+
     /** What to filter it by when it opens, for "show me this source's lines". */
     private static final String PARAM_FILTER = "filter";
 
@@ -126,15 +129,47 @@ public class LogcatActivity extends AppCompatActivity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
+    /** How many dots the running line has right now; it grows by one a second. */
+    private int dots;
+
     /** Reads it again, over and over, for as long as the screen is in front of someone. */
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
             load();
+            showRunning();
 
             handler.postDelayed(this, RELOAD_INTERVAL_MS);
         }
     };
+
+    /**
+     * A line of dots under the log while a build runs, one more every second.
+     *
+     * <p>The log says what the build is doing, not that it still is: a download that is
+     * quiet for a minute and a build that was killed a minute ago look the same in it. The
+     * dots are the difference - as long as they keep coming, something is happening.
+     */
+    private void showRunning() {
+        TextView runningView = findViewById(R.id.running);
+        if (runningView == null) return;
+
+        if (!BuildStarter.isBuilding()) {
+            if (runningView.getVisibility() != View.GONE) runningView.setVisibility(View.GONE);
+            dots = 0;
+            return;
+        }
+
+        dots = dots % MAX_DOTS + 1;
+
+        StringBuilder line = new StringBuilder(dots);
+        for (int i = 0; i < dots; i++) line.append('.');
+
+        runningView.setText(line);
+        runningView.setVisibility(View.VISIBLE);
+
+        if (following) scrollToEndNow();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

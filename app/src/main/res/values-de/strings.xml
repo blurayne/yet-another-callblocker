@@ -99,6 +99,13 @@
     <string name="db_build_table_failed">Die Nummern ließen sich nicht in die Tabelle schreiben. Womöglich ist kein Platz mehr auf dem Telefon.</string>
     <string name="db_build_table_failed_reason">Die Nummern ließen sich nicht in die Tabelle schreiben: %s</string>
     <string name="db_build_interrupted">Der Aufbau wurde nicht fertig \u2013 die App lief nicht mehr, während sie daran war.</string>
+    <string name="db_build_cancelled">Aufbau abgebrochen</string>
+    <string name="db_build_cancelled_text">Wie gewünscht abgebrochen. In Gebrauch ist die Datenbank von vorher.</string>
+    <string name="build_log_cancelled">Wie gewünscht abgebrochen</string>
+    <string name="build_running_title">Es läuft noch ein Aufbau</string>
+    <string name="build_running_message">Die Datenbank wird gerade gebaut. Nur abbrechen, oder abbrechen und stattdessen das hier ausführen?</string>
+    <string name="build_running_replace">Ersetzen</string>
+    <string name="build_running_stop">Nur abbrechen</string>
     <string name="db_build_sources_failed_title">Gebaut, aber nicht aus allen Quellen</string>
     <string name="db_build_sources_failed">%1$d von %2$d Quellen konnten nicht geholt werden:\n%3$s</string>
     <string name="auto_update_failed_title">Die automatische Aktualisierung ist schiefgegangen</string>
@@ -353,8 +360,8 @@
     <string name="source_preset_database">Gemeinschaftsdatenbank (die, die die App immer genutzt hat)</string>
     <string name="source_preset_phone_block">PhoneBlock-Liste</string>
     <string name="source_preset_custom">Etwas anderes\u2026</string>
-    <string name="source_fetch">Jetzt abrufen</string>
-    <string name="source_download">Jetzt abrufen</string>
+    <string name="source_fetch">Jetzt aktualisieren</string>
+    <string name="source_download">Jetzt aktualisieren</string>
     <string name="sources_none_enabled">Keine Quelle ist eingeschaltet, es wurde nichts geholt.</string>
     <string name="source_fetching">Wird abgerufen\u2026</string>
     <string name="sources_compile">Datenbank jetzt bauen</string>

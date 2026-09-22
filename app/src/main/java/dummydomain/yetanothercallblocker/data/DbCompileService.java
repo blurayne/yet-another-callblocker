@@ -118,6 +118,47 @@ public class DbCompileService {
     }
 
     /** How a compile went. */
+    /**
+     * Thrown out of a build that someone asked to stop.
+     *
+     * <p>Unchecked, because it has to get out through code that was written for a build that
+     * runs to its end: readers, downloads, the compiler. Each of them lets it through rather
+     * than reporting it as a failure of its own, and the service that started the build is
+     * where it lands.
+     */
+    public static class Cancelled extends RuntimeException {
+        Cancelled() {
+            super("the build was cancelled");
+        }
+    }
+
+    /** Whether someone asked for the build that is running to stop. */
+    private static volatile boolean cancelRequested;
+
+    /** Asks the running build to stop at the next place it looks. */
+    public static void requestCancel() {
+        cancelRequested = true;
+    }
+
+    /** Starts a build with a clean slate: a cancel from before is not about this one. */
+    public static void clearCancel() {
+        cancelRequested = false;
+    }
+
+    public static boolean isCancelRequested() {
+        return cancelRequested;
+    }
+
+    /**
+     * Stops the build here if it was asked to.
+     *
+     * <p>Called wherever the build reports how far it is - which is often enough that a
+     * cancel is answered within a second or two, and seldom enough that it costs nothing.
+     */
+    public static void checkCancelled() {
+        if (cancelRequested) throw new Cancelled();
+    }
+
     public enum Status {
         /** The database was built. */
         COMPILED,
@@ -234,10 +275,6 @@ public class DbCompileService {
         }
 
         int total = sources.size();
-        int failed = 0;
-
-        // who couldn't be fetched and why, for the notification at the end
-        List<String> failures = new ArrayList<>();
 
         /*
          * The one whose files the library keeps - the featured names and what the app knows
@@ -247,7 +284,26 @@ public class DbCompileService {
          */
         NumberSource primary = getPrimary(sources);
 
+        try {
+            return compile(sources, primary, total, trigger, listener, startTime);
+        } catch (Cancelled e) {
+            // said in the log, because a run that just stops is a run that looks killed
+            buildLog.line(BuildLog.MAIN, context.getString(R.string.build_log_cancelled));
+
+            throw e;
+        }
+    }
+
+    private Result compile(List<NumberSource> sources, NumberSource primary, int total,
+                           Trigger trigger, ProgressListener listener, long startTime) {
+        int failed = 0;
+
+        // who couldn't be fetched and why, for the notification at the end
+        List<String> failures = new ArrayList<>();
+
         for (int i = 0; i < sources.size(); i++) {
+            checkCancelled();
+
             NumberSource source = sources.get(i);
 
             if (listener != null) listener.onProgress(i + 1, total);
@@ -631,6 +687,8 @@ public class DbCompileService {
             noteFetched(source, context.getString(R.string.source_result_files, files));
 
             return null;
+        } catch (Cancelled e) {
+            throw e; // not a failure of this step: the whole build was asked to stop
         } catch (Exception e) {
             LOG.error("downloadIntoDir() failed", e);
 
@@ -907,6 +965,8 @@ public class DbCompileService {
 
                 error = context.getString(R.string.source_result_failed);
             }
+        } catch (Cancelled e) {
+            throw e; // not a failure of this step: the whole build was asked to stop
         } catch (Exception e) {
             LOG.error("downloadBase() failed", e);
             error = describe(e);
@@ -1123,6 +1183,8 @@ public class DbCompileService {
             FileUtils.delete(oldDir);
 
             return null;
+        } catch (Cancelled e) {
+            throw e; // not a failure of this step: the whole build was asked to stop
         } catch (Exception e) {
             LOG.error("unpackBase() failed", e);
             return describe(e);
@@ -1170,6 +1232,8 @@ public class DbCompileService {
     private long sayProgress(NumberSource source, long written, long total, long lastSaid,
                              ProgressListener listener) {
         if (lastSaid != 0 && written - lastSaid < PROGRESS_EVERY_BYTES) return lastSaid;
+
+        checkCancelled(); // every half megabyte: a download stops within a moment too
 
         if (listener != null && total > 0) {
             // as tenths of a percent, because a notification counts in whole steps
@@ -1262,6 +1326,8 @@ public class DbCompileService {
             }
 
             return null;
+        } catch (Cancelled e) {
+            throw e; // not a failure of this step: the whole build was asked to stop
         } catch (Exception e) {
             LOG.warn("download() failed", e);
             return context.getString(R.string.source_test_unreachable, describe(e));

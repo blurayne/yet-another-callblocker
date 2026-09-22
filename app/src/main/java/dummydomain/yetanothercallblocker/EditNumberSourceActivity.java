@@ -193,7 +193,7 @@ public class EditNumberSourceActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.source_fetching, Toast.LENGTH_SHORT).show();
         }
 
-        TaskService.start(this, database
+        BuildStarter.start(this, database
                         ? TaskService.TASK_DOWNLOAD_MAIN_DB
                         : TaskService.TASK_UPDATE_PHONE_BLOCK,
                 DbCompileService.Trigger.FORCED);

@@ -108,7 +108,7 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
                     .setTitle(R.string.db_filtering_rebuild)
                     .setMessage(R.string.db_filtering_rebuild_confirm)
                     .setPositiveButton(R.string.db_filtering_rebuild, (dialog, which) ->
-                            TaskService.start(requireContext(),
+                            BuildStarter.start(requireActivity(),
                                     TaskService.TASK_DOWNLOAD_MAIN_DB))
                     .setNegativeButton(R.string.back, null)
                     .show();

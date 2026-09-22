@@ -13,6 +13,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import dummydomain.yetanothercallblocker.data.DbCompileService;
+
 /**
  * Reads a source that hands over a SQLite database rather than slice files.
  *
@@ -220,6 +222,8 @@ public class SqliteImporter {
 
                 if (progress != null && read % REPORT_EVERY == 0) progress.onRead(read);
             }
+        } catch (DbCompileService.Cancelled e) {
+            throw e; // asked to stop, which is not the file's fault
         } catch (Exception e) {
             LOG.error("readNumbers() failed after {} rows", read, e);
 

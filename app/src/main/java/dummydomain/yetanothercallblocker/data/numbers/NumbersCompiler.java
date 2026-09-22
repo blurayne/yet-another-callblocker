@@ -20,6 +20,7 @@ import java.util.List;
 
 import dummydomain.yetanothercallblocker.R;
 import dummydomain.yetanothercallblocker.data.BuildLog;
+import dummydomain.yetanothercallblocker.data.DbCompileService;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 
 /**
@@ -479,6 +480,8 @@ public class NumbersCompiler {
 
             return new Result(false, 0, 0, "OutOfMemoryError (max heap "
                     + (Runtime.getRuntime().maxMemory() / (1024 * 1024)) + " MB)");
+        } catch (DbCompileService.Cancelled e) {
+            throw e; // whoever asked for the build to stop is told by whoever started it
         } catch (Throwable e) {
             LOG.error("compile() failed", e);
 
@@ -652,6 +655,8 @@ public class NumbersCompiler {
             SliceBatchReader.Result result;
             try {
                 result = SliceBatchReader.read(dir, names, filters, this::write);
+            } catch (DbCompileService.Cancelled e) {
+                throw e; // the readers were joined on the way out; nothing is left running
             } catch (Exception e) {
                 LOG.error("readBase() reading the database failed", e);
 
@@ -700,6 +705,9 @@ public class NumbersCompiler {
             SqliteImporter.Result result = SqliteImporter.read(input.database, db, writer,
                     sourceId, asLayer, filter,
                     read -> {
+                        // a file of millions of rows is read in one go; this is where it looks
+                        DbCompileService.checkCancelled();
+
                         if (log == null) return;
 
                         long now = System.currentTimeMillis();
@@ -861,6 +869,8 @@ public class NumbersCompiler {
          * out of it has nothing to show for the wait.
          */
         private void commitIfDue() {
+            DbCompileService.checkCancelled();
+
             if (pending < COMMIT_EVERY && files < COMMIT_EVERY_FILES) return;
 
             db.setTransactionSuccessful();
@@ -1274,6 +1284,9 @@ public class NumbersCompiler {
     }
 
     private static void report(ProgressListener listener, int current, int total) {
+        // once per file or per batch of rows: often enough to stop within a moment
+        DbCompileService.checkCancelled();
+
         if (listener != null) listener.onProgress(current, total);
     }
 

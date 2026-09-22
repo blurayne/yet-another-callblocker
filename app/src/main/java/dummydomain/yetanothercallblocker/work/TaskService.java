@@ -169,9 +169,13 @@ public class TaskService extends IntentService {
 
         DbCompileService.Result result = null;
         String error = null;
+        boolean cancelled = false;
 
         // so that a build that is killed rather than finished can be told about afterwards
         App.getSettings().setDbBuildRunning(true);
+
+        // a cancel asked for before this build began was about the build before it
+        DbCompileService.clearCancel();
 
         postStickyEvent(sticky);
         try {
@@ -200,6 +204,10 @@ public class TaskService extends IntentService {
                                     phaseTitleResId, current, total));
                         }
                     });
+        } catch (DbCompileService.Cancelled e) {
+            LOG.info("downloadMainDb() the build was cancelled");
+
+            cancelled = true;
         } catch (Throwable e) {
             /*
              * Everything, an OutOfMemoryError included: a build that ends in a message is
@@ -219,10 +227,28 @@ public class TaskService extends IntentService {
             removeStickyEvent(sticky);
         }
 
-        showBuildFinished(result, error);
+        if (cancelled) {
+            showBuildCancelled();
+        } else {
+            showBuildFinished(result, error);
+        }
 
         postEvent(new MainDbDownloadFinishedEvent(
-                result != null && result.status == DbCompileService.Status.NO_SOURCES));
+                result != null && result.status == DbCompileService.Status.NO_SOURCES,
+                cancelled));
+    }
+
+    /**
+     * Says that the build stopped because someone said so - which is not an error, and is
+     * not "built" either. The database in use is whatever was there before it started.
+     */
+    private void showBuildCancelled() {
+        App.getSettings().setLastDbBuildError("");
+        App.getSettings().setLastDbBuildErrorTime(0);
+
+        NotificationHelper.showDbBuildFinished(getApplicationContext(),
+                getString(R.string.db_build_cancelled),
+                getString(R.string.db_build_cancelled_text), true);
     }
 
     /** The first of these that says something. */

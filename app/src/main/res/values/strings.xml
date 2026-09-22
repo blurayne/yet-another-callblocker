@@ -135,8 +135,8 @@
     <string name="source_preset_database">Community database (the one the app has always used)</string>
     <string name="source_preset_phone_block">PhoneBlock list</string>
     <string name="source_preset_custom">Something else\u2026</string>
-    <string name="source_fetch">Fetch now</string>
-    <string name="source_download">Fetch now</string>
+    <string name="source_fetch">Update now</string>
+    <string name="source_download">Update now</string>
     <string name="sources_none_enabled">No source is switched on, so nothing was fetched.</string>
     <string name="source_fetching">Fetching\u2026</string>
     <string name="sources_compile">Build the database now</string>
@@ -450,6 +450,13 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_build_table_failed">The numbers couldn\'t be written into the table. There may be no room left on the phone.</string>
     <string name="db_build_table_failed_reason">The numbers couldn\'t be written into the table: %s</string>
     <string name="db_build_interrupted">The build never finished \u2013 the app stopped running while it was working.</string>
+    <string name="db_build_cancelled">Build stopped</string>
+    <string name="db_build_cancelled_text">Stopped as asked. The database in use is the one from before.</string>
+    <string name="build_log_cancelled">Stopped as asked</string>
+    <string name="build_running_title">A build is still running</string>
+    <string name="build_running_message">The database is being built right now. Stop it, or stop it and run this instead?</string>
+    <string name="build_running_replace">Replace</string>
+    <string name="build_running_stop">Only stop</string>
     <string name="db_build_sources_failed_title">Built, but not from every source</string>
     <string name="db_build_sources_failed">%1$d of %2$d sources couldn\'t be fetched:\n%3$s</string>
     <string name="auto_update_failed_title">The automatic update went wrong</string>

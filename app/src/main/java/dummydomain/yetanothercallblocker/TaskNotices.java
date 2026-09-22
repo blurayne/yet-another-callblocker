@@ -55,6 +55,11 @@ public class TaskNotices implements Application.ActivityLifecycleCallbacks {
 
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onMainDbDownloadFinished(MainDbDownloadFinishedEvent event) {
+        if (event.cancelled) {
+            toast(context.getString(R.string.db_build_cancelled));
+            return;
+        }
+
         String error = App.getSettings() != null ? App.getSettings().getLastDbBuildError() : null;
 
         toast(!TextUtils.isEmpty(error)

@@ -148,7 +148,7 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
          * is the one source in the list nobody put there.
          */
         requirePreference(PREF_UPDATE).setOnPreferenceClickListener(preference -> {
-            TaskService.start(requireContext(), TaskService.TASK_DOWNLOAD_MAIN_DB,
+            BuildStarter.start(requireActivity(), TaskService.TASK_DOWNLOAD_MAIN_DB,
                     DbCompileService.Trigger.SCHEDULED);
             return true;
         });
@@ -200,7 +200,7 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
     private void build() {
         if (!BackgroundWorkHelper.needsAttention(requireContext())) {
             // the start and the end of it are said by TaskNotices, wherever it is started
-            TaskService.start(requireContext(), TaskService.TASK_DOWNLOAD_MAIN_DB);
+            BuildStarter.start(requireActivity(), TaskService.TASK_DOWNLOAD_MAIN_DB);
             return;
         }
 
@@ -211,7 +211,7 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
                 .setPositiveButton(R.string.background_work_open_settings,
                         (d, w) -> BackgroundWorkHelper.openSettings(requireContext()))
                 .setNegativeButton(R.string.background_work_build_anyway, (d, w) ->
-                        TaskService.start(requireContext(), TaskService.TASK_DOWNLOAD_MAIN_DB))
+                        BuildStarter.start(requireActivity(), TaskService.TASK_DOWNLOAD_MAIN_DB))
                 .show();
     }
 

@@ -5241,6 +5241,18 @@ build_log_reading_database:
   comment: NumbersCompiler build log
   en: Reading the database
   de: Die Datenbank wird gelesen
+build_log_is_a_database:
+  comment: DbCompileService build log
+  en: A SQLite database, not the library\'s own files
+  de: Eine SQLite-Datenbank, nicht die Dateien der Bibliothek
+build_log_header_wrong:
+  comment: DbCompileService build log
+  en: '%1$s starts with \"%2$s\"; expected %3$s'
+  de: '%1$s beginnt mit \"%2$s\"; erwartet wurde %3$s'
+build_log_header_missing:
+  comment: DbCompileService build log
+  en: '%1$s is missing'
+  de: '%1$s fehlt'
 build_log_ingesting_rows:
   comment: NumbersCompiler build log
   en: Ingesting row
@@ -7168,6 +7180,39 @@ license:
   tr: Bu uygulama yalnızca AGPL-3.0 altında lisanslanmıştır.
   uk: Цей застосунок ліцензований згідно AGPL-3.0-only.
   vi: Ứng dụng này được cấp phép dưới chỉ AGPL-3.0.
+about_data_title:
+  comment: activity_about.xml text
+  en: Where the numbers come from
+  de: Woher die Nummern kommen
+about_data:
+  comment: activity_about.xml text
+  en: What this app knows about a number it did not find out itself. The ratings and the reviews come from the Should I Answer community database; a PhoneBlock account adds what that community has collected; lists such as tellows can be added as sources of their own. Behind all of it are people writing down who called them.
+  de: Was diese App über eine Nummer weiß, hat sie nicht selbst herausgefunden. Die Bewertungen und die Kommentare stammen aus der Community-Datenbank von Should I Answer; ein PhoneBlock-Konto steuert bei, was dort zusammengetragen wurde; Listen wie tellows lassen sich als eigene Quellen einbinden. Dahinter stehen überall Menschen, die aufschreiben, wer bei ihnen angerufen hat.
+about_sia:
+  comment: AboutActivity
+  en: Should I Answer – about the project
+  de: Should I Answer – über das Projekt
+about_phone_block:
+  comment: AboutActivity
+  en: PhoneBlock
+  de: PhoneBlock
+about_tellows:
+  comment: AboutActivity
+  en: tellows
+  de: tellows
+about_donate:
+  comment: activity_about.xml text
+  en: These projects are run by other people, and running them costs money. If this app is any use to you, it is their work you are finding useful – please think about supporting them.
+  de: Diese Projekte werden von anderen betrieben, und das kostet Geld. Wenn Ihnen diese App etwas nützt, dann nützt Ihnen deren Arbeit – denken Sie bitte über eine Spende nach.
+url_sia_about:
+  comment: AboutActivity
+  en: https://www.shouldianswer.com/about
+url_phone_block:
+  comment: AboutActivity
+  en: https://phoneblock.net
+url_tellows:
+  comment: AboutActivity
+  en: https://www.tellows.de
 url_repo:
   comment: AboutActivity
   en: https://gitlab.com/xynngh/YetAnotherCallBlocker

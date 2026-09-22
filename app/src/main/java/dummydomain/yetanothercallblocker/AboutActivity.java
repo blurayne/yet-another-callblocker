@@ -43,6 +43,11 @@ public class AboutActivity extends AppCompatActivity {
         setLink(R.id.translate, R.string.url_translate, R.string.translate);
         setLink(R.id.issues, R.string.url_issues, R.string.issues);
 
+        // the projects the numbers come from, which are other people's work and other people's bills
+        setLink(R.id.about_sia, R.string.url_sia_about, R.string.about_sia);
+        setLink(R.id.about_phone_block, R.string.url_phone_block, R.string.about_phone_block);
+        setLink(R.id.about_tellows, R.string.url_tellows, R.string.about_tellows);
+
         ((TextView) findViewById(R.id.app_version)).setText(getString(R.string.version_string,
                 BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE));
 

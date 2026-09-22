@@ -128,6 +128,9 @@
     <string name="build_log_ingesting">Datei %1$d von %2$d wird gelesen</string>
     <string name="build_log_ingesting_files">%1$d Dateien werden gelesen</string>
     <string name="build_log_reading_database">Die Datenbank wird gelesen</string>
+    <string name="build_log_is_a_database">Eine SQLite-Datenbank, nicht die Dateien der Bibliothek</string>
+    <string name="build_log_header_wrong">%1$s beginnt mit \"%2$s\"; erwartet wurde %3$s</string>
+    <string name="build_log_header_missing">%1$s fehlt</string>
     <string name="build_log_ingesting_rows">Zeile wird gelesen:</string>
     <string name="build_log_ingesting_threads">%1$d Dateien werden mit %2$d Threads gelesen</string>
     <string name="build_log_indexing">Index wird gebaut\u2026</string>
@@ -685,4 +688,10 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="translate">Die App auf Weblate übersetzen</string>
     <string name="issues">Hilfe bekommen / Problem melden</string>
     <string name="license">Diese App ist unter der AGPL-3.0 lizenziert.</string>
+    <string name="about_data_title">Woher die Nummern kommen</string>
+    <string name="about_data">Was diese App über eine Nummer weiß, hat sie nicht selbst herausgefunden. Die Bewertungen und die Kommentare stammen aus der Community-Datenbank von Should I Answer; ein PhoneBlock-Konto steuert bei, was dort zusammengetragen wurde; Listen wie tellows lassen sich als eigene Quellen einbinden. Dahinter stehen überall Menschen, die aufschreiben, wer bei ihnen angerufen hat.</string>
+    <string name="about_sia">Should I Answer – über das Projekt</string>
+    <string name="about_phone_block">PhoneBlock</string>
+    <string name="about_tellows">tellows</string>
+    <string name="about_donate">Diese Projekte werden von anderen betrieben, und das kostet Geld. Wenn Ihnen diese App etwas nützt, dann nützt Ihnen deren Arbeit – denken Sie bitte über eine Spende nach.</string>
 </resources>

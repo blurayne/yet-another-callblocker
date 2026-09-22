@@ -616,6 +616,98 @@ public class DbCompileService {
     }
 
     /**
+     * Says what the files actually start with, when the library won't read them.
+     *
+     * <p>"Not a database" is true and useless. These files say what they are in their first
+     * few bytes, and a set that the library refuses is nearly always one where those bytes
+     * are wrong - a rewrite that renamed some of the marks and not others, or renamed them
+     * to something neither name. Naming the file and what stands in it turns an afternoon
+     * into a minute.
+     */
+    private void logHeaders(File dir, String tag) {
+        String[][] wanted = {
+                {"data_slice_info.dat", "YACBSIAI", "MDI"},
+                {"data_slice_0.dat", "YABF", "MTZF", "MTZD"},
+                {"featured_slice_info.dat", "YACBSIAI", "MDI"},
+                {"featured_slice_0.dat", "YABX", "MTZX"},
+        };
+
+        for (String[] expected : wanted) {
+            File file = firstOf(dir, expected[0]);
+
+            if (file == null) {
+                buildLog.line(tag, context.getString(R.string.build_log_header_missing,
+                        expected[0]));
+                continue;
+            }
+
+            String found = readHeader(file);
+
+            boolean ok = false;
+            for (int i = 1; i < expected.length; i++) {
+                if (expected[i].equalsIgnoreCase(found)) ok = true;
+            }
+
+            if (ok) continue;
+
+            StringBuilder names = new StringBuilder();
+            for (int i = 1; i < expected.length; i++) {
+                if (names.length() != 0) names.append(", ");
+                names.append(expected[i]);
+            }
+
+            buildLog.line(tag, context.getString(R.string.build_log_header_wrong,
+                    file.getName(), found, names.toString()));
+        }
+    }
+
+    /** The named file, or the first one of that kind when the numbered one isn't there. */
+    private static File firstOf(File dir, String name) {
+        File exact = new File(dir, name);
+        if (exact.isFile()) return exact;
+
+        String prefix = name.substring(0, name.lastIndexOf('_') + 1);
+
+        File[] files = dir.listFiles();
+        if (files == null) return null;
+
+        for (File file : files) {
+            if (file.isFile() && file.getName().startsWith(prefix)
+                    && file.getName().endsWith(".dat")) {
+                return file;
+            }
+        }
+
+        return null;
+    }
+
+    /** The first bytes of a file, as the characters they stand for. */
+    private static String readHeader(File file) {
+        byte[] header = new byte[8];
+
+        try (InputStream in = new FileInputStream(file)) {
+            int read = in.read(header);
+            if (read <= 0) return "";
+
+            StringBuilder text = new StringBuilder(read);
+
+            for (int i = 0; i < read; i++) {
+                char c = (char) (header[i] & 0xff);
+
+                // a mark is letters; the first byte that isn't one is where it ends
+                if (c < 'A' || c > 'z') break;
+
+                text.append(c);
+            }
+
+            return text.toString();
+        } catch (Exception e) {
+            LOG.debug("readHeader() couldn't read {}", file, e);
+            return "";
+        }
+    }
+
+    /**
      * Whether a source has to be fetched again.
      *
      * <p>Two answers come before the schedule and before whoever asked. There is nothing of
@@ -717,11 +809,41 @@ public class DbCompileService {
         reloadDatabases();
 
         if (!YacbHolder.getCommunityDatabase().isOperational()) {
+            LOG.warn("downloadBase() what arrived isn't slice files");
+
+            // and what it is instead, file by file, because "not a database" says nothing
+            logHeaders(new File(YacbHolder.getStorage().getDataDirPath(),
+                    SiaConstants.SIA_PATH_PREFIX), tagOf(source));
+
+            /*
+             * Which is not the same as it being nothing. The same address can hand over one
+             * SQLite database instead, and that is a database - it just isn't the library's
+             * kind, so the library unpacked it and found nothing it knew. Before calling
+             * this a failure it is fetched into a place of its own and looked at properly.
+             *
+             * The cost is one extra download, once: what it turns out to be is written on
+             * the source, and from then on it is fetched straight into that place.
+             */
+            String failure = downloadIntoDir(source, getSourceDir(source));
+
+            if (failure == null
+                    && source.getContent() == ArchiveUtils.Content.SQLITE) {
+                LOG.info("downloadBase() it is a SQLite database rather than slice files");
+
+                buildLog.line(tagOf(source),
+                        context.getString(R.string.build_log_is_a_database));
+
+                return null;
+            }
+
             LOG.error("downloadBase() what arrived can't be read as a database");
 
             note(source, context.getString(R.string.source_result_not_a_database));
             return context.getString(R.string.db_build_not_readable);
         }
+
+        // slice files, which is what the library keeps - said out loud so nothing guesses again
+        source.setContent(ArchiveUtils.Content.SIA);
 
         // what is on the phone now came from here, which is how a changed address is noticed
         source.setFetchedUrl(source.getUrl());
@@ -1051,7 +1173,7 @@ public class DbCompileService {
 
         totals[0] = result.totals;
 
-        noteSourceMeta(compiler, sources);
+        noteSourceMeta(compiler, sources, primary);
 
         // and only now does it become the database the app looks numbers up in
         if (!compiler.promote()) {
@@ -1092,7 +1214,15 @@ public class DbCompileService {
             File database = null;
 
             if (source.getType() == NumberSource.Type.DATABASE) {
-                if (source == primary) {
+                /*
+                 * Where its files went is what decides where they are read from, and a
+                 * source can have turned out to be a SQLite database after the order was
+                 * worked out - the fetch says so, and this is after the fetch. Reading the
+                 * library's directory for a source that is no longer in it would find
+                 * nothing at all.
+                 */
+                if (source == primary
+                        && source.getContent() != ArchiveUtils.Content.SQLITE) {
                     dir = new File(dataDir, SiaConstants.SIA_PATH_PREFIX);
                     updatesDir = new File(dataDir, SiaConstants.SIA_SECONDARY_PATH_PREFIX);
                 } else {
@@ -1175,7 +1305,8 @@ public class DbCompileService {
      * came from there, and - for the source whose files the library keeps - which version
      * it says it is.
      */
-    private void noteSourceMeta(NumbersCompiler compiler, List<NumberSource> sources) {
+    private void noteSourceMeta(NumbersCompiler compiler, List<NumberSource> sources,
+                                NumberSource primary) {
         if (sourceService == null) return;
 
         int version = YacbHolder.getCommunityDatabase().getEffectiveDbVersion();
@@ -1186,8 +1317,13 @@ public class DbCompileService {
 
                 source.setEntries(count.count);
 
-                // the first source's files are the library's, so its version is the one it says
-                if (count.layer == 0) source.setVersion(version);
+                /*
+                 * The version the library reports belongs to the source whose files it
+                 * keeps, and to that one only. Any other source says its own - a SQLite
+                 * database carries it in its meta table - and writing the library's over
+                 * that would replace a real version with a zero.
+                 */
+                if (source == primary && version > 0) source.setVersion(version);
 
                 sourceService.save(source);
                 break;

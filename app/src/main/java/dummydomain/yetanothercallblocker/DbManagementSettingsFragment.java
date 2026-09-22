@@ -384,6 +384,16 @@ public class DbManagementSettingsFragment extends BaseSettingsFragment {
                 line.append(": ").append(NumberFormat.getInstance().format(source.getEntries()));
             }
 
+            /*
+             * Which version of it is on the phone, when the source says: a database that is
+             * published in numbered versions is otherwise impossible to place, and "fetched
+             * two days ago" doesn't say whether that fetch brought anything new.
+             */
+            if (source.getVersion() > 0) {
+                line.append(" \u00b7 ").append(getString(R.string.source_version,
+                        source.getVersion()));
+            }
+
             if (source.getLastUpdate() > 0) {
                 line.append(" \u00b7 ").append(DateUtils.getRelativeTimeSpanString(
                         source.getLastUpdate(), System.currentTimeMillis(),

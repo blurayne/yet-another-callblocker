@@ -23,7 +23,6 @@ import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.db.BlacklistItem;
 import dummydomain.yetanothercallblocker.data.provider.Provider;
 import dummydomain.yetanothercallblocker.data.provider.ProviderService;
-import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
 
 /**
  * The dialog about a number: what is known about it on top, what can be done with it below.
@@ -65,11 +64,10 @@ public class InfoDialogHelper {
                 ? numberInfo.featuredDatabaseItem.getName() : null;
         setText(view, R.id.featured_name, featuredName);
 
-        NumberCategory category = numberInfo.communityDatabaseItem != null
-                ? NumberCategory.getById(numberInfo.communityDatabaseItem.getCategory())
-                : null;
-        setText(view, R.id.category, category != null && category != NumberCategory.NONE
-                ? SiaNumberCategoryUtils.getName(context, category) : null);
+        setText(view, R.id.category, numberInfo.communityDatabaseItem != null
+                ? SiaNumberCategoryUtils.getName(context,
+                        numberInfo.communityDatabaseItem.getCategory())
+                : null);
 
         ReviewsSummaryHelper.populateSummary(view.findViewById(R.id.reviews_summary),
                 numberInfo.communityDatabaseItem);

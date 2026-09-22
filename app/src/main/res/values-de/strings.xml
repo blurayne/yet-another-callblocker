@@ -127,6 +127,8 @@
     <string name="build_log_filtered">Herausgefiltert:</string>
     <string name="build_log_ingesting">Datei %1$d von %2$d wird gelesen</string>
     <string name="build_log_ingesting_files">%1$d Dateien werden gelesen</string>
+    <string name="build_log_reading_database">Die Datenbank wird gelesen</string>
+    <string name="build_log_ingesting_rows">Zeile wird gelesen:</string>
     <string name="build_log_ingesting_threads">%1$d Dateien werden mit %2$d Threads gelesen</string>
     <string name="build_log_indexing">Index wird gebaut\u2026</string>
     <string name="build_log_total_read">Gelesene Einträge insgesamt:</string>

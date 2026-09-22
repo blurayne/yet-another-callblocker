@@ -163,12 +163,7 @@ public class CallerIdTemplate {
     }
 
     private static String getCategory(Context context, CommunityDatabaseItem item) {
-        if (item == null) return null;
-
-        NumberCategory category = NumberCategory.getById(item.getCategory());
-
-        return category != null && category != NumberCategory.NONE
-                ? SiaNumberCategoryUtils.getName(context, category) : null;
+        return item != null ? SiaNumberCategoryUtils.getName(context, item.getCategory()) : null;
     }
 
     private static String getRating(Context context, NumberInfo numberInfo) {

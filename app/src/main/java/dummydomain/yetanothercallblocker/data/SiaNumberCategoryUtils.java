@@ -5,9 +5,32 @@ import android.content.Context;
 import androidx.annotation.StringRes;
 
 import dummydomain.yetanothercallblocker.R;
+import dummydomain.yetanothercallblocker.data.numbers.NumbersLookup;
 import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
 
 public class SiaNumberCategoryUtils {
+
+    /**
+     * What a category id means, whoever it came from.
+     *
+     * <p>The library has nineteen of them and a translation for each. A source that brings
+     * its own is given ids beyond those as they arrive, and what those mean is in the table
+     * the sources were built into - under the name the source used, because a category that
+     * didn't exist until this morning has no translation to show instead.
+     *
+     * @return the name, or null when the number means nothing to anybody
+     */
+    public static String getName(Context context, int id) {
+        NumberCategory category = NumberCategory.getById(id);
+
+        if (category != null) {
+            return category != NumberCategory.NONE ? getName(context, category) : null;
+        }
+
+        NumbersLookup lookup = YacbHolder.getNumbersLookup();
+
+        return lookup != null ? lookup.categoryName(id) : null;
+    }
 
     public static String getName(Context context, NumberCategory category) {
         return context.getString(getNameResId(category));

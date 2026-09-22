@@ -471,6 +471,8 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="build_log_filtered">Filtered out:</string>
     <string name="build_log_ingesting">Ingesting file %1$d of %2$d</string>
     <string name="build_log_ingesting_files">Ingesting %1$d files</string>
+    <string name="build_log_reading_database">Reading the database</string>
+    <string name="build_log_ingesting_rows">Ingesting row</string>
     <string name="build_log_ingesting_threads">Ingesting %1$d files on %2$d threads</string>
     <string name="build_log_indexing">Indexing\u2026</string>
     <string name="build_log_total_read">Read records in total:</string>

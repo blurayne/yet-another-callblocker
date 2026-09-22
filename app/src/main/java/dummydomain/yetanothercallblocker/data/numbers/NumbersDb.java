@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
+import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
 
@@ -12,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+
+import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
 
 /**
  * The one table every source ends up in.
@@ -53,7 +56,13 @@ public class NumbersDb extends SQLiteOpenHelper {
      */
     public static final String BUILD_FILE_NAME = "numbers-build.db";
 
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
+
+    /** The first id a category that nobody had before is given. */
+    private static final int FIRST_ADDED_CATEGORY = 32;
+
+    /** And the last one a row has room for: the flags keep seven bits for this. */
+    private static final int LAST_CATEGORY = 127;
 
     /** Whether the database in use has been filtered. */
     public static final String META_FILTERED = "filtered";
@@ -93,6 +102,19 @@ public class NumbersDb extends SQLiteOpenHelper {
                     + "source INTEGER NOT NULL REFERENCES sources(id) ON DELETE CASCADE)",
 
             "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)",
+
+            /*
+             * What a category id means, so that the table is self-describing.
+             *
+             * <p>The library has an enum of nineteen and numbers them itself; a source that
+             * brings its own has its own numbering, and the same name can be 3 in one and 11
+             * in the other. Keeping the names here is what lets the two be reconciled by
+             * name rather than by a number neither of them agreed on - and what lets a
+             * category nobody had before simply be added.
+             */
+            "CREATE TABLE categories ("
+                    + "id INTEGER PRIMARY KEY,"
+                    + "name TEXT NOT NULL UNIQUE)",
     };
 
     /**
@@ -111,7 +133,10 @@ public class NumbersDb extends SQLiteOpenHelper {
             "CREATE INDEX IF NOT EXISTS names_source ON names(source)",
     };
 
-    private static final String[] TABLES = {"names", "numbers", "sources", "meta"};
+    /** Everything {@link #recreate} clears out; a table missing here is one a rebuild
+     * would try to create a second time. */
+    private static final String[] TABLES
+            = {"names", "numbers", "sources", "meta", "categories"};
 
     public NumbersDb(Context context) {
         this(context, FILE_NAME);
@@ -151,6 +176,96 @@ public class NumbersDb extends SQLiteOpenHelper {
         for (String statement : TABLES_SQL) {
             db.execSQL(statement);
         }
+
+        seedCategories(db);
+    }
+
+    /**
+     * Writes down what the library's own category numbers mean.
+     *
+     * <p>Every table starts knowing these, so a source that brings categories of its own is
+     * matched against them by name before anything new is added. The names are the enum's,
+     * not the translated ones: this is what two databases agree on, not what a screen shows.
+     */
+    public static void seedCategories(SQLiteDatabase db) {
+        for (NumberCategory category : NumberCategory.values()) {
+            db.execSQL("INSERT OR IGNORE INTO categories (id, name) VALUES (?, ?)",
+                    new Object[]{category.getId(), category.name()});
+        }
+    }
+
+    /**
+     * The id this table uses for a category of that name, adding it when it is new.
+     *
+     * <p>The id a source used is its own business. What matters is the name, because that is
+     * the only thing two databases built by different people mean the same by.
+     *
+     * @return the id to write into a row, or 0 - "nothing is known" - when there is no room
+     */
+    public static int categoryFor(SQLiteDatabase db, String name) {
+        if (name == null || name.trim().isEmpty()) return 0;
+
+        String cleaned = name.trim();
+
+        try (Cursor cursor = db.rawQuery("SELECT id FROM categories WHERE name = ?",
+                new String[]{cleaned})) {
+            if (cursor.moveToFirst()) return cursor.getInt(0);
+        } catch (Exception e) {
+            LOG.warn("categoryFor({})", cleaned, e);
+            return 0;
+        }
+
+        int id = freeCategoryId(db);
+
+        if (id <= 0) {
+            LOG.warn("categoryFor() no room left for {}", cleaned);
+            return 0;
+        }
+
+        db.execSQL("INSERT OR IGNORE INTO categories (id, name) VALUES (?, ?)",
+                new Object[]{id, cleaned});
+
+        LOG.info("categoryFor() {} is now {}", cleaned, id);
+
+        return id;
+    }
+
+    /**
+     * An id no category has yet.
+     *
+     * <p>Above the library's own block and below the ones it keeps for "this number is
+     * fine", so that a new category can never be mistaken for either. Seven bits is what a
+     * row has for this, which leaves room for far more categories than anyone will have.
+     */
+    private static int freeCategoryId(SQLiteDatabase db) {
+        for (int id = FIRST_ADDED_CATEGORY; id <= LAST_CATEGORY; id++) {
+            if (id >= 100 && id <= 102) continue; // the library's "safe" ones
+
+            try (Cursor cursor = db.rawQuery("SELECT 1 FROM categories WHERE id = ?",
+                    new String[]{String.valueOf(id)})) {
+                if (!cursor.moveToFirst()) return id;
+            } catch (Exception e) {
+                LOG.warn("freeCategoryId()", e);
+                return 0;
+            }
+        }
+
+        return 0;
+    }
+
+    /** What every category id in this table means: {@code {id: name}}. */
+    public static SparseArray<String> getCategories(SQLiteDatabase db) {
+        SparseArray<String> categories = new SparseArray<>();
+
+        try (Cursor cursor = db.rawQuery("SELECT id, name FROM categories", null)) {
+            while (cursor.moveToNext()) {
+                categories.put(cursor.getInt(0), cursor.getString(1));
+            }
+        } catch (Exception e) {
+            LOG.warn("getCategories()", e);
+        }
+
+        return categories;
     }
 
     /** Made when the table is full; see {@link #INDEXES_SQL}. */

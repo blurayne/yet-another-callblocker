@@ -28,9 +28,11 @@ import dummydomain.yetanothercallblocker.data.source.ArchiveUtils;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceNames;
 import dummydomain.yetanothercallblocker.data.source.SourceHttp;
+import dummydomain.yetanothercallblocker.data.source.SourceTester;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersCompiler;
 import dummydomain.yetanothercallblocker.data.numbers.NumberFlags;
 import dummydomain.yetanothercallblocker.data.numbers.NumbersFilter;
+import dummydomain.yetanothercallblocker.data.numbers.SqliteImporter;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.sia.utils.FileUtils;
 import dummydomain.yetanothercallblocker.utils.DeferredInit;
@@ -455,7 +457,16 @@ public class DbCompileService {
      */
     private NumberSource getPrimary(List<NumberSource> sources) {
         for (NumberSource source : sources) {
-            if (source.getType() == NumberSource.Type.DATABASE) return source;
+            /*
+             * A source that hands over a SQLite database can't be it, whatever its place in
+             * the list: what the library keeps is its own slice files, and putting anything
+             * else there leaves it with no database at all. Such a source is read into the
+             * table like any other, out of a directory of its own.
+             */
+            if (source.getType() == NumberSource.Type.DATABASE
+                    && source.getContent() != ArchiveUtils.Content.SQLITE) {
+                return source;
+            }
         }
 
         return null;
@@ -478,9 +489,37 @@ public class DbCompileService {
                     : context.getString(R.string.source_result_failed);
         }
 
-        if (primary) return downloadBase(source, listener);
+        /*
+         * What is behind the address decides where it goes, so a source nobody has looked at
+         * yet is looked at now: a few kilobytes off the front, which is all it takes to tell
+         * slice files from a SQLite database. Without it the first fetch of a SQLite source
+         * would be unpacked into the library's own directory, where it is not a database.
+         */
+        if (source.getContent() == ArchiveUtils.Content.UNKNOWN) probeContent(source);
+
+        if (primary && source.getContent() != ArchiveUtils.Content.SQLITE) {
+            return downloadBase(source, listener);
+        }
 
         return downloadIntoDir(source, getSourceDir(source));
+    }
+
+    /** Asks the address what it holds and writes the answer down on the source. */
+    private void probeContent(NumberSource source) {
+        String secret = sourceService != null ? sourceService.getSecret(source.getId()) : null;
+
+        SourceTester.Result result = SourceTester.test(source, secret);
+
+        if (!result.isOk() || result.content == ArchiveUtils.Content.UNKNOWN) {
+            LOG.info("probeContent() {} didn't say what it holds", tagOf(source));
+            return;
+        }
+
+        LOG.info("probeContent() {} holds {}", tagOf(source), result.content);
+
+        source.setContent(result.content);
+
+        if (sourceService != null) sourceService.save(source);
     }
 
     /**
@@ -531,6 +570,10 @@ public class DbCompileService {
             }
 
             source.setFetchedUrl(source.getUrl());
+
+            // what actually arrived has the last word about what this source hands over
+            source.setContent(SqliteImporter.find(dir) != null
+                    ? ArchiveUtils.Content.SQLITE : ArchiveUtils.Content.SIA);
 
             noteFetched(source, context.getString(R.string.source_result_files, files));
 
@@ -1046,16 +1089,22 @@ public class DbCompileService {
             File dir = null;
             File updatesDir = null;
 
+            File database = null;
+
             if (source.getType() == NumberSource.Type.DATABASE) {
                 if (source == primary) {
                     dir = new File(dataDir, SiaConstants.SIA_PATH_PREFIX);
                     updatesDir = new File(dataDir, SiaConstants.SIA_SECONDARY_PATH_PREFIX);
                 } else {
                     dir = getSourceDir(source);
+
+                    // what is lying there decides how it is read, not what anyone expected
+                    database = SqliteImporter.find(dir);
                 }
             }
 
-            inputs.add(new NumbersCompiler.Input(source, tagOf(source), dir, updatesDir));
+            inputs.add(new NumbersCompiler.Input(
+                    source, tagOf(source), dir, updatesDir, database));
         }
 
         return inputs;

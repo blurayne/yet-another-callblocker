@@ -7,7 +7,6 @@ import dummydomain.yetanothercallblocker.data.BlacklistUtils;
 import dummydomain.yetanothercallblocker.data.NumberInfo;
 import dummydomain.yetanothercallblocker.data.PhoneBlockList;
 import dummydomain.yetanothercallblocker.data.SiaNumberCategoryUtils;
-import dummydomain.yetanothercallblocker.sia.model.NumberCategory;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseItem;
 import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabaseItem;
 
@@ -15,12 +14,10 @@ public class NumberInfoUtils {
 
     public static String getShortDescription(Context context, NumberInfo numberInfo) {
         if (numberInfo.communityDatabaseItem != null) {
-            NumberCategory category = NumberCategory.getById(
+            String category = SiaNumberCategoryUtils.getName(context,
                     numberInfo.communityDatabaseItem.getCategory());
 
-            if (category != null && category != NumberCategory.NONE) {
-                return SiaNumberCategoryUtils.getName(context, category);
-            }
+            if (category != null) return category;
         }
 
         if (numberInfo.blacklistItem != null && numberInfo.contactItem == null) {

@@ -2328,8 +2328,8 @@ source_type:
   de: Quellentyp
 source_type_database:
   comment: SourceNames
-  en: Community database
-  de: Community-Datenbank
+  en: URL
+  de: URL
 source_type_phone_block:
   comment: SourceNames
   en: PhoneBlock API
@@ -2435,7 +2435,7 @@ source_last_check:
   en: 'last checked: %s'
   de: 'zuletzt geprüft: %s'
 source_version:
-  comment: EditNumberSourceActivity
+  comment: EditNumberSourceActivity; DbManagementSettingsFragment
   en: version %d
   de: Version %d
 source_never_fetched:
@@ -2482,6 +2482,18 @@ source_test_ok_format:
   comment: SourceTestHelper
   en: works, and looks like %s
   de: funktioniert, sieht aus wie %s
+source_test_ok_content:
+  comment: SourceTestHelper
+  en: 'works: %1$s holding %2$s'
+  de: 'funktioniert: %1$s mit %2$s'
+source_content_sia:
+  comment: SourceTestHelper
+  en: the community database's own files
+  de: den Dateien der Community-Datenbank
+source_content_sqlite:
+  comment: SourceTestHelper
+  en: a SQLite database
+  de: einer SQLite-Datenbank
 source_test_no_url:
   comment: SourceTestHelper
   en: no address to go to
@@ -5225,6 +5237,14 @@ build_log_ingesting_files:
   comment: NumbersCompiler build log
   en: Ingesting %1$d files
   de: '%1$d Dateien werden gelesen'
+build_log_reading_database:
+  comment: NumbersCompiler build log
+  en: Reading the database
+  de: Die Datenbank wird gelesen
+build_log_ingesting_rows:
+  comment: NumbersCompiler build log
+  en: Ingesting row
+  de: 'Zeile wird gelesen:'
 build_log_ingesting_threads:
   comment: NumbersCompiler build log
   en: Ingesting %1$d files on %2$d threads

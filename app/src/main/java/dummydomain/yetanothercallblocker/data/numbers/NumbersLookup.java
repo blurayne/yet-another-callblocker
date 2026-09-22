@@ -3,6 +3,7 @@ package dummydomain.yetanothercallblocker.data.numbers;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.SparseArray;
 
 import java.io.File;
 
@@ -43,6 +44,9 @@ public class NumbersLookup {
 
     /** How many numbers it holds, as the build wrote it down; 0 when there is nothing. */
     private long count;
+
+    /** What each category id in there means, read once and kept; it is a couple of dozen rows. */
+    private SparseArray<String> categories;
 
     public NumbersLookup(Context context) {
         this.context = context.getApplicationContext();
@@ -117,6 +121,7 @@ public class NumbersLookup {
 
         tried = false;
         count = 0;
+        categories = null;
     }
 
     public synchronized void close() {
@@ -178,6 +183,25 @@ public class NumbersLookup {
             LOG.warn("readCount() failed", e);
             return 0;
         }
+    }
+
+    /**
+     * What a category id means, for the ones the library's own list doesn't have.
+     *
+     * <p>A source can bring categories nobody had before, and they are given ids here as
+     * they arrive. The names are the source's own - untranslated, because nobody has
+     * translated a category that didn't exist until this morning - which is better than
+     * showing a number or nothing at all.
+     *
+     * @return the name as the table has it, or null when it doesn't know the id either
+     */
+    public synchronized String categoryName(int id) {
+        SQLiteDatabase db = open();
+        if (db == null) return null;
+
+        if (categories == null) categories = NumbersDb.getCategories(db);
+
+        return categories.get(id);
     }
 
     /**

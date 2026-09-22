@@ -130,11 +130,19 @@ public class NumbersCompiler {
         /** What the library has fetched since, for the source whose files it keeps. */
         public final File updatesDir;
 
+        /** The SQLite database it handed over, when that is what it hands over. */
+        public final File database;
+
         public Input(NumberSource source, String tag, File dir, File updatesDir) {
+            this(source, tag, dir, updatesDir, null);
+        }
+
+        public Input(NumberSource source, String tag, File dir, File updatesDir, File database) {
             this.source = source;
             this.tag = tag;
             this.dir = dir;
             this.updatesDir = updatesDir;
+            this.database = database;
         }
 
     }
@@ -314,7 +322,8 @@ public class NumbersCompiler {
             int total = 0;
 
             for (Input input : inputs) {
-                List<String> names = input.dir != null ? listSlices(input.dir) : null;
+                List<String> names = input.dir != null && input.database == null
+                        ? listSlices(input.dir) : null;
 
                 if (names != null && input.updatesDir != null) {
                     names = new ArrayList<>(names);
@@ -358,7 +367,10 @@ public class NumbersCompiler {
                      */
                     boolean asLayer = i != 0;
 
-                    if (names != null && !names.isEmpty()) {
+                    if (input.database != null) {
+                        // one file holding the whole of what this source knows
+                        run.readSqlite(input, sourceId, asLayer);
+                    } else if (names != null && !names.isEmpty()) {
                         run.readFiles(input, names, sourceId, asLayer);
                     } else if (extra != null && extra.canRead(source)) {
                         // a source the app holds itself, handed over the same way
@@ -646,6 +658,51 @@ public class NumbersCompiler {
             for (int i = 0; i < batch.files; i++) {
                 step();
             }
+        }
+
+        /**
+         * Reads a source that handed over one SQLite database.
+         *
+         * <p>A file rather than a directory, and a format that is not the community
+         * database's - what it has in common with the rest is that it ends up as rows in
+         * the same table, in the place in the order its source has.
+         */
+        void readSqlite(Input input, int sourceId, boolean asLayer) {
+            if (log != null) {
+                log.line(tag, context.getString(R.string.build_log_reading_database));
+            }
+
+            SqliteImporter.Result result = SqliteImporter.read(input.database, db, writer,
+                    sourceId, asLayer, filter,
+                    read -> {
+                        if (log == null) return;
+
+                        long now = System.currentTimeMillis();
+                        if (now - lastLogged < LOG_INTERVAL_MS) return;
+
+                        lastLogged = now;
+
+                        log.line(tag, context.getString(R.string.build_log_ingesting_rows), read);
+                    });
+
+            /*
+             * What the file said it was, kept with the source: for a database that is
+             * published in numbered versions it is the only way to see, later, which one is
+             * on the phone.
+             */
+            if (result.version > 0) input.source.setVersion(result.version);
+
+            sourceNumbers += result.read - result.deletions;
+            sourceDeletions += result.deletions;
+            sourceSkipped += result.skipped;
+
+            pending += result.read;
+            entries += result.read;
+            files++;
+
+            commitIfDue();
+
+            step();
         }
 
         /** Reads a source the app holds itself, as a layer over what is already there. */

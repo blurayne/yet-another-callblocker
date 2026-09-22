@@ -6923,6 +6923,110 @@ open_about_activity:
   tr: Hakkında
   uk: Про застосунок
   vi: Giới thiệu
+open_statistics_activity:
+  comment: activity_main.xml title; AndroidManifest.xml title bar; StatisticsActivity
+  en: Statistics
+  de: Statistik
+stats_overview:
+  comment: StatisticsActivity
+  en: Overview
+  de: Überblick
+stats_top_negative:
+  comment: StatisticsActivity
+  en: Most reported numbers
+  de: Meistgemeldete Nummern
+stats_top_positive:
+  comment: StatisticsActivity
+  en: Best rated numbers
+  de: Bestbewertete Nummern
+stats_categories:
+  comment: StatisticsActivity
+  en: Categories
+  de: Kategorien
+stats_sources:
+  comment: StatisticsActivity
+  en: Sources
+  de: Quellen
+stats_named_only:
+  comment: activity_statistics.xml title
+  en: Only where a company is known
+  de: Nur mit bekannter Firma
+stats_top_hint_named:
+  comment: StatisticsActivity
+  en: The %d numbers with the strongest rating that some source knows a company for. Tap one for details.
+  de: Die %d am stärksten bewerteten Nummern, zu denen eine Quelle eine Firma kennt. Antippen für Details.
+stats_top_hint_all:
+  comment: StatisticsActivity
+  en: The %d numbers with the strongest rating, companies known or not. Tap one for details.
+  de: Die %d am stärksten bewerteten Nummern, mit oder ohne bekannte Firma. Antippen für Details.
+stats_empty:
+  comment: StatisticsActivity
+  en: Nothing built yet. Build the database first.
+  de: Noch nichts gebaut. Zuerst die Datenbank bauen.
+stats_nothing:
+  comment: StatisticsActivity
+  en: Nothing to show
+  de: Nichts anzuzeigen
+stats_loading:
+  comment: StatisticsActivity
+  en: Counting\u2026
+  de: Wird gezählt\u2026
+stats_numbers:
+  comment: StatisticsActivity
+  en: Numbers
+  de: Nummern
+stats_negative:
+  comment: StatisticsActivity
+  en: Rated negative
+  de: Negativ bewertet
+stats_positive:
+  comment: StatisticsActivity
+  en: Rated positive
+  de: Positiv bewertet
+stats_neutral:
+  comment: StatisticsActivity
+  en: Rated neutral
+  de: Neutral bewertet
+stats_names:
+  comment: StatisticsActivity
+  en: Company names
+  de: Firmennamen
+stats_named_negative:
+  comment: StatisticsActivity
+  en: Rated negative with a company known
+  de: Negativ bewertet mit bekannter Firma
+stats_deleted:
+  comment: StatisticsActivity
+  en: Taken out by a later source
+  de: Von einer späteren Quelle entfernt
+stats_size:
+  comment: StatisticsActivity
+  en: Size on disk
+  de: Größe auf dem Speicher
+stats_filtered:
+  comment: StatisticsActivity
+  en: Filtered
+  de: Gefiltert
+stats_built:
+  comment: StatisticsActivity
+  en: Built
+  de: Gebaut
+stats_yes:
+  comment: StatisticsActivity
+  en: 'yes'
+  de: ja
+stats_no:
+  comment: StatisticsActivity
+  en: 'no'
+  de: nein
+stats_no_category:
+  comment: StatisticsActivity
+  en: No category
+  de: Ohne Kategorie
+stats_unnamed_source:
+  comment: StatisticsActivity
+  en: Unnamed source
+  de: Quelle ohne Namen
 open_help_activity:
   comment: activity_main.xml title
   en: Help

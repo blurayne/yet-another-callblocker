@@ -271,6 +271,10 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, AboutActivity.class));
     }
 
+    public void onOpenStatistics(MenuItem item) {
+        startActivity(StatisticsActivity.getIntent(this));
+    }
+
     private void onCallLogItemClicked(CallLogItemGroup group) {
         List<CallLogItem> items = group.getItems();
 

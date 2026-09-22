@@ -198,6 +198,14 @@
                 android:value=".MainActivity" />
         </activity>
         <activity
+            android:name=".StatisticsActivity"
+            android:label="@string/open_statistics_activity"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
             android:name=".AboutActivity"
             android:label="@string/about_activity"
             android:parentActivityName=".MainActivity">

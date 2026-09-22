@@ -23,6 +23,10 @@
         android:title="@string/open_whitelist_activity" />
 
     <item
+        android:onClick="onOpenStatistics"
+        android:title="@string/open_statistics_activity" />
+
+    <item
         android:onClick="onOpenSettings"
         android:title="@string/open_settings_activity" />
 

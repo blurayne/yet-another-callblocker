@@ -139,6 +139,32 @@
             android:textSize="12sp"
             tools:text="Last fetched 2 hours ago" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/testButton"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="-8dp"
+                android:layout_marginStart="-8dp"
+                android:onClick="onTestButtonClicked"
+                android:text="@string/source_test_connection" />
+
+            <Button
+                android:id="@+id/fetchButton"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="onFetchClicked"
+                android:text="@string/source_fetch" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </ScrollView>

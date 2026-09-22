@@ -2299,19 +2299,19 @@ source_preset_custom:
   en: Something else\u2026
   de: Etwas anderes\u2026
 source_fetch:
-  comment: number_source_item.xml text; NumberSourcesActivity
+  comment: number_source_item.xml text; activity_edit_number_source.xml text; NumberSourcesActivity
   en: Fetch now
   de: Jetzt abrufen
 source_download:
   comment: NumberSourcesActivity
-  en: Download now
-  de: Jetzt herunterladen
+  en: Fetch now
+  de: Jetzt abrufen
 sources_none_enabled:
   comment: NumberSourcesActivity toast; DbCompileService build log; TaskService
   en: No source is switched on, so nothing was fetched.
   de: Keine Quelle ist eingeschaltet, es wurde nichts geholt.
 source_fetching:
-  comment: NumberSourcesActivity toast; DbCompileService
+  comment: EditNumberSourceActivity toast; NumberSourcesActivity toast; DbCompileService
   en: Fetching\u2026
   de: Wird abgerufen\u2026
 sources_compile:
@@ -2487,7 +2487,11 @@ source_position:
   en: read %d.
   de: '%d. gelesen'
 source_test:
-  comment: number_source_item.xml text; activity_edit_number_source.xml title
+  comment: number_source_item.xml text
+  en: Test
+  de: Testen
+source_test_connection:
+  comment: activity_edit_number_source.xml text; activity_edit_number_source.xml title
   en: Test connection
   de: Verbindung testen
 source_test_running:

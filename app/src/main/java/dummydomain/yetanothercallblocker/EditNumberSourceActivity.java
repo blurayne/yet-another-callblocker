@@ -26,11 +26,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import dummydomain.yetanothercallblocker.data.DbCompileService;
 import dummydomain.yetanothercallblocker.data.YacbHolder;
 import dummydomain.yetanothercallblocker.data.source.ArchiveUtils;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceNames;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
+import dummydomain.yetanothercallblocker.work.TaskService;
 
 /** One source: where it is, what it holds, what it needs to let us in, how often to ask. */
 public class EditNumberSourceActivity extends AppCompatActivity {
@@ -150,9 +152,14 @@ public class EditNumberSourceActivity extends AppCompatActivity {
     }
 
     public void onSaveClicked(MenuItem item) {
-        if (sourceService == null) return;
+        if (save()) finish();
+    }
 
-        if (!apply(source)) return;
+    /** Writes the form down, secret included; false when the form isn't a source yet. */
+    private boolean save() {
+        if (sourceService == null) return false;
+
+        if (!apply(source)) return false;
 
         sourceService.save(source);
 
@@ -163,6 +170,33 @@ public class EditNumberSourceActivity extends AppCompatActivity {
         } else if (!TextUtils.isEmpty(secret)) {
             sourceService.setSecret(source.getId(), secret);
         }
+
+        return true;
+    }
+
+    /** The button under the form does what the menu item does. */
+    public void onTestButtonClicked(View view) {
+        onTestClicked(null);
+    }
+
+    /**
+     * Saves and fetches: what is fetched is the stored source, so the form is written down
+     * first - pressing "fetch now" on an address that was just typed means that address.
+     * The list is where the fetch is followed, so the screen closes onto it.
+     */
+    public void onFetchClicked(View view) {
+        if (!save()) return;
+
+        boolean database = source.getType() == NumberSource.Type.DATABASE;
+
+        if (!database) {
+            Toast.makeText(this, R.string.source_fetching, Toast.LENGTH_SHORT).show();
+        }
+
+        TaskService.start(this, database
+                        ? TaskService.TASK_DOWNLOAD_MAIN_DB
+                        : TaskService.TASK_UPDATE_PHONE_BLOCK,
+                DbCompileService.Trigger.FORCED);
 
         finish();
     }

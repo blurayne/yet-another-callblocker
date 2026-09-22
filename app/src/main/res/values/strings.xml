@@ -136,7 +136,7 @@
     <string name="source_preset_phone_block">PhoneBlock list</string>
     <string name="source_preset_custom">Something else\u2026</string>
     <string name="source_fetch">Fetch now</string>
-    <string name="source_download">Download now</string>
+    <string name="source_download">Fetch now</string>
     <string name="sources_none_enabled">No source is switched on, so nothing was fetched.</string>
     <string name="source_fetching">Fetching\u2026</string>
     <string name="sources_compile">Build the database now</string>
@@ -182,7 +182,8 @@
     <string name="source_reorder">Move</string>
     <string name="sources_order_hint">The database is built in this order: the first source that is switched on brings the database itself, every source below it adds its numbers on top and can take numbers out again. Drag a source by its handle to move it.</string>
     <string name="source_position">read %d.</string>
-    <string name="source_test">Test connection</string>
+    <string name="source_test">Test</string>
+    <string name="source_test_connection">Test connection</string>
     <string name="source_test_running">Testing\u2026</string>
     <string name="source_test_result">test: %s</string>
     <string name="source_test_ok">works</string>

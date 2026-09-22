@@ -354,7 +354,7 @@
     <string name="source_preset_phone_block">PhoneBlock-Liste</string>
     <string name="source_preset_custom">Etwas anderes\u2026</string>
     <string name="source_fetch">Jetzt abrufen</string>
-    <string name="source_download">Jetzt herunterladen</string>
+    <string name="source_download">Jetzt abrufen</string>
     <string name="sources_none_enabled">Keine Quelle ist eingeschaltet, es wurde nichts geholt.</string>
     <string name="source_fetching">Wird abgerufen\u2026</string>
     <string name="sources_compile">Datenbank jetzt bauen</string>
@@ -400,7 +400,8 @@
     <string name="source_reorder">Verschieben</string>
     <string name="sources_order_hint">In dieser Reihenfolge wird die Datenbank gebaut: Die erste eingeschaltete Quelle bringt die Datenbank selbst, jede darunter legt ihre Nummern darüber und kann auch Nummern wieder herausnehmen. Zum Verschieben am Griff ziehen.</string>
     <string name="source_position">%d. gelesen</string>
-    <string name="source_test">Verbindung testen</string>
+    <string name="source_test">Testen</string>
+    <string name="source_test_connection">Verbindung testen</string>
     <string name="source_test_running">Wird getestet\u2026</string>
     <string name="source_test_result">Test: %s</string>
     <string name="source_test_ok">funktioniert</string>

@@ -12,7 +12,7 @@
     <item
         android:id="@+id/menu_test"
         android:onClick="onTestClicked"
-        android:title="@string/source_test"
+        android:title="@string/source_test_connection"
         app:showAsAction="never" />
 
     <item

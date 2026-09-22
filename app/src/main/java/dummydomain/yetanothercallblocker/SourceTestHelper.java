@@ -64,7 +64,8 @@ public class SourceTestHelper {
         return context.getString(R.string.source_test_result, getOutcome(context, result));
     }
 
-    private static String getOutcome(Context context, SourceTester.Result result) {
+    /** The same, without the "test:" in front - for a line that isn't about a test. */
+    public static String getOutcome(Context context, SourceTester.Result result) {
         switch (result.outcome) {
             case OK:
                 if (result.format == null) return context.getString(R.string.source_test_ok);

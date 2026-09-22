@@ -30,9 +30,10 @@ import dummydomain.yetanothercallblocker.sia.utils.FileUtils;
  * able to block a call - not to be able to rebuild. The cost is that the next build fetches
  * the sources again, which is the trade this is.
  *
- * <p>Three small things do go in beside the table, because they are read on every call and
- * are not in it: the business names, what the app knows about countries, and the categories.
- * They live in the same directory as the slices and are a few kilobytes.
+ * <p>One small thing goes in beside the table, because it is read and is not in it: what
+ * the library knows about the database and about countries, its {@code sia_*} files. They
+ * live in the same directory as the slices and are a few kilobytes. The business names
+ * used to be taken from there too; they are in the table now, like the numbers.
  *
  * <p>Deliberately <em>not</em> included is the index over the slices. While that file is
  * there the app takes the database to be present: a restored phone would neither fetch it
@@ -54,10 +55,10 @@ public class DatabaseBackup {
     /** The table itself, under the name it is read from. */
     private static final String DB_ENTRY = "numbers.db";
 
-    /** And the small files that are read on every call but are not in the table. */
+    /** And the small files that are read but are not in the table. */
     private static final String SUPPORT_PREFIX = "support/";
 
-    private static final String[] SUPPORT_PREFIXES = {"featured_slice_", "sia_"};
+    private static final String[] SUPPORT_PREFIXES = {"sia_"};
 
     private static final int BUFFER_SIZE = 8192;
 

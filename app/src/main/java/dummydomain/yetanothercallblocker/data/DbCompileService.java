@@ -546,7 +546,7 @@ public class DbCompileService {
          * diagnosis, where "couldn't be fetched" would have been the start of one.
          */
         buildLog.line(tagOf(source), context.getString(R.string.build_log_answer,
-                SourceTestHelper.getMessage(context, result)));
+                SourceTestHelper.getOutcome(context, result)));
 
         if (!result.isOk() || result.content == ArchiveUtils.Content.UNKNOWN) {
             LOG.info("probeContent() {} didn't say what it holds", tagOf(source));

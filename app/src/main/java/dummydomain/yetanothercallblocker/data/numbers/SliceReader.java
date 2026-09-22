@@ -3,6 +3,7 @@ package dummydomain.yetanothercallblocker.data.numbers;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 /**
  * Reads a database slice, entry by entry.
@@ -36,7 +37,14 @@ public class SliceReader {
 
     }
 
+    /** Told about every name of a featured slice, in the order they are stored (by number). */
+    public interface NameVisitor {
+        void onName(long number, String name);
+    }
+
     private static final int BUFFER_SIZE = 32 * 1024;
+
+    private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private SliceReader() {
     }
@@ -91,6 +99,68 @@ public class SliceReader {
         for (int i = 0; i < deletedCount; i++) {
             visitor.onDeleted(readLong(in));
         }
+
+        String endMark = readChars(in, 6);
+        if (!"YABEND".equalsIgnoreCase(endMark) && !"MTZEND".equalsIgnoreCase(endMark)) {
+            throw new IOException("End mark not found: " + endMark);
+        }
+
+        return version;
+    }
+
+    /**
+     * Reads a whole featured slice: the business names the database has for its numbers.
+     *
+     * <p>Marked YABX, or MTZX as SIA ships it. The shape is the plain one: a header, a
+     * version, a count, that many entries of a number and a UTF-8 name with its length in
+     * bytes in front, the divider, a count of extras that is always 0, and the end mark.
+     *
+     * @return the version the slice says it has
+     * @throws IOException when the stream isn't a featured slice, or ends in the middle
+     */
+    public static int readFeatured(InputStream inputStream, NameVisitor visitor)
+            throws IOException {
+        BufferedInputStream in = inputStream instanceof BufferedInputStream
+                ? (BufferedInputStream) inputStream
+                : new BufferedInputStream(inputStream, BUFFER_SIZE);
+
+        String header = readChars(in, 4);
+        if (!"YABX".equalsIgnoreCase(header) && !"MTZX".equalsIgnoreCase(header)) {
+            throw new IOException("Not a featured slice: " + header);
+        }
+
+        int version = readInt(in);
+
+        int count = readInt(in);
+        if (count < 0) throw new IOException("Negative number of items: " + count);
+
+        byte[] buffer = new byte[256];
+
+        for (int i = 0; i < count; i++) {
+            long number = readLong(in);
+
+            int length = readInt(in);
+            if (length < 0) throw new IOException("Negative name length: " + length);
+
+            if (buffer.length < length) buffer = new byte[length];
+
+            int read = 0;
+            while (read < length) {
+                int got = in.read(buffer, read, length - read);
+                if (got < 0) throw new IOException("The slice ends in the middle of a name");
+                read += got;
+            }
+
+            visitor.onName(number, new String(buffer, 0, length, UTF_8));
+        }
+
+        String divider = readChars(in, 2);
+        if (!"CP".equalsIgnoreCase(divider)) {
+            throw new IOException("Divider not found: " + divider);
+        }
+
+        int extras = readInt(in);
+        if (extras != 0) throw new IOException("Number of extras is not 0: " + extras);
 
         String endMark = readChars(in, 6);
         if (!"YABEND".equalsIgnoreCase(endMark) && !"MTZEND".equalsIgnoreCase(endMark)) {

@@ -211,6 +211,9 @@ public class NumbersCompiler {
     }
 
     private static final String SLICE_PREFIX = "data_slice_";
+
+    /** The slices holding the business names, beside the ones holding the numbers. */
+    private static final String FEATURED_PREFIX = "featured_slice_";
     private static final String SLICE_POSTFIX = ".dat";
     private static final String SECONDARY_POSTFIX = ".sia";
 
@@ -372,6 +375,13 @@ public class NumbersCompiler {
                         run.readSqlite(input, sourceId, asLayer);
                     } else if (names != null && !names.isEmpty()) {
                         run.readFiles(input, names, sourceId, asLayer);
+
+                        /*
+                         * And the names the same files come with. Into the table as well,
+                         * because the table is the whole answer once it is built: nothing
+                         * opens the library's own files for a lookup after that.
+                         */
+                        run.readFeatured(input, sourceId);
                     } else if (extra != null && extra.canRead(source)) {
                         // a source the app holds itself, handed over the same way
                         run.readFrom(source, sourceId, extra);
@@ -758,6 +768,32 @@ public class NumbersCompiler {
             commitIfDue();
 
             step();
+        }
+
+        /** The business names a slice source brought, out of its featured slices. */
+        void readFeatured(Input input, int sourceId) {
+            List<String> featured = listNames(input.dir, FEATURED_PREFIX, SLICE_POSTFIX);
+            if (featured.isEmpty()) return;
+
+            for (String name : featured) {
+                File file = new File(input.dir, name);
+
+                try (InputStream inputStream
+                             = new BufferedInputStream(new FileInputStream(file))) {
+                    SliceReader.readFeatured(inputStream, (number, businessName) -> {
+                        // a name for a number the filter keeps out is one nothing asks for
+                        if (filter != null && !filter.keep(number)) return;
+
+                        writer.putName(number, businessName, sourceId);
+                        sourceNames++;
+                        pending++;
+                    });
+                } catch (Exception e) {
+                    LOG.warn("readFeatured() couldn't read {}", file, e);
+                }
+
+                commitIfDue();
+            }
         }
 
         void readAll(File dir, List<String> names, int sourceId, boolean asLayer) {

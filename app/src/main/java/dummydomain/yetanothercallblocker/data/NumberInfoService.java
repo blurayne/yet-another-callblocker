@@ -164,17 +164,16 @@ public class NumberInfoService {
         LOG.trace("getNumberInfo() communityItem={}", numberInfo.communityDatabaseItem);
 
         /*
-         * The name, from the same table first: a source that hands over a database brings
-         * its business names with it, and they are read into the table beside the numbers.
-         * The library's own featured files are what the primary source brought, and are
-         * asked when the table has no name - they aren't in it.
+         * The name, out of the same table and nowhere else: every source's business names
+         * are read into it beside the numbers, the library's featured slices included, so
+         * once it is built the library's files are not opened for a lookup at all. Until
+         * then, the library's own files are all there is.
          */
-        String tableName = numbersLookup != null && numbersLookup.isReady()
-                ? numbersLookup.getName(normalizedNumber) : null;
+        if (numbersLookup != null && numbersLookup.isReady()) {
+            String name = numbersLookup.getName(normalizedNumber);
 
-        if (!TextUtils.isEmpty(tableName)) {
-            numberInfo.featuredDatabaseItem = new FeaturedDatabaseItem(
-                    parseNumber(normalizedNumber), tableName);
+            numberInfo.featuredDatabaseItem = !TextUtils.isEmpty(name)
+                    ? new FeaturedDatabaseItem(parseNumber(normalizedNumber), name) : null;
         } else if (featuredDatabase != null) {
             numberInfo.featuredDatabaseItem = featuredDatabase.getDbItemByNumber(normalizedNumber);
         }

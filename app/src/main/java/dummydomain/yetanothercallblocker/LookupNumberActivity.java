@@ -214,13 +214,12 @@ public class LookupNumberActivity extends AppCompatActivity {
                         ? lookup.get(purePhoneNumber)
                         : YacbHolder.getCommunityDatabase().getDbItemByNumber(purePhoneNumber);
 
-                // and the name the same way: the table's sources first, the library after
-                String tableName = lookup != null && lookup.isReady()
-                        ? lookup.getName(purePhoneNumber) : null;
-
+                // and the name the same way: out of the table once there is one
                 FeaturedDatabaseItem featuredItem;
 
-                if (!TextUtils.isEmpty(tableName)) {
+                if (lookup != null && lookup.isReady()) {
+                    String name = lookup.getName(purePhoneNumber);
+
                     long number;
                     try {
                         number = Long.parseLong(purePhoneNumber.startsWith("+")
@@ -229,7 +228,8 @@ public class LookupNumberActivity extends AppCompatActivity {
                         number = 0;
                     }
 
-                    featuredItem = new FeaturedDatabaseItem(number, tableName);
+                    featuredItem = !TextUtils.isEmpty(name)
+                            ? new FeaturedDatabaseItem(number, name) : null;
                 } else {
                     featuredItem = YacbHolder.getFeaturedDatabase()
                             .getDbItemByNumber(purePhoneNumber);

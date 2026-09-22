@@ -67,10 +67,17 @@ public class SourceTestHelper {
     private static String getOutcome(Context context, SourceTester.Result result) {
         switch (result.outcome) {
             case OK:
-                return result.format != null
-                        ? context.getString(R.string.source_test_ok_format,
-                                context.getString(getFormatName(result.format)))
-                        : context.getString(R.string.source_test_ok);
+                if (result.format == null) return context.getString(R.string.source_test_ok);
+
+                String format = context.getString(getFormatName(result.format));
+
+                // what is inside it is the part that decides how the source will be read
+                if (result.content == ArchiveUtils.Content.UNKNOWN) {
+                    return context.getString(R.string.source_test_ok_format, format);
+                }
+
+                return context.getString(R.string.source_test_ok_content, format,
+                        context.getString(getContentName(result.content)));
 
             case NO_URL:
                 return context.getString(R.string.source_test_no_url);
@@ -91,6 +98,11 @@ public class SourceTestHelper {
                 return context.getString(R.string.source_test_unreachable,
                         !TextUtils.isEmpty(result.detail) ? result.detail : "");
         }
+    }
+
+    private static int getContentName(ArchiveUtils.Content content) {
+        return content == ArchiveUtils.Content.SQLITE
+                ? R.string.source_content_sqlite : R.string.source_content_sia;
     }
 
     private static int getFormatName(ArchiveUtils.Format format) {

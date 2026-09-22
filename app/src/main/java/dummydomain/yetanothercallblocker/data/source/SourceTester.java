@@ -78,13 +78,21 @@ public class SourceTester {
         public final int code;
         /** How the data is packed, when something was read. */
         public final ArchiveUtils.Format format;
+        /** And what is inside it, which is what decides how it is read. */
+        public final ArchiveUtils.Content content;
         /** Why it didn't work, in the words of whatever failed. */
         public final String detail;
 
         Result(Outcome outcome, int code, ArchiveUtils.Format format, String detail) {
+            this(outcome, code, format, ArchiveUtils.Content.UNKNOWN, detail);
+        }
+
+        Result(Outcome outcome, int code, ArchiveUtils.Format format,
+               ArchiveUtils.Content content, String detail) {
             this.outcome = outcome;
             this.code = code;
             this.format = format;
+            this.content = content != null ? content : ArchiveUtils.Content.UNKNOWN;
             this.detail = detail;
         }
 
@@ -143,10 +151,16 @@ public class SourceTester {
             ResponseBody body = response.body();
             if (body == null) return new Result(Outcome.EMPTY, response.code(), null, null);
 
-            ArchiveUtils.Format format = peek(body.byteStream());
-            if (format == null) return new Result(Outcome.EMPTY, response.code(), null, null);
+            /*
+             * Both questions off the same few kilobytes: how it is packed, and what is in
+             * there. An archive names what it holds at the front and a SQLite file says so
+             * in its first sixteen bytes, so neither needs the rest of the download.
+             */
+            Peeked peeked = peek(body.byteStream());
+            if (peeked == null) return new Result(Outcome.EMPTY, response.code(), null, null);
 
-            return new Result(Outcome.OK, response.code(), format, null);
+            return new Result(Outcome.OK, response.code(),
+                    peeked.format, peeked.content, null);
         } catch (Exception e) {
             return failed(e);
         }
@@ -255,15 +269,28 @@ public class SourceTester {
         return new Result(Outcome.HTTP_ERROR, response.code(), null, response.message());
     }
 
+    /** What the first bytes turned out to be. */
+    private static class Peeked {
+
+        final ArchiveUtils.Format format;
+        final ArchiveUtils.Content content;
+
+        Peeked(ArchiveUtils.Format format, ArchiveUtils.Content content) {
+            this.format = format;
+            this.content = content;
+        }
+
+    }
+
     /** Reads the first bytes and names what they are, or null when there are none. */
-    private static ArchiveUtils.Format peek(InputStream inputStream) throws IOException {
+    private static Peeked peek(InputStream inputStream) throws IOException {
         BufferedInputStream in = new BufferedInputStream(inputStream, PEEK_SIZE);
 
         in.mark(PEEK_SIZE);
         if (in.read() < 0) return null;
         in.reset();
 
-        return ArchiveUtils.detect(in);
+        return new Peeked(ArchiveUtils.detect(in), ArchiveUtils.inspect(in));
     }
 
     private static Result failed(Exception e) {

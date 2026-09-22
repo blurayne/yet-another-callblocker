@@ -338,7 +338,7 @@
     <string name="sources_compiling">Datenbank wird gebaut\u2026</string>
     <string name="source_name">Name</string>
     <string name="source_type">Quellentyp</string>
-    <string name="source_type_database">Community-Datenbank</string>
+    <string name="source_type_database">URL</string>
     <string name="source_type_phone_block">PhoneBlock API</string>
     <string name="source_type_carddav">Adressbuch (CardDAV), blockiert</string>
     <string name="source_url">Adresse</string>
@@ -377,6 +377,9 @@
     <string name="source_test_result">Test: %s</string>
     <string name="source_test_ok">funktioniert</string>
     <string name="source_test_ok_format">funktioniert, sieht aus wie %s</string>
+    <string name="source_test_ok_content">funktioniert: %1$s mit %2$s</string>
+    <string name="source_content_sia">den Dateien der Community-Datenbank</string>
+    <string name="source_content_sqlite">einer SQLite-Datenbank</string>
     <string name="source_test_no_url">keine Adresse, zu der man gehen k\u00f6nnte</string>
     <string name="source_test_bad_url">die Adresse l\u00e4sst sich nicht verwenden</string>
     <string name="source_test_unauthorized">die Anmeldung wurde abgelehnt (HTTP %d)</string>

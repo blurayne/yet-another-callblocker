@@ -77,6 +77,7 @@ public class NumberSource {
     private static final String KEY_FETCHED_URL = "fetchedUrl";
     private static final String KEY_ENTRIES = "entries";
     private static final String KEY_DROP_FILES = "dropFiles";
+    private static final String KEY_CONTENT = "content";
 
     /** Stays the same for the life of the source: its files and its password hang off it. */
     private final String id;
@@ -120,6 +121,16 @@ public class NumberSource {
 
     /** How many numbers of the built database came from here. */
     private long entries;
+
+    /**
+     * What this source hands over, once anything has looked.
+     *
+     * <p>Not something the user picks: a URL is a URL, and what is behind it is a question
+     * the bytes answer. The test button asks it without downloading the whole thing, and a
+     * fetch answers it again from what actually arrived - so this is what was last seen
+     * there rather than a promise about what will be.
+     */
+    private ArchiveUtils.Content content = ArchiveUtils.Content.UNKNOWN;
 
     public NumberSource() {
         this(UUID.randomUUID().toString());
@@ -188,6 +199,15 @@ public class NumberSource {
 
     public void setDropFilesAfterBuild(boolean drop) {
         this.dropFilesAfterBuild = drop;
+    }
+
+    /** What was last seen at this address: slice files, a SQLite database, or nothing yet. */
+    public ArchiveUtils.Content getContent() {
+        return content != null ? content : ArchiveUtils.Content.UNKNOWN;
+    }
+
+    public void setContent(ArchiveUtils.Content content) {
+        this.content = content != null ? content : ArchiveUtils.Content.UNKNOWN;
     }
 
     /** Whether this source hands over files at all, which is what there would be to drop. */
@@ -303,6 +323,7 @@ public class NumberSource {
         json.put(KEY_FETCHED_URL, fetchedUrl);
         json.put(KEY_ENTRIES, entries);
         json.put(KEY_DROP_FILES, dropFilesAfterBuild);
+        json.put(KEY_CONTENT, getContent().name());
 
         return json;
     }
@@ -324,6 +345,8 @@ public class NumberSource {
         source.fetchedUrl = json.optString(KEY_FETCHED_URL, null);
         source.entries = json.optLong(KEY_ENTRIES);
         source.dropFilesAfterBuild = json.optBoolean(KEY_DROP_FILES, false);
+        source.content = parse(ArchiveUtils.Content.class, json.optString(KEY_CONTENT),
+                ArchiveUtils.Content.UNKNOWN);
 
         return source;
     }

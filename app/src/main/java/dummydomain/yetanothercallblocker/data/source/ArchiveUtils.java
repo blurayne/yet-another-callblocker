@@ -1,5 +1,8 @@
 package dummydomain.yetanothercallblocker.data.source;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,9 +27,28 @@ import java.util.zip.ZipInputStream;
  */
 public class ArchiveUtils {
 
-    /** What a stream turned out to be. */
+    private static final Logger LOG = LoggerFactory.getLogger(ArchiveUtils.class);
+
+    /** What a stream turned out to be packed in. */
     public enum Format {
         PLAIN, GZIP, TAR, TAR_GZIP, ZIP
+    }
+
+    /**
+     * And what is inside it, which is a different question with a different answer.
+     *
+     * <p>How a source packs its data says nothing about what the data is: the same zip can
+     * hold the community database's own slice files or one SQLite database, and the two are
+     * read by entirely different machinery. A file server calls both of them
+     * "application/octet-stream", so the content is what has to say.
+     */
+    public enum Content {
+        /** The community database's own format: a directory of {@code data_slice_*.dat}. */
+        SIA,
+        /** One SQLite database, in the shape the update packages are built in. */
+        SQLITE,
+        /** Something that is neither, or too little of it to tell. */
+        UNKNOWN
     }
 
     /** How much has to be readable ahead to tell the formats apart. */
@@ -41,6 +63,16 @@ public class ArchiveUtils {
 
     /** The name the database is expected to have inside an archive. */
     private static final String DATABASE_SUFFIX = ".dat";
+
+    /** The first bytes of every SQLite file there has ever been. */
+    private static final byte[] SQLITE_MAGIC = {
+            'S', 'Q', 'L', 'i', 't', 'e', ' ', 'f', 'o', 'r', 'm', 'a', 't', ' ', '3', 0};
+
+    /** What a SQLite database is called when it is packed with other things. */
+    private static final String[] SQLITE_SUFFIXES = {".sqlite", ".sqlite3", ".db"};
+
+    /** How many entries of an archive are looked at before giving up on naming it. */
+    private static final int ENTRIES_TO_LOOK_AT = 32;
 
     private ArchiveUtils() {
     }
@@ -211,6 +243,116 @@ public class ArchiveUtils {
         }
 
         return Format.PLAIN;
+    }
+
+    /**
+     * What the stream holds, as opposed to how it is packed. The stream is left where it was.
+     *
+     * <p>The first bytes are enough for all of it, which is what makes this worth doing
+     * before anything is downloaded: an archive names its entries at the front, a gzip
+     * stream unpacks to its first block from its first block, and a SQLite file says so in
+     * its first sixteen bytes.
+     */
+    public static Content inspect(BufferedInputStream in) throws IOException {
+        Format format = detect(in);
+
+        switch (format) {
+            case ZIP:
+                return namedInZip(in);
+
+            case TAR:
+                return namedInTar(in, false);
+
+            case TAR_GZIP:
+                return namedInTar(in, true);
+
+            case GZIP:
+                return unpacksToSqlite(in) ? Content.SQLITE : Content.SIA;
+
+            default:
+                return startsWith(peek(in, SQLITE_MAGIC.length), SQLITE_MAGIC)
+                        ? Content.SQLITE : Content.SIA;
+        }
+    }
+
+    /** What an archive's entry names say it holds. */
+    private static Content ofName(String name) {
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+
+        if (lower.endsWith(DATABASE_SUFFIX)) return Content.SIA;
+
+        for (String suffix : SQLITE_SUFFIXES) {
+            if (lower.endsWith(suffix)) return Content.SQLITE;
+        }
+
+        return Content.UNKNOWN;
+    }
+
+    private static Content namedInZip(BufferedInputStream in) throws IOException {
+        in.mark(HEADER_SIZE * 64);
+        try {
+            ZipInputStream zip = new ZipInputStream(in);
+
+            for (int i = 0; i < ENTRIES_TO_LOOK_AT; i++) {
+                ZipEntry entry = zip.getNextEntry();
+                if (entry == null) break;
+
+                if (entry.isDirectory()) continue;
+
+                Content content = ofName(entry.getName());
+                if (content != Content.UNKNOWN) return content;
+            }
+        } catch (IOException e) {
+            LOG.debug("namedInZip() couldn't read the entries", e);
+        } finally {
+            in.reset();
+        }
+
+        return Content.UNKNOWN;
+    }
+
+    private static Content namedInTar(BufferedInputStream in, boolean gzipped)
+            throws IOException {
+        in.mark(HEADER_SIZE * 64);
+        try {
+            InputStream tar = gzipped ? new GZIPInputStream(in) : in;
+
+            byte[] header = new byte[HEADER_SIZE];
+
+            for (int i = 0; i < ENTRIES_TO_LOOK_AT; i++) {
+                if (!readFully(tar, header)) break;
+
+                String name = readString(header, 0, 100);
+                if (name.isEmpty()) break;
+
+                Content content = ofName(name);
+                if (content != Content.UNKNOWN) return content;
+
+                long size = readOctal(header, 124, 12);
+
+                skip(tar, (size + HEADER_SIZE - 1) / HEADER_SIZE * HEADER_SIZE);
+            }
+        } catch (IOException e) {
+            LOG.debug("namedInTar() couldn't read the entries", e);
+        } finally {
+            in.reset();
+        }
+
+        return Content.UNKNOWN;
+    }
+
+    /** Whether what the gzip stream unpacks to is a SQLite database. */
+    private static boolean unpacksToSqlite(BufferedInputStream in) throws IOException {
+        in.mark(HEADER_SIZE * 8);
+        try {
+            byte[] unpacked = peekFully(new GZIPInputStream(in), SQLITE_MAGIC.length);
+
+            return startsWith(unpacked, SQLITE_MAGIC);
+        } catch (IOException e) {
+            return false;
+        } finally {
+            in.reset();
+        }
     }
 
     /** Whether the gzip stream holds a tar, which only its content can say. */

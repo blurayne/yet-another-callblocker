@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Objects;
 
 import dummydomain.yetanothercallblocker.data.YacbHolder;
+import dummydomain.yetanothercallblocker.data.source.ArchiveUtils;
 import dummydomain.yetanothercallblocker.data.source.NumberSource;
 import dummydomain.yetanothercallblocker.data.source.SourceNames;
 import dummydomain.yetanothercallblocker.data.source.SourceService;
@@ -184,6 +185,18 @@ public class EditNumberSourceActivity extends AppCompatActivity {
             if (isFinishing()) return;
 
             status.setText(message);
+
+            /*
+             * And what it found is kept: what is behind a URL decides how the source is read,
+             * so having just been told, the source is not left guessing. It is written down
+             * on the stored source rather than only on the one that was tested, because the
+             * user may well close the screen having read the answer and nothing else.
+             */
+            if (result.isOk() && result.content != ArchiveUtils.Content.UNKNOWN) {
+                source.setContent(result.content);
+
+                if (sourceService != null) sourceService.save(source);
+            }
         });
     }
 

@@ -84,6 +84,9 @@ public class DbCompileService {
     /** How much has to arrive before the download says so again. */
     private static final long PROGRESS_EVERY_BYTES = 512 * 1024;
 
+    /** How often the log says it, when the size isn't known and a tenth can't be worked out. */
+    private static final long LOG_EVERY_BYTES = 5 * 1024 * 1024;
+
     private static final int CONNECT_TIMEOUT_SECONDS = 30;
     private static final int READ_TIMEOUT_SECONDS = 120;
 
@@ -592,7 +595,20 @@ public class DbCompileService {
          * slice files from a SQLite database. Without it the first fetch of a SQLite source
          * would be unpacked into the library's own directory, where it is not a database.
          */
-        if (source.getContent() == ArchiveUtils.Content.UNKNOWN) probeContent(source);
+        if (source.getContent() == ArchiveUtils.Content.UNKNOWN) {
+            /*
+             * An answer that says the address is wrong ends it here. Going on meant asking the
+             * library to load what a 404 page sent, then looking inside it for slices, then
+             * downloading it once more - three lines of noise in the log after the one that
+             * already said what was wrong, and "not fetchable" at the end of them.
+             */
+            String failure = probeContent(source);
+
+            if (failure != null) {
+                noteFailed(source, failure);
+                return failure;
+            }
+        }
 
         if (primary && source.getContent() != ArchiveUtils.Content.SQLITE) {
             return downloadBase(source, listener);
@@ -601,8 +617,13 @@ public class DbCompileService {
         return downloadIntoDir(source, getSourceDir(source), listener);
     }
 
-    /** Asks the address what it holds and writes the answer down on the source. */
-    private void probeContent(NumberSource source) {
+    /**
+     * Asks the address what it holds and writes the answer down on the source.
+     *
+     * @return why the address is no good, when the answer says so plainly; null when it
+     *         answered, or when the question failed in a way the download may not
+     */
+    private String probeContent(NumberSource source) {
         String secret = sourceService != null ? sourceService.getSecret(source.getId()) : null;
 
         SourceTester.Result result = SourceTester.test(source, secret);
@@ -615,9 +636,11 @@ public class DbCompileService {
         buildLog.line(tagOf(source), context.getString(R.string.build_log_answer,
                 SourceTestHelper.getOutcome(context, result)));
 
+        if (isFatal(result)) return SourceTestHelper.getOutcome(context, result);
+
         if (!result.isOk() || result.content == ArchiveUtils.Content.UNKNOWN) {
             LOG.info("probeContent() {} didn't say what it holds", tagOf(source));
-            return;
+            return null;
         }
 
         LOG.info("probeContent() {} holds {}", tagOf(source), result.content);
@@ -625,6 +648,31 @@ public class DbCompileService {
         source.setContent(result.content);
 
         if (sourceService != null) sourceService.save(source);
+
+        return null;
+    }
+
+    /**
+     * Whether the answer means the download would fail the same way.
+     *
+     * <p>Only the plain cases: an address that isn't one, a login that isn't accepted, no
+     * such host, and a server that says the file isn't there. Anything else - a server that
+     * dislikes being asked for a part of a file, say - is left to the download to find out.
+     */
+    private static boolean isFatal(SourceTester.Result result) {
+        switch (result.outcome) {
+            case NO_URL:
+            case BAD_URL:
+            case UNAUTHORIZED:
+            case UNREACHABLE:
+                return true;
+
+            case HTTP_ERROR:
+                return result.code == 404 || result.code == 410;
+
+            default:
+                return false;
+        }
     }
 
     /**
@@ -1251,12 +1299,25 @@ public class DbCompileService {
             listener.onProgress((int) (written * 1000 / total), 1000);
         }
 
-        buildLog.line(tagOf(source), total > 0
-                ? context.getString(R.string.build_log_downloaded_of,
-                        megabytes(written), megabytes(total))
-                : context.getString(R.string.build_log_downloaded, megabytes(written)));
+        /*
+         * The log only every tenth of the way, or every few megabytes when the size isn't
+         * known: a line per half megabyte was ninety lines for one download, and the log is
+         * read for what happened, not watched as a progress bar - the notification is that.
+         */
+        boolean first = lastSaid == 0; // the start, and the call after the last chunk
+        boolean step = total > 0
+                ? written * 10 / total != (lastSaid - 1) * 10 / total
+                : written / LOG_EVERY_BYTES != (lastSaid - 1) / LOG_EVERY_BYTES;
 
-        return written;
+        if (first || step) {
+            buildLog.line(tagOf(source), total > 0
+                    ? context.getString(R.string.build_log_downloaded_of,
+                            megabytes(written), megabytes(total))
+                    : context.getString(R.string.build_log_downloaded, megabytes(written)));
+        }
+
+        // never 0 again, so that "first" means the first
+        return Math.max(1, written);
     }
 
     /** A size a person reads rather than a number of bytes. */

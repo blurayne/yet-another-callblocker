@@ -758,21 +758,28 @@ public class NumbersCompiler {
                 log.line(tag, context.getString(R.string.build_log_reading_database));
             }
 
-            SqliteImporter.Result result = SqliteImporter.read(input.database, db, writer,
-                    sourceId, asLayer, filter,
-                    read -> {
-                        // a file of millions of rows is read in one go; this is where it looks
-                        DbCompileService.checkCancelled();
+            SqliteImporter.Progress progress = read -> {
+                // a file of millions of rows is read in one go; this is where it looks
+                DbCompileService.checkCancelled();
 
-                        if (log == null) return;
+                if (log == null) return;
 
-                        long now = System.currentTimeMillis();
-                        if (now - lastLogged < LOG_INTERVAL_MS) return;
+                long now = System.currentTimeMillis();
+                if (now - lastLogged < LOG_INTERVAL_MS) return;
 
-                        lastLogged = now;
+                lastLogged = now;
 
-                        log.line(tag, context.getString(R.string.build_log_ingesting_rows), read);
-                    });
+                log.line(tag, context.getString(R.string.build_log_ingesting_rows), read);
+            };
+
+            SqliteImporter.Result result;
+
+            if (YablReader.isYabl(input.database)) {
+                result = readYabl(input, sourceId, asLayer, progress);
+            } else {
+                result = SqliteImporter.read(input.database, db, writer, sourceId, asLayer,
+                        filter, progress);
+            }
 
             /*
              * What the file said it was, kept with the source: for a database that is
@@ -799,6 +806,33 @@ public class NumbersCompiler {
             commitIfDue();
 
             step();
+        }
+
+        /**
+         * A YABL file, said in the log for what it is before it is read: which version, how
+         * many numbers in how many blocks, how many names.
+         */
+        private SqliteImporter.Result readYabl(Input input, int sourceId, boolean asLayer,
+                                               SqliteImporter.Progress progress) {
+            try {
+                YablReader.Header header = YablReader.readHeader(input.database);
+
+                if (log != null) {
+                    java.text.NumberFormat format = java.text.NumberFormat.getInstance();
+
+                    log.line(tag, context.getString(R.string.build_log_yabl,
+                            String.valueOf(header.dbVersion), format.format(header.numNumbers),
+                            format.format(header.numBlocks), format.format(header.numFeatured)));
+                }
+
+                return YablImporter.read(input.database, db, writer, sourceId, asLayer, filter,
+                        progress);
+            } catch (java.io.IOException e) {
+                LOG.error("readYabl() {} couldn't be read", input.database, e);
+
+                // what is wrong with the file, rather than that something is
+                throw new RuntimeException("YABL: " + e.getMessage(), e);
+            }
         }
 
         /** Reads a source the app holds itself, as a layer over what is already there. */

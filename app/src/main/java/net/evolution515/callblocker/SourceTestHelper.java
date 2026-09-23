@@ -102,8 +102,10 @@ public class SourceTestHelper {
     }
 
     public static int getContentName(ArchiveUtils.Content content) {
-        return content == ArchiveUtils.Content.SQLITE
-                ? R.string.source_content_sqlite : R.string.source_content_sia;
+        if (content == ArchiveUtils.Content.SQLITE) return R.string.source_content_sqlite;
+        if (content == ArchiveUtils.Content.YABL) return R.string.source_content_yabl;
+
+        return R.string.source_content_sia;
     }
 
     public static int getFormatName(ArchiveUtils.Format format) {

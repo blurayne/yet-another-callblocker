@@ -191,6 +191,7 @@
     <string name="source_test_ok_content">works: %1$s holding %2$s</string>
     <string name="source_content_sia">the community database\'s own files</string>
     <string name="source_content_sqlite">a SQLite database</string>
+    <string name="source_content_yabl">a YABL database</string>
     <string name="source_test_no_url">no address to go to</string>
     <string name="source_test_bad_url">the address can\'t be used</string>
     <string name="source_test_unauthorized">the login was rejected (HTTP %d)</string>
@@ -495,6 +496,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="build_log_ingesting">Ingesting file %1$d of %2$d</string>
     <string name="build_log_ingesting_files">Ingesting %1$d files</string>
     <string name="build_log_reading_database">Reading the database</string>
+    <string name="build_log_yabl">YABL file, version %1$s: %2$s numbers in %3$s blocks, %4$s business names</string>
     <string name="build_log_is_a_database">A SQLite database, not the library\'s own files</string>
     <string name="build_log_header_wrong">%1$s starts with \"%2$s\"; expected %3$s</string>
     <string name="build_log_header_missing">%1$s is missing</string>

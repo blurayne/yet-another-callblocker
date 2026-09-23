@@ -47,6 +47,8 @@ public class ArchiveUtils {
         SIA,
         /** One SQLite database, in the shape the update packages are built in. */
         SQLITE,
+        /** One YABL file: a whole database, compressed in blocks. */
+        YABL,
         /** Something that is neither, or too little of it to tell. */
         UNKNOWN
     }
@@ -63,6 +65,10 @@ public class ArchiveUtils {
 
     /** The name the database is expected to have inside an archive. */
     private static final String DATABASE_SUFFIX = ".dat";
+
+    /** A YABL file says so in its first four bytes, and usually in its name. */
+    private static final byte[] YABL_MAGIC = {'Y', 'A', 'B', 'L'};
+    private static final String YABL_SUFFIX = ".yabl";
 
     /** The first bytes of every SQLite file there has ever been. */
     private static final byte[] SQLITE_MAGIC = {
@@ -267,11 +273,15 @@ public class ArchiveUtils {
                 return namedInTar(in, true);
 
             case GZIP:
+                if (unpacksToYabl(in)) return Content.YABL;
                 return unpacksToSqlite(in) ? Content.SQLITE : Content.SIA;
 
             default:
-                return startsWith(peek(in, SQLITE_MAGIC.length), SQLITE_MAGIC)
-                        ? Content.SQLITE : Content.SIA;
+                byte[] start = peek(in, SQLITE_MAGIC.length);
+
+                if (startsWith(start, YABL_MAGIC)) return Content.YABL;
+
+                return startsWith(start, SQLITE_MAGIC) ? Content.SQLITE : Content.SIA;
         }
     }
 
@@ -394,6 +404,7 @@ public class ArchiveUtils {
         String lower = name.toLowerCase(java.util.Locale.ROOT);
 
         if (lower.endsWith(DATABASE_SUFFIX)) return Content.SIA;
+        if (lower.endsWith(YABL_SUFFIX)) return Content.YABL;
 
         for (String suffix : SQLITE_SUFFIXES) {
             if (lower.endsWith(suffix)) return Content.SQLITE;
@@ -456,6 +467,17 @@ public class ArchiveUtils {
     }
 
     /** Whether what the gzip stream unpacks to is a SQLite database. */
+    private static boolean unpacksToYabl(BufferedInputStream in) throws IOException {
+        in.mark(HEADER_SIZE * 8);
+        try {
+            return startsWith(peekFully(new GZIPInputStream(in), YABL_MAGIC.length), YABL_MAGIC);
+        } catch (IOException e) {
+            return false;
+        } finally {
+            in.reset();
+        }
+    }
+
     private static boolean unpacksToSqlite(BufferedInputStream in) throws IOException {
         in.mark(HEADER_SIZE * 8);
         try {

@@ -167,9 +167,14 @@ public class SqliteImporter {
      */
     private static SparseIntArray mapCategories(SQLiteDatabase source, SQLiteDatabase target,
                                                 int[] named, java.util.List<String> added) {
+        return mapCategories(NumbersDb.getCategories(source), target, named, added);
+    }
+
+    /** The same, for a file that says what its categories are called some other way. */
+    static SparseIntArray mapCategories(SparseArray<String> theirs, SQLiteDatabase target,
+                                        int[] named, java.util.List<String> added) {
         SparseIntArray mapping = new SparseIntArray();
 
-        SparseArray<String> theirs = NumbersDb.getCategories(source);
         named[0] = theirs.size();
 
         if (theirs.size() == 0) {

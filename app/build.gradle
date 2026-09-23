@@ -149,6 +149,8 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.12.13'
     implementation 'com.gitlab.xynngh:LibPhoneNumberInfo:c77bdd2b69'
     implementation 'org.apache.commons:commons-csv:1.8'
+    // YABL sources are XZ/LZMA2-compressed in blocks
+    implementation 'org.tukaani:xz:1.9'
 
     implementation 'androidx.appcompat:appcompat:1.3.1'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'

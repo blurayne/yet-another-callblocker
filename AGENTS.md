@@ -73,6 +73,17 @@ the deletions) is the same in both.
 The library is `com.gitlab.xynngh:LibPhoneNumberInfo`, pinned in `app/build.gradle`; it
 accepts both at the pinned revision, so this is a property of that pin rather than of us.
 
+## YABL
+
+A source can also hand over a YABL file (`YABL-FORMAT.md` and `bin/_yabl.py` in
+[callblocker-sia-data](https://github.com/blurayne/callblocker-sia-data)): one file with the
+whole database, XZ-compressed in blocks, recognised by its `YABL` magic, plain or gzipped.
+`data/numbers/YablReader.java` reads it and has no Android in it, so it can be checked on a
+plain JVM against files the reference implementation wrote (it needs `org.tukaani:xz`);
+`YablImporter` puts it into the table the way `SqliteImporter` does, categories matched by
+name. It was checked row for row against the reference reader on the published `db.yabl`
+(13,089,195 rows) and against `bnetza.zip`'s `.dat` slices.
+
 ## Upstream
 
 `upstream` is the GitLab repo, mirrored to `origin/master`. Keep changes rebaseable on it:

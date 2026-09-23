@@ -2522,6 +2522,10 @@ source_content_sqlite:
   comment: SourceTestHelper
   en: a SQLite database
   de: einer SQLite-Datenbank
+source_content_yabl:
+  comment: SourceTestHelper
+  en: a YABL database
+  de: einer YABL-Datenbank
 source_test_no_url:
   comment: SourceTestHelper
   en: no address to go to
@@ -5333,6 +5337,10 @@ build_log_reading_database:
   comment: NumbersCompiler build log
   en: Reading the database
   de: Die Datenbank wird gelesen
+build_log_yabl:
+  comment: NumbersCompiler build log
+  en: 'YABL file, version %1$s: %2$s numbers in %3$s blocks, %4$s business names'
+  de: 'YABL-Datei, Version %1$s: %2$s Nummern in %3$s Blöcken, %4$s Firmennamen'
 build_log_is_a_database:
   comment: DbCompileService
   en: A SQLite database, not the library\'s own files

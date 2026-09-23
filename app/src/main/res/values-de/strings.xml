@@ -173,6 +173,7 @@
     <string name="build_log_ingesting">Datei %1$d von %2$d wird gelesen</string>
     <string name="build_log_ingesting_files">%1$d Dateien werden gelesen</string>
     <string name="build_log_reading_database">Die Datenbank wird gelesen</string>
+    <string name="build_log_yabl">YABL-Datei, Version %1$s: %2$s Nummern in %3$s Blöcken, %4$s Firmennamen</string>
     <string name="build_log_is_a_database">Eine SQLite-Datenbank, nicht die Dateien der Bibliothek</string>
     <string name="build_log_header_wrong">%1$s beginnt mit \"%2$s\"; erwartet wurde %3$s</string>
     <string name="build_log_header_missing">%1$s fehlt</string>
@@ -451,6 +452,7 @@
     <string name="source_test_ok_content">funktioniert: %1$s mit %2$s</string>
     <string name="source_content_sia">den Dateien der Community-Datenbank</string>
     <string name="source_content_sqlite">einer SQLite-Datenbank</string>
+    <string name="source_content_yabl">einer YABL-Datenbank</string>
     <string name="source_test_no_url">keine Adresse, zu der man gehen k\u00f6nnte</string>
     <string name="source_test_bad_url">die Adresse l\u00e4sst sich nicht verwenden</string>
     <string name="source_test_unauthorized">die Anmeldung wurde abgelehnt (HTTP %d)</string>

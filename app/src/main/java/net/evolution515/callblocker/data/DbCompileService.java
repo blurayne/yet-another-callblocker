@@ -34,6 +34,7 @@ import net.evolution515.callblocker.data.numbers.NumbersCompiler;
 import net.evolution515.callblocker.data.numbers.NumberFlags;
 import net.evolution515.callblocker.data.numbers.NumbersFilter;
 import net.evolution515.callblocker.data.numbers.SqliteImporter;
+import net.evolution515.callblocker.data.numbers.YablReader;
 import net.evolution515.callblocker.data.source.SourceService;
 import dummydomain.yetanothercallblocker.sia.utils.FileUtils;
 import net.evolution515.callblocker.utils.DeferredInit;
@@ -563,13 +564,25 @@ public class DbCompileService {
              * else there leaves it with no database at all. Such a source is read into the
              * table like any other, out of a directory of its own.
              */
-            if (source.getType() == NumberSource.Type.DATABASE
-                    && source.getContent() != ArchiveUtils.Content.SQLITE) {
+            if (source.getType() == NumberSource.Type.DATABASE && isSlices(source)) {
                 return source;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Whether what the source hands over is - or may be - the library's own slice files.
+     *
+     * <p>A SQLite database and a YABL file are each one file holding everything, which the
+     * library can't read and the table can; only slice files, or a source nobody has looked
+     * at yet, go the library's way.
+     */
+    private static boolean isSlices(NumberSource source) {
+        ArchiveUtils.Content content = source.getContent();
+
+        return content == ArchiveUtils.Content.SIA || content == ArchiveUtils.Content.UNKNOWN;
     }
 
     /** Where a source that isn't the primary one keeps what it handed over. */
@@ -610,7 +623,7 @@ public class DbCompileService {
             }
         }
 
-        if (primary && source.getContent() != ArchiveUtils.Content.SQLITE) {
+        if (primary && isSlices(source)) {
             return downloadBase(source, listener);
         }
 
@@ -722,7 +735,9 @@ public class DbCompileService {
             }
 
             ArchiveUtils.Content content = SqliteImporter.find(tempDir) != null
-                    ? ArchiveUtils.Content.SQLITE : ArchiveUtils.Content.SIA;
+                    ? ArchiveUtils.Content.SQLITE
+                    : YablReader.find(tempDir) != null
+                            ? ArchiveUtils.Content.YABL : ArchiveUtils.Content.SIA;
 
             // what it was and what it held, because "1055 files" alone answers neither
             buildLog.line(tagOf(source), context.getString(R.string.build_log_unpacked,
@@ -1083,7 +1098,7 @@ public class DbCompileService {
                         source.getContent());
 
                 buildLog.line(tagOf(source), context.getString(
-                        source.getContent() == ArchiveUtils.Content.SQLITE
+                        !isSlices(source)
                                 ? R.string.build_log_is_a_database
                                 : R.string.build_log_not_the_librarys));
 
@@ -1573,8 +1588,7 @@ public class DbCompileService {
                  * library's directory for a source that is no longer in it would find
                  * nothing at all.
                  */
-                if (source == primary
-                        && source.getContent() != ArchiveUtils.Content.SQLITE) {
+                if (source == primary && isSlices(source)) {
                     dir = new File(dataDir, SiaConstants.SIA_PATH_PREFIX);
                     updatesDir = new File(dataDir, SiaConstants.SIA_SECONDARY_PATH_PREFIX);
                 } else {
@@ -1582,6 +1596,7 @@ public class DbCompileService {
 
                     // what is lying there decides how it is read, not what anyone expected
                     database = SqliteImporter.find(dir);
+                    if (database == null) database = YablReader.find(dir);
                 }
             }
 

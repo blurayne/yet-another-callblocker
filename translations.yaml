@@ -1791,7 +1791,7 @@ secondary_db_updating:
   zh-rCN: 正在更新数据库…
   zh-rTW: 正在更新資料庫…
 online_reviews:
-  comment: InfoDialogHelper; NotificationHelper
+  comment: unused
   en: Online reviews
   de: Online-Bewertungen
   ar: مراجعات عبر الإنترنت
@@ -1821,7 +1821,7 @@ online_reviews:
   zh-rCN: 网上评价
   zh-rTW: 網絡評論
 add_web_review:
-  comment: activity_lookup_number.xml text; InfoDialogHelper
+  comment: activity_lookup_number.xml text
   en: Report to shouldianswer.com
   de: An shouldianswer.com melden
   ar: إضافة مراجعة (ويب)
@@ -2031,7 +2031,7 @@ are_you_sure:
   zh-rCN: 您确定吗？
   zh-rTW: 你確定嗎？
 load_reviews_confirmation_message:
-  comment: InfoDialogHelper
+  comment: unused
   en: Loading online reviews will leak the number to a 3rd party service. Are you sure you want to do it with a number present in your Contacts?
   de: Beim Laden der Online-Bewertungen wird die Nummer an einen fremden Server gesendet. Möchten Sie das wirklich mit einer Nummer aus Ihren Kontakten tun?
   ar: سيؤدي تحميل المراجعات عبر الإنترنت إلى تسريب الرقم إلى خدمة تابعة لجهة خارجية. هل أنت متأكد أنك تريد القيام بذلك برقم موجود في جهات الاتصال الخاصة بك؟
@@ -2260,8 +2260,12 @@ provider_token_notice:
   de: Bleibt auf diesem Telefon; in einer Sicherung steht er nur, wenn Sie das so eingestellt haben.
 provider_enabled:
   comment: activity_edit_provider.xml text; provider_item.xml description
-  en: Offer this in the call info
-  de: In der Anrufinfo anbieten
+  en: Search functions
+  de: Suchfunktionen
+provider_report_enabled:
+  comment: activity_edit_provider.xml text
+  en: Report function
+  de: Meldefunktion
 provider_lookup:
   comment: InfoDialogHelper
   en: Look up on %s

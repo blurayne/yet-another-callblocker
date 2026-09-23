@@ -404,7 +404,8 @@
     <string name="provider_token">Schlüssel oder Token</string>
     <string name="provider_token_phone_block">API-Token</string>
     <string name="provider_token_notice">Bleibt auf diesem Telefon; in einer Sicherung steht er nur, wenn Sie das so eingestellt haben.</string>
-    <string name="provider_enabled">In der Anrufinfo anbieten</string>
+    <string name="provider_enabled">Suchfunktionen</string>
+    <string name="provider_report_enabled">Meldefunktion</string>
     <string name="provider_lookup">Nachschlagen bei %s</string>
     <string name="provider_web_search">Google</string>
     <string name="provider_phone_block_address">die Seite Ihres PhoneBlock-Kontos</string>

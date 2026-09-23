@@ -59,7 +59,7 @@ public class EditProviderActivity extends AppCompatActivity {
             patternTextField, usernameTextField, passwordTextField, apiUrlTextField,
             tokenTextField;
     private Spinner authSpinner, apiSpinner;
-    private SwitchCompat apiSwitch, enabledSwitch;
+    private SwitchCompat apiSwitch, enabledSwitch, reportEnabledSwitch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +81,7 @@ public class EditProviderActivity extends AppCompatActivity {
         apiSpinner = findViewById(R.id.apiSpinner);
         apiSwitch = findViewById(R.id.apiSwitch);
         enabledSwitch = findViewById(R.id.enabledSwitch);
+        reportEnabledSwitch = findViewById(R.id.reportEnabledSwitch);
 
         setUpSpinner(authSpinner, Provider.Auth.values(), this::getAuthName);
         setUpSpinner(apiSpinner, Provider.Api.values(), this::getApiName);
@@ -199,6 +200,7 @@ public class EditProviderActivity extends AppCompatActivity {
         provider.setApi(apiKind);
         provider.setApiUrl(apiUrl);
         provider.setEnabled(enabledSwitch.isChecked());
+        provider.setReportEnabled(reportEnabledSwitch.isChecked());
 
         providerService.save(provider);
 
@@ -290,6 +292,7 @@ public class EditProviderActivity extends AppCompatActivity {
         }
 
         enabledSwitch.setChecked(provider.isEnabled());
+        reportEnabledSwitch.setChecked(provider.isReportEnabled());
     }
 
     /** Addresses and an API are two ways of asking; only one of them is filled in. */

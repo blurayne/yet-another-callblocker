@@ -21,7 +21,6 @@ import java.util.List;
 import net.evolution515.callblocker.data.NumberInfo;
 import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseItem;
 
-import static net.evolution515.callblocker.IntentHelper.clearTop;
 import static net.evolution515.callblocker.IntentHelper.pendingActivity;
 
 public class NotificationHelper {
@@ -510,10 +509,7 @@ public class NotificationHelper {
         builder.setContentIntent(createInfoIntent(context, numberInfo));
 
         if (!numberInfo.noNumber && numberInfo.contactItem == null) {
-            builder.addAction(0, context.getString(R.string.online_reviews),
-                    createReviewsIntent(context, numberInfo));
-
-            if (PhoneBlockHelper.canReport()) {
+            if (ProviderHelper.isPhoneBlockReportOffered()) {
                 builder.addAction(0, context.getString(R.string.phone_block_report_action),
                         createReportIntent(context, numberInfo));
             }
@@ -527,11 +523,6 @@ public class NotificationHelper {
     private static PendingIntent createReportIntent(Context context, NumberInfo numberInfo) {
         return pendingActivity(context,
                 InfoDialogActivity.getReportIntent(context, numberInfo.number));
-    }
-
-    private static PendingIntent createReviewsIntent(Context context, NumberInfo numberInfo) {
-        return pendingActivity(context, clearTop(
-                ReviewsActivity.getNumberIntent(context, numberInfo.number)));
     }
 
     public static void initNotificationChannels(Context context) {

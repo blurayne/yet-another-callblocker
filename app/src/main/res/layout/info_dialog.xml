@@ -194,14 +194,6 @@
             android:id="@+id/action_phone_block"
             layout="@layout/info_dialog_action" />
 
-        <include
-            android:id="@+id/action_reviews"
-            layout="@layout/info_dialog_action" />
-
-        <include
-            android:id="@+id/action_web_review"
-            layout="@layout/info_dialog_action" />
-
         <!-- one row per provider that is switched on; filled in as the dialog is built -->
         <LinearLayout
             android:id="@+id/provider_actions"

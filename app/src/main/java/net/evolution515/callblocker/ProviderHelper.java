@@ -29,8 +29,28 @@ public class ProviderHelper {
             case Provider.ID_WEB_SEARCH: return context.getString(R.string.provider_web_search);
             case Provider.ID_CLEVER_DIALER: return "Clever Dialer";
             case Provider.ID_DASOERTLICHE: return "Das \u00d6rtliche";
+            case Provider.ID_SOLL_ICH_ANNEHMEN: return "Soll ich annehmen";
             default: return context.getString(R.string.provider);
         }
+    }
+
+    /**
+     * Whether a PhoneBlock report is offered: an account to report with, and the PhoneBlock
+     * provider's report switch on - or no such provider, which is how it always was.
+     */
+    public static boolean isPhoneBlockReportOffered() {
+        if (!PhoneBlockHelper.canReport()) return false;
+
+        ProviderService providerService = YacbHolder.getProviderService();
+        if (providerService == null) return true;
+
+        for (Provider provider : providerService.getProviders()) {
+            if (Provider.ID_PHONE_BLOCK.equals(provider.getId())) {
+                return provider.isReportEnabled();
+            }
+        }
+
+        return true;
     }
 
     /** What the row under the name says: where it goes. */

@@ -125,7 +125,8 @@
     <string name="provider_token">Key or token</string>
     <string name="provider_token_phone_block">API token</string>
     <string name="provider_token_notice">Kept on this phone; a backup holds it only if you asked for that.</string>
-    <string name="provider_enabled">Offer this in the call info</string>
+    <string name="provider_enabled">Search functions</string>
+    <string name="provider_report_enabled">Report function</string>
     <string name="provider_lookup">Look up on %s</string>
     <string name="provider_web_search">Google</string>
     <string name="provider_phone_block_address">the page of your PhoneBlock account</string>

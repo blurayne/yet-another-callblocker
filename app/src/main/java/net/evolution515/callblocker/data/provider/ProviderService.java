@@ -43,6 +43,9 @@ public class ProviderService {
     private static final String DASOERTLICHE_URL
             = "https://mobil.dasoertliche.de/Themen?was=" + Provider.PLACEHOLDER_NATIONAL + "&wo=";
 
+    private static final String SOLL_ICH_ANNEHMEN_URL
+            = "https://www.sollichannehmen.de/telefonnummer/" + Provider.PLACEHOLDER_NATIONAL;
+
     /** An address that was handed out before and turned out to be the wrong one. */
     private static final String DASOERTLICHE_OLD_URL
             = "https://www.dasoertliche.de/?form_name=search_inv&ph="
@@ -66,10 +69,12 @@ public class ProviderService {
             new Defaults(Provider.ID_CLEVER_DIALER, CLEVER_DIALER_URL, null, 2),
             new Defaults(Provider.ID_DASOERTLICHE, DASOERTLICHE_URL, "49*", 2,
                     DASOERTLICHE_OLD_URL),
+            // was a fixed row of the dialog, and now is a provider like the others
+            new Defaults(Provider.ID_SOLL_ICH_ANNEHMEN, SOLL_ICH_ANNEHMEN_URL, "49*", 4),
     };
 
     /** The highest version in {@link #DEFAULTS}. */
-    private static final int SEED_VERSION = 3;
+    private static final int SEED_VERSION = 4;
 
     private static class Defaults {
 
@@ -109,7 +114,9 @@ public class ProviderService {
         List<Provider> providers = new ArrayList<>();
 
         for (Provider provider : getProviders()) {
-            if (provider.isEnabled() && provider.isValid()) providers.add(provider);
+            if ((provider.isEnabled() || provider.isReportEnabled()) && provider.isValid()) {
+                providers.add(provider);
+            }
         }
 
         return providers;

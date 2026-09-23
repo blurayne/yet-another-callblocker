@@ -57,6 +57,9 @@ public class Provider {
     /** The phone book, which knows the numbers that are in it rather than the spam ones. */
     public static final String ID_DASOERTLICHE = "dasoertliche";
 
+    /** Should I Answer's German site, which used to be a fixed row of the dialog. */
+    public static final String ID_SOLL_ICH_ANNEHMEN = "sollichannehmen";
+
     /**
      * Where the number goes in the address, in the form the provider wants it.
      *
@@ -92,6 +95,7 @@ public class Provider {
     private static final String KEY_API = "api";
     private static final String KEY_API_URL = "apiUrl";
     private static final String KEY_ENABLED = "enabled";
+    private static final String KEY_REPORT_ENABLED = "reportEnabled";
 
     /** Stays the same for the life of the provider: its token hangs off it. */
     private final String id;
@@ -99,6 +103,9 @@ public class Provider {
     private String name;
     private Mode mode = Mode.URLS;
     private boolean enabled = true;
+
+    /** Whether the dialog about a call offers to report the number here. */
+    private boolean reportEnabled = true;
 
     /** Which numbers it is worth asking about; empty means all of them. */
     private String pattern;
@@ -139,13 +146,25 @@ public class Provider {
         this.mode = mode != null ? mode : Mode.URLS;
     }
 
-    /** Whether the dialog about a call offers it. */
+    /**
+     * Whether the dialog about a call offers to look the number up here - the "search"
+     * switch. Stored under its old name, so that what was switched off stays off.
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    /** Whether the dialog about a call offers to report the number here. */
+    public boolean isReportEnabled() {
+        return reportEnabled;
+    }
+
+    public void setReportEnabled(boolean reportEnabled) {
+        this.reportEnabled = reportEnabled;
     }
 
     /**
@@ -264,6 +283,7 @@ public class Provider {
         json.put(KEY_API, api.name());
         json.put(KEY_API_URL, apiUrl);
         json.put(KEY_ENABLED, enabled);
+        json.put(KEY_REPORT_ENABLED, reportEnabled);
 
         return json;
     }
@@ -286,6 +306,7 @@ public class Provider {
         provider.setApi(parse(Api.class, json.optString(KEY_API), Api.CUSTOM));
         provider.setApiUrl(json.optString(KEY_API_URL, null));
         provider.setEnabled(json.optBoolean(KEY_ENABLED, true));
+        provider.setReportEnabled(json.optBoolean(KEY_REPORT_ENABLED, true));
 
         return provider;
     }

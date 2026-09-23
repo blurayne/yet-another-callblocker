@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -115,7 +114,7 @@ public class InfoDialogHelper {
             for (int id : new int[]{R.id.action_copy, R.id.action_open_contact,
                     R.id.action_whitelist, R.id.action_whitelist_rule,
                     R.id.action_blacklist, R.id.action_blacklist_rule, R.id.action_contacts,
-                    R.id.action_phone_block, R.id.action_reviews, R.id.action_web_review}) {
+                    R.id.action_phone_block}) {
                 view.findViewById(id).setVisibility(View.GONE);
             }
 
@@ -220,26 +219,12 @@ public class InfoDialogHelper {
         // reporting is only offered when there's an account to report with;
         // the dialog stays until the report is done, so that going back returns to it
         bindAction(view, R.id.action_phone_block, R.drawable.ic_thumb_down_24dp,
-                R.string.phone_block_report_title_short, PhoneBlockHelper.canReport(),
+                R.string.phone_block_report_title_short,
+                ProviderHelper.isPhoneBlockReportOffered(),
                 () -> PhoneBlockHelper.showReportDialog(context, number, dialog::dismiss));
 
-        // the reviews are fetched from the web, which tells the web service about the number:
-        // for a contact, that is asked about first
-        bindAction(view, R.id.action_reviews, R.drawable.ic_thumbs_up_down_24dp,
-                R.string.online_reviews, true, () -> confirmForContact(context, numberInfo,
-                        R.string.load_reviews_confirmation_message, () -> {
-                            ReviewsActivity.startForNumber(context, number);
-                            dialog.dismiss();
-                        }));
-
-        bindAction(view, R.id.action_web_review, R.drawable.ic_plus_24dp,
-                R.string.add_web_review, true, () -> confirmForContact(context, numberInfo,
-                        R.string.load_reviews_confirmation_message, () -> {
-                            Uri uri = Uri.parse(
-                                    YacbHolder.getWebService().getWebReviewsUrlPart() + number);
-                            IntentHelper.startActivity(context, new Intent(Intent.ACTION_VIEW, uri));
-                            dialog.dismiss();
-                        }));
+        // Should I Answer's reviews and page are no fixed rows any more: sollichannehmen.de is
+        // a provider, and comes in with the others below when it is switched on
 
         addProviderActions(context, view, numberInfo, number, dialog);
 
@@ -270,15 +255,20 @@ public class InfoDialogHelper {
 
             String name = ProviderHelper.getName(context, provider);
 
-            addProviderAction(context, container, inflater, numberInfo, dialog,
-                    ProviderHelper.getUrl(provider, number), provider,
-                    context.getString(R.string.provider_lookup, name),
-                    R.drawable.ic_search_24dp);
+            // each of the two by its own switch: "Suchfunktionen" and "Meldefunktion"
+            if (provider.isEnabled()) {
+                addProviderAction(context, container, inflater, numberInfo, dialog,
+                        ProviderHelper.getUrl(provider, number), provider,
+                        context.getString(R.string.provider_lookup, name),
+                        R.drawable.ic_search_24dp);
+            }
 
-            addProviderAction(context, container, inflater, numberInfo, dialog,
-                    ProviderHelper.getReportUrl(provider, number), provider,
-                    context.getString(R.string.provider_report, name),
-                    R.drawable.ic_thumb_down_24dp);
+            if (provider.isReportEnabled()) {
+                addProviderAction(context, container, inflater, numberInfo, dialog,
+                        ProviderHelper.getReportUrl(provider, number), provider,
+                        context.getString(R.string.provider_report, name),
+                        R.drawable.ic_thumb_down_24dp);
+            }
         }
     }
 

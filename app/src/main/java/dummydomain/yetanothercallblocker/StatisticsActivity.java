@@ -131,6 +131,12 @@ public class StatisticsActivity extends AppCompatActivity {
 
         hintView = findViewById(R.id.hint);
 
+        // the hint that blames the filter leads to it
+        hintView.setOnClickListener(v -> {
+            if (isFiltering()) startActivity(SettingsActivity.getIntent(this,
+                    SettingsActivity.SCREEN_DB_FILTERING));
+        });
+
         RecyclerView list = findViewById(R.id.list);
         list.setAdapter(adapter);
     }
@@ -207,11 +213,49 @@ public class StatisticsActivity extends AppCompatActivity {
             protected void onPostExecute(List<Row> result) {
                 if (isCancelled()) return;
 
-                show(result, result.isEmpty() ? getString(R.string.stats_nothing) : hint(namedOnly));
+                String hint = result.size() <= 1 ? fewHint(namedOnly) : null;
+
+                if (hint == null) {
+                    hint = result.isEmpty() ? getString(R.string.stats_nothing) : hint(namedOnly);
+                }
+
+                show(result, hint);
             }
         };
 
         task.execute();
+    }
+
+    /** Whether the database is filtered, which is the usual reason for a short list. */
+    private static boolean isFiltering() {
+        Settings settings = App.getSettings();
+
+        return settings != null && settings.isDbFilteringEnabled()
+                && !TextUtils.isEmpty(settings.getDbFilteringPattern());
+    }
+
+    /**
+     * Why a list may hold nothing or one thing, when there is a likely reason.
+     *
+     * <p>The filter is the usual one: it leaves the numbers of a few countries, and with the
+     * others their company names and categories. For the top lists the toggle is the other.
+     */
+    private String fewHint(boolean namedOnly) {
+        if (kind != Kind.CATEGORIES && !kind.isTop()) return null;
+
+        StringBuilder hint = new StringBuilder();
+
+        if (isFiltering()) {
+            hint.append(getString(R.string.stats_few_filtered,
+                    App.getSettings().getDbFilteringPattern()));
+        }
+
+        if (kind.isTop() && namedOnly) {
+            if (hint.length() > 0) hint.append("\n\n");
+            hint.append(getString(R.string.stats_few_named_only));
+        }
+
+        return hint.length() > 0 ? hint.toString() : null;
     }
 
     /** What the list says above itself, when it has something to say. */
@@ -260,8 +304,11 @@ public class StatisticsActivity extends AppCompatActivity {
                 list.add(Row.figure(getString(R.string.stats_deleted), overview.deleted));
                 list.add(Row.text(getString(R.string.stats_size),
                         Formatter.formatShortFileSize(this, overview.size)));
-                list.add(Row.text(getString(R.string.stats_filtered), getString(overview.filtered
-                        ? R.string.stats_yes : R.string.stats_no)));
+                list.add(Row.text(getString(R.string.stats_filtered), overview.filtered
+                        && isFiltering()
+                        ? getString(R.string.stats_filtered_pattern,
+                                App.getSettings().getDbFilteringPattern())
+                        : getString(overview.filtered ? R.string.stats_yes : R.string.stats_no)));
 
                 if (overview.compiledTime > 0) {
                     list.add(Row.text(getString(R.string.stats_built),

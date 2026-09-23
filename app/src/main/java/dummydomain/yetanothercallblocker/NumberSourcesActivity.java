@@ -549,4 +549,17 @@ public class NumberSourcesActivity extends AppCompatActivity {
         }
     }
 
+
+    /**
+     * Up goes back to the screen this was opened from, like back does.
+     *
+     * <p>The parent in the manifest is the settings, and going up to it by the book starts
+     * them again from the top - out of the database screen the user came from.
+     */
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
+    }
+
 }

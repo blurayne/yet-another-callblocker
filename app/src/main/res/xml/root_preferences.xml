@@ -103,11 +103,6 @@
     <!-- where what the app knows about a number comes from -->
     <PreferenceCategory app:title="@string/settings_category_number_sources">
         <Preference
-            app:key="numberSources"
-            app:persistent="false"
-            app:summary="@string/sources_summary"
-            app:title="@string/title_sources_activity" />
-        <Preference
             app:fragment="dummydomain.yetanothercallblocker.DbManagementSettingsFragment"
             app:key="dbManagement"
             app:persistent="false"

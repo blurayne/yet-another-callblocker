@@ -62,7 +62,6 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_BLACKLIST_SCREEN = "blacklistScreen";
     private static final String PREF_WHITELIST_SCREEN = "whitelistScreen";
     private static final String PREF_DB_MANAGEMENT = "dbManagement";
-    private static final String PREF_NUMBER_SOURCES = "numberSources";
     private static final String PREF_PROVIDERS = "providersScreen";
     private static final String PREF_CALLER_ID_TEMPLATE_SCREEN = "callerIdTemplateScreen";
 
@@ -305,11 +304,6 @@ public class RootSettingsFragment extends BaseSettingsFragment {
                             (d, w) -> pickBackupToRestore())
                     .setNegativeButton(R.string.back, null)
                     .show();
-            return true;
-        });
-
-        requirePreference(PREF_NUMBER_SOURCES).setOnPreferenceClickListener(preference -> {
-            startActivity(NumberSourcesActivity.getIntent(requireContext()));
             return true;
         });
 
@@ -723,8 +717,6 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     /** What the three rows about numbers hold, said in one line each. */
     @SuppressLint("StaticFieldLeak") // a short read, and the screen is checked afterwards
     private void updateSourcePreferences() {
-        requirePreference(PREF_NUMBER_SOURCES).setSummary(getSourcesStatus());
-
         // the list can only block while it is fetched at all, which the sources decide
         requirePreference(Settings.PREF_BLOCK_PHONE_BLOCK)
                 .setEnabled(App.getSettings().getUsePhoneBlock());
@@ -759,16 +751,23 @@ public class RootSettingsFragment extends BaseSettingsFragment {
     private String getDatabaseStatus(NumbersCompiler.Info info) {
         if (!info.readable) return getString(R.string.db_management_status_unreadable);
 
-        if (info.count <= 0) return getString(R.string.db_management_status_empty);
+        // the sources live under this row now, so it says how many of them are on
+        String sources = getSourcesStatus();
+
+        if (info.count <= 0) {
+            return getString(R.string.db_management_status_empty) + "\n" + sources;
+        }
 
         String numbers = getString(R.string.db_filtering_status_numbers,
                 NumberFormat.getInstance().format(info.count));
 
-        if (info.compiledTime <= 0) return numbers;
+        if (info.compiledTime > 0) {
+            numbers += " \u00b7 " + getString(R.string.db_management_status_built,
+                    DateUtils.getRelativeTimeSpanString(info.compiledTime,
+                            System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS));
+        }
 
-        return numbers + " \u00b7 " + getString(R.string.db_management_status_built,
-                DateUtils.getRelativeTimeSpanString(info.compiledTime,
-                        System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS));
+        return numbers + "\n" + sources;
     }
 
     /** How many of the sources are switched on, which is what the database is built from. */

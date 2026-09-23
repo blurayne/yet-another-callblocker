@@ -419,20 +419,20 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_filtering_rebuild_summary">Every number is held against the pattern as it is read, so what is set here takes effect the next time the database is built. Nothing is filtered out of the database that is already there</string>
     <string name="db_filtering_rebuild_confirm">The sources are read again and the database is built from scratch, with the filter as it is set now. The database in use stays as it is until the new one is finished.</string>
     <string name="db_filtering_info">Explanation</string>
-    <string name="db_filtering_info_summary">The database holds numbers from everywhere. Filtering keeps the ones that can reach you and drops the rest, which saves storage; nothing else about the app changes. It happens while the database is fetched and after every update. Every source is compiled into one table first and a copy of it is put aside; the filter then runs on that table, so filtering always starts from the unfiltered database - and when no copy is kept, the sources are asked for it again rather than a narrowed database being narrowed further</string>
+    <string name="db_filtering_info_summary">The sources bring numbers from all over the world. While the database is built, every number is held against the pattern, and what doesn\'t match is never written. That saves storage and makes the build faster. The company names of the numbers that are left out go with them, and a category whose numbers are all left out no longer appears in the database - the statistics only count what is left. Calls from numbers that were filtered out are not recognised any more, from abroad or from a foreign number while you travel.</string>
     <string name="db_filtering_enabled">Filtering enabled</string>
     <string name="db_filtering_enabled_summary">Enables the filtering during the database download and update</string>
     <string name="db_filtering_prefixes_to_keep">Prefixes to keep</string>
     <string name="db_filtering_prefixes_to_keep_summary">A comma-separated list of prefixes of numbers to keep. The prefixes should be in the international format (like +1234). E.g., if you only receive calls from numbers starting with +1, put +1 here</string>
     <string name="db_filtering_pattern">Which numbers to keep</string>
-    <string name="db_filtering_pattern_summary">A pattern that a number has to match to be written into the database, in its international form: %s keeps the Netherlands, Austria, Switzerland and Germany. * stands for any digits, # for exactly one, and {a,b} for either. Everything else is left out as the sources are read.</string>
+    <string name="db_filtering_pattern_summary">A pattern that a number has to match to be written into the database, in its international form: %s keeps the Netherlands, Austria, Switzerland and Germany. * stands for any digits, # for exactly one, and {a,b} for either. Everything else is left out as the sources are read. Careful: a typo here can leave out nearly everything, and the company names and categories of what is left out go with it.</string>
     <string name="db_filtering_pattern_invalid">That pattern can\'t be read</string>
     <string name="build_log_filter">Keeping numbers that match %s</string>
     <string name="build_log_no_filter">Keeping every number</string>
     <string name="db_filtering_thorough">Thorough filtering</string>
-    <string name="db_filtering_thorough_summary">If enabled, it goes through every block of data and removes numbers not matching the prefixes. Otherwise, it only removes whole unwanted blocks (leaving some unwanted numbers in wanted blocks). It is recommended to leave this on. Required for keeping short numbers</string>
+    <string name="db_filtering_thorough_summary">Only about downloading the community database: when on, each of its files is filtered number by number; when off, only the files of other country codes are left out whole. Only what matches the pattern gets into the database either way. When off, short numbers are lost even if they are to be kept.</string>
     <string name="db_filtering_keep_short_numbers">Keep short numbers</string>
-    <string name="db_filtering_keep_short_numbers_summary">Keep numbers shorter than the specified length regardless of prefixes</string>
+    <string name="db_filtering_keep_short_numbers_summary">Keep numbers up to the given length whatever the pattern says. These are emergency and service numbers without a country code; when off, they are left out.</string>
     <string name="db_filtering_keep_short_numbers_max_length">Length of numbers to keep</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">The maximum length (inclusive) of short numbers to keep regardless of prefixes. E.g. the value of 5 will keep numbers with length of 5 digits or shorter</string>
     <string name="compiling_db">Building the database (%1$d/%2$d)\u2026</string>
@@ -637,7 +637,7 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="add_to_blacklist">Add to blacklist</string>
     <string name="edit_blacklist_entry">Edit blacklist entry</string>
 
-    <string name="db_management">Database</string>
+    <string name="db_management">Database &amp; sources</string>
     <string name="db_management_status">Database information</string>
     <string name="db_management_status_failed">The last build failed %1$s: %2$s</string>
     <string name="db_management_status_failed_when_unknown">recently</string>
@@ -719,6 +719,9 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="stats_no">no</string>
     <string name="stats_no_category">No category</string>
     <string name="stats_unnamed_source">Unnamed source</string>
+    <string name="stats_filtered_pattern">yes, keeping %s</string>
+    <string name="stats_few_filtered">So little may be because the database is filtered: only what matches %s is kept, and the categories and company names of everything else are left out with it. Tap to open the filter.</string>
+    <string name="stats_few_named_only">\"Only where a company is known\" is on; switch it off in the menu to see every number.</string>
     <string name="open_help_activity">Help</string>
     <string name="help_activity">Help</string>
     <string name="help_database_title">How the database is built</string>

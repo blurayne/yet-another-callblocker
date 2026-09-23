@@ -111,6 +111,15 @@ public class StatisticsActivity extends AppCompatActivity {
         /** Where the row leads when it isn't a plain kind or a number: a step down. */
         Intent intent;
 
+        /** A heading between groups of rows, which leads nowhere. */
+        boolean header;
+
+        static Row header(String title) {
+            Row row = new Row(title, null, null, null, null);
+            row.header = true;
+            return row;
+        }
+
         Row(String title, String subtitle, String value, Kind opens, String number) {
             this.title = title;
             this.subtitle = subtitle;
@@ -348,14 +357,42 @@ public class StatisticsActivity extends AppCompatActivity {
         hintView.setVisibility(TextUtils.isEmpty(hint) ? View.GONE : View.VISIBLE);
     }
 
+    /**
+     * The page as a person looks for things on it: what is calling that shouldn't, what is
+     * calling that is fine, and then the database itself. Each rating in the same order - the
+     * strongest numbers, then by country, then by country and place - and the entries that
+     * lead somewhere say where.
+     */
     private List<Row> menuRows() {
         List<Row> list = new ArrayList<>();
 
-        for (Kind each : Kind.values()) {
-            if (each != Kind.MENU && !each.isStep()) list.add(Row.menu(this, each));
-        }
+        list.add(Row.header(getString(R.string.stats_section_spam)));
+        list.add(menuRow(Kind.TOP_NEGATIVE, R.string.stats_top_negative,
+                R.string.stats_top_negative_sub));
+        list.add(menuRow(Kind.SPAM_COUNTRIES, R.string.stats_by_country,
+                R.string.stats_by_country_sub));
+        list.add(menuRow(Kind.SPAM_COUNTRIES_PLACES, R.string.stats_by_country_place,
+                R.string.stats_by_country_place_sub));
+
+        list.add(Row.header(getString(R.string.stats_section_good)));
+        list.add(menuRow(Kind.TOP_POSITIVE, R.string.stats_top_positive,
+                R.string.stats_top_positive_sub));
+        list.add(menuRow(Kind.GOOD_COUNTRIES, R.string.stats_by_country,
+                R.string.stats_by_country_sub));
+        list.add(menuRow(Kind.GOOD_COUNTRIES_PLACES, R.string.stats_by_country_place,
+                R.string.stats_by_country_place_sub));
+
+        list.add(Row.header(getString(R.string.stats_section_database)));
+        list.add(menuRow(Kind.OVERVIEW, R.string.stats_overview, 0));
+        list.add(menuRow(Kind.CATEGORIES, R.string.stats_categories, 0));
+        list.add(menuRow(Kind.SOURCES, R.string.stats_sources, 0));
 
         return list;
+    }
+
+    private Row menuRow(Kind target, int title, int subtitle) {
+        return new Row(getString(title), subtitle != 0 ? getString(subtitle) : null, null,
+                target, null);
     }
 
     /** The rows for the kind this screen is on; on a background thread. */
@@ -540,8 +577,14 @@ public class StatisticsActivity extends AppCompatActivity {
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new ViewHolder(LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.statistics_item, parent, false));
+            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(
+                    viewType == 1 ? R.layout.statistics_header : R.layout.statistics_item,
+                    parent, false));
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return rows.get(position).header ? 1 : 0;
         }
 
         @Override
@@ -569,21 +612,34 @@ public class StatisticsActivity extends AppCompatActivity {
 
             itemView.setOnClickListener(v -> {
                 int position = getBindingAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) onRowClicked(rows.get(position));
+                if (position != RecyclerView.NO_POSITION && !rows.get(position).header) {
+                    onRowClicked(rows.get(position));
+                }
             });
         }
 
         void bind(Row row) {
             title.setText(row.title);
 
-            subtitle.setText(row.subtitle);
-            subtitle.setVisibility(TextUtils.isEmpty(row.subtitle) ? View.GONE : View.VISIBLE);
+            // a heading is its title and nothing else
+            if (subtitle != null) {
+                subtitle.setText(row.subtitle);
+                subtitle.setVisibility(TextUtils.isEmpty(row.subtitle) ? View.GONE : View.VISIBLE);
+            }
 
-            value.setText(row.value);
-            value.setVisibility(TextUtils.isEmpty(row.value) ? View.GONE : View.VISIBLE);
+            boolean leads = row.opens != null || row.number != null || row.intent != null;
 
-            itemView.setClickable(row.opens != null || row.number != null
-                    || row.intent != null);
+            if (value != null) {
+                // a row that leads further and has no figure of its own says so with a chevron
+                String shown = !TextUtils.isEmpty(row.value) ? row.value
+                        : leads && !row.header ? "\u203a" : null;
+
+                value.setText(shown);
+                value.setVisibility(TextUtils.isEmpty(shown) ? View.GONE : View.VISIBLE);
+            }
+
+            itemView.setClickable(leads);
+            itemView.setEnabled(leads || !row.header);
         }
 
     }

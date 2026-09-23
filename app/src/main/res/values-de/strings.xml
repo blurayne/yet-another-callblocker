@@ -76,6 +76,15 @@
     <string name="stats_no">nein</string>
     <string name="stats_no_category">Ohne Kategorie</string>
     <string name="stats_unnamed_source">Quelle ohne Namen</string>
+    <string name="stats_section_spam">Spam</string>
+    <string name="stats_section_good">Seriöse Nummern</string>
+    <string name="stats_section_database">Die Datenbank</string>
+    <string name="stats_by_country">Nach Ländern</string>
+    <string name="stats_by_country_place">Nach Ländern und Orten</string>
+    <string name="stats_by_country_sub">Land, dann seine Firmen und Nummern</string>
+    <string name="stats_by_country_place_sub">Land, dann Ort, dann dessen Firmen und Nummern</string>
+    <string name="stats_top_negative_sub">Die 100 am häufigsten gemeldeten Nummern</string>
+    <string name="stats_top_positive_sub">Die 100 am besten bewerteten Nummern</string>
     <string name="stats_spam_countries">Spam nach Ländern</string>
     <string name="stats_spam_countries_places">Spam nach Ländern und Orten</string>
     <string name="stats_good_countries">Seriöse Nummern nach Ländern</string>

@@ -715,6 +715,15 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="stats_no">no</string>
     <string name="stats_no_category">No category</string>
     <string name="stats_unnamed_source">Unnamed source</string>
+    <string name="stats_section_spam">Spam</string>
+    <string name="stats_section_good">Trusted numbers</string>
+    <string name="stats_section_database">The database</string>
+    <string name="stats_by_country">By country</string>
+    <string name="stats_by_country_place">By country and place</string>
+    <string name="stats_by_country_sub">Country, then its companies and numbers</string>
+    <string name="stats_by_country_place_sub">Country, then place, then its companies and numbers</string>
+    <string name="stats_top_negative_sub">The 100 numbers reported most</string>
+    <string name="stats_top_positive_sub">The 100 numbers rated best</string>
     <string name="stats_spam_countries">Spam by country</string>
     <string name="stats_spam_countries_places">Spam by country and place</string>
     <string name="stats_good_countries">Trusted numbers by country</string>

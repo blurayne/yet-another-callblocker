@@ -7000,6 +7000,42 @@ stats_unnamed_source:
   comment: StatisticsActivity
   en: Unnamed source
   de: Quelle ohne Namen
+stats_section_spam:
+  comment: StatisticsActivity
+  en: Spam
+  de: Spam
+stats_section_good:
+  comment: StatisticsActivity
+  en: Trusted numbers
+  de: Seriöse Nummern
+stats_section_database:
+  comment: StatisticsActivity
+  en: The database
+  de: Die Datenbank
+stats_by_country:
+  comment: StatisticsActivity
+  en: By country
+  de: Nach Ländern
+stats_by_country_place:
+  comment: StatisticsActivity
+  en: By country and place
+  de: Nach Ländern und Orten
+stats_by_country_sub:
+  comment: StatisticsActivity
+  en: Country, then its companies and numbers
+  de: Land, dann seine Firmen und Nummern
+stats_by_country_place_sub:
+  comment: StatisticsActivity
+  en: Country, then place, then its companies and numbers
+  de: Land, dann Ort, dann dessen Firmen und Nummern
+stats_top_negative_sub:
+  comment: StatisticsActivity
+  en: The 100 numbers reported most
+  de: Die 100 am häufigsten gemeldeten Nummern
+stats_top_positive_sub:
+  comment: StatisticsActivity
+  en: The 100 numbers rated best
+  de: Die 100 am besten bewerteten Nummern
 stats_spam_countries:
   comment: StatisticsActivity
   en: Spam by country

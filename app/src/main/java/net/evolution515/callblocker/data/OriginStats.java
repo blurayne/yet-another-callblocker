@@ -129,9 +129,14 @@ public class OriginStats {
 
             Map<String, long[]> counts = new HashMap<>();
 
+            /*
+             * The rating goes into the text, not in as a parameter: Android binds parameters
+             * as text, and "(flags & 3) = '1'" is never true - an expression has no affinity
+             * to turn the text into a number, unlike a column. So every count came out as 0.
+             */
             try (Cursor cursor = numbers.rawQuery("SELECT number FROM numbers"
-                    + " WHERE (flags & 3) = ? AND (flags & " + NumberFlags.FLAG_DELETED + ") = 0",
-                    new String[]{String.valueOf(rating)})) {
+                    + " WHERE (flags & 3) = " + rating
+                    + " AND (flags & " + NumberFlags.FLAG_DELETED + ") = 0", null)) {
                 while (cursor.moveToNext()) {
                     String region = regionOf(cursor.getLong(0));
                     if (region == null) region = "";
@@ -222,8 +227,8 @@ public class OriginStats {
                 // the named ones are a few thousand at most: asked all at once, sorted out here
                 try (Cursor cursor = numbers.rawQuery("SELECT m.number, m.name, n.flags, n.score"
                         + " FROM names m JOIN numbers n ON n.number = m.number"
-                        + " WHERE (n.flags & 3) = ? AND (n.flags & " + NumberFlags.FLAG_DELETED
-                        + ") = 0", new String[]{String.valueOf(rating)})) {
+                        + " WHERE (n.flags & 3) = " + rating
+                        + " AND (n.flags & " + NumberFlags.FLAG_DELETED + ") = 0", null)) {
                     while (cursor.moveToNext()) {
                         long number = cursor.getLong(0);
 

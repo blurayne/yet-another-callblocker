@@ -13,7 +13,8 @@ public class ContactsHelper {
 
     private static final String[] PROJECTION = new String[]{
             ContactsContract.Contacts._ID,
-            ContactsContract.Contacts.DISPLAY_NAME
+            ContactsContract.Contacts.DISPLAY_NAME,
+            ContactsContract.Contacts.PHOTO_THUMBNAIL_URI
     };
 
     public static ContactItem getContact(Context context, String number) {
@@ -34,6 +35,10 @@ public class ContactsHelper {
                 );
 
                 if (TextUtils.isEmpty(contact.displayName)) return null; // TODO: check
+
+                // the photo the phone's own contacts show; asked in the same query
+                int photo = cursor.getColumnIndex(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI);
+                if (photo >= 0) contact.photoUri = cursor.getString(photo);
 
                 return contact;
             }

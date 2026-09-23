@@ -39,6 +39,9 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
 
         final AppCompatImageView[] callTypeIcons;
         final TextView label;
+
+        /** The number, small, above the label - when the label says where it is from. */
+        final TextView numberView;
         final AppCompatImageView numberInfoIcon;
         final TextView duration;
         final TextView description;
@@ -53,6 +56,7 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
                     view.findViewById(R.id.callTypeIcon3)
             };
             label = view.findViewById(R.id.item_label);
+            numberView = view.findViewById(R.id.item_number);
             numberInfoIcon = view.findViewById(R.id.numberInfoIcon);
             duration = view.findViewById(R.id.duration);
             description = view.findViewById(R.id.description);
@@ -84,10 +88,28 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
 
             NumberInfo numberInfo = item.numberInfo;
 
-            label.setText(getLabel(context, item));
+            /*
+             * A number that is only a number, but whose place is known, gets three lines: the
+             * number itself, smaller, on top; where it is from as the line that is read first;
+             * and what happened below. That says more than "+4930123456 (Berlin, Deutschland)"
+             * cut off at the edge of the screen.
+             */
+            boolean originLine = showsNumber(item) && !TextUtils.isEmpty(numberInfo.origin);
+
+            if (originLine) {
+                numberView.setText(item.number);
+                numberView.setVisibility(View.VISIBLE);
+                label.setText(numberInfo.origin);
+            } else {
+                numberView.setVisibility(View.GONE);
+                label.setText(getLabel(context, item));
+            }
 
             // a number nothing is known about gets the question mark rather than nothing at all
             IconAndColor.forNumberInfo(numberInfo).applyToImageView(numberInfoIcon);
+
+            // a contact with a photo is shown with it, the way the phone's own call log does
+            ContactPhotos.apply(numberInfoIcon, numberInfo.contactItem);
 
             // the line also says what became of the call: what the app did about it when it
             // came in, or else what the system recorded about it
@@ -193,7 +215,7 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
             String listEntryName = NumberInfoUtils.getListEntryName(numberInfo);
             if (listEntryName != null) return listEntryName;
 
-            return NumberInfoUtils.withOrigin(item.number, numberInfo);
+            return item.number;
         }
 
         /** Whether the row's label is the number itself, which is where its origin goes. */

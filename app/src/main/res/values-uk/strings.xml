@@ -222,8 +222,6 @@
     <string name="db_filtering_enabled">Фільтрація ввімкнута</string>
     <string name="db_filtering_enabled_summary">Ввімкнути фільтрацію під час завантаження та оновлення бази даних</string>
     <string name="db_filtering_prefixes_to_keep">Префікси для збереження</string>
-    <string name="db_filtering_thorough">Ретельна фільтрація</string>
-    <string name="db_filtering_thorough_summary">Якщо ввімкнено, додаток пройде через кожен блок даних і видалить номера, що не відповідають префіксам. В іншому випадку він видалить лише цілі небажані номери (залишаючи деякі небажані номери в бажаних блоках). Рекомендується залишити це увімкненим. Необхідний для збереження коротких номерів</string>
     <string name="db_filtering_keep_short_numbers">Залишити короткі номери</string>
     <string name="db_filtering_keep_short_numbers_summary">Залишити номери коротші за вказану довжину незалежно від префіксів</string>
     <string name="db_filtering_keep_short_numbers_max_length">Довжина номеру для збереження</string>

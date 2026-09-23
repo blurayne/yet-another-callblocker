@@ -211,8 +211,6 @@
     <string name="db_filtering_keep_short_numbers_max_length">Độ dài các số để giữ lại</string>
     <string name="db_filtering_keep_short_numbers_summary">Giữ các số ngắn hơn độ dài được chỉ định mà không tính đến các tiền tố</string>
     <string name="db_filtering_keep_short_numbers">Giữ lại các số ngắn</string>
-    <string name="db_filtering_thorough_summary">Nếu được bật, nó đi qua mọi khối dữ liệu và xoá các số không khớp với các tiền tố. Nếu không, nó chỉ xoá toàn bộ các khối không mong muốn (để lại một số số không mong muốn trong các khối mong muốn). Chúng tôi khuyên bạn cứ để bật tuỳ chọn này. Được yêu cầu để giữ lại các số ngắn</string>
-    <string name="db_filtering_thorough">Lọc kỹ</string>
     <string name="db_filtering_prefixes_to_keep_summary">Một danh sách các tiền tố của số điện thoại được chia tách bởi dấu phẩy để giữ lại. Các tiền tố nên ở định dạng quốc tế (như +1234). Vd: nếu bạn chỉ nhận các cuộc gọi từ các số bắt đầu bằng +1, hãy đặt +1 ở đây</string>
     <string name="db_filtering_prefixes_to_keep">Các tiền tố để giữ lại</string>
     <string name="db_filtering_enabled_summary">Bật việc lọc trong khi tải xuống và cập nhật cơ sở dữ liệu</string>

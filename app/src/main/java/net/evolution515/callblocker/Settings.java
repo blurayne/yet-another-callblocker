@@ -778,12 +778,13 @@ public class Settings extends GenericSettings {
         setString(PREF_DB_FILTERING_PREFIXES_TO_KEEP, prefixes);
     }
 
+    /**
+     * Always: every file of the community database is filtered number by number while it is
+     * downloaded. Leaving whole files in only saved a little time and lost the short numbers,
+     * and the table is filtered number by number anyway, so there is nothing to choose.
+     */
     public boolean isDbFilteringThorough() {
-        return getBoolean(PREF_DB_FILTERING_THOROUGH, true);
-    }
-
-    public void setDbFilteringThorough(boolean thorough) {
-        setBoolean(PREF_DB_FILTERING_THOROUGH, thorough);
+        return true;
     }
 
     public boolean getDbFilteringKeepShortNumbers() {

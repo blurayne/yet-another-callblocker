@@ -214,8 +214,6 @@
     <string name="db_filtering_keep_short_numbers_max_length">Lengte van te bewaren nummers</string>
     <string name="db_filtering_keep_short_numbers_summary">Bewaar nummers die korter zijn dan de opgegeven lengte (landnummers niet meegeteld)</string>
     <string name="db_filtering_keep_short_numbers">Korte nummers bewaren</string>
-    <string name="db_filtering_thorough_summary">Schakel in om elk gegevensblok grondig te doorlopen en nummers te wissen die niet overeenkomen met de landnummers. Schakel uit om gehele onnodige blokken te wissen, waardoor enkele ongewenste nummers kunnen achterblijven. Wij raden aan deze functie in te schakelen</string>
-    <string name="db_filtering_thorough">Grondig filteren</string>
     <string name="db_filtering_prefixes_to_keep_summary">Een kommagescheiden lijst met te bewaren landnummers. Deze dienen te worden ingevoerd met internationale opmaak (bijv. +1234). Als je bijv. alleen nummers ontvangt van landen met +1, voer hier dan +1 in</string>
     <string name="db_filtering_prefixes_to_keep">Te bewaren landnummers</string>
     <string name="db_filtering_enabled_summary">Schakel filteren in tijdens het ophalen en bijwerken van de databank</string>

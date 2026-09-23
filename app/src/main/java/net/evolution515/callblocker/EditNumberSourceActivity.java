@@ -193,12 +193,11 @@ public class EditNumberSourceActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.source_fetching, Toast.LENGTH_SHORT).show();
         }
 
+        // closed once it is under way, not while the question about a running build is open
         BuildStarter.start(this, database
                         ? TaskService.TASK_DOWNLOAD_MAIN_DB
                         : TaskService.TASK_UPDATE_PHONE_BLOCK,
-                DbCompileService.Trigger.FORCED);
-
-        finish();
+                DbCompileService.Trigger.FORCED, this::finish);
     }
 
     /**

@@ -214,7 +214,6 @@
     <string name="db_filtering_keep_short_numbers_summary">Teni numerojn pli mallongajn ol la specifita longo, sendepende de prefiksoj</string>
     <string name="db_filtering_keep_short_numbers">Teni mallongajn telefonnumerojn</string>
     <string name="db_filtering_keep_short_numbers_max_length">Nombro de tenotaj ciferoj</string>
-    <string name="db_filtering_thorough">Plena filtrado</string>
     <string name="db_filtering_prefixes_to_keep">Tenotaj prefiksoj</string>
     <string name="db_filtering_enabled">Filtrado ŝaltita</string>
     <string name="db_filtering_info">Klarigo</string>

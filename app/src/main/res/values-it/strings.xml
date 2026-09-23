@@ -214,8 +214,6 @@
     <string name="db_filtering_keep_short_numbers_max_length">Lunghezza dei numeri da conservare</string>
     <string name="db_filtering_keep_short_numbers_summary">Conserva i numeri più corti della lunghezza specificata indipendentemente dai prefissi</string>
     <string name="db_filtering_keep_short_numbers">Conserva numeri brevi</string>
-    <string name="db_filtering_thorough_summary">Se abilitato, passa attraverso ogni blocco di dati e rimuove i numeri che non corrispondono ai prefissi. Altrimenti, rimuove solo interi blocchi indesiderati (lasciando alcuni numeri indesiderati nei blocchi desiderati). Si raccomanda di lasciarlo attivo. Richiesto per conservare i numeri brevi</string>
-    <string name="db_filtering_thorough">Filtraggio accurato</string>
     <string name="db_filtering_prefixes_to_keep_summary">Una lista separata da virgole di prefissi di numeri da conservare. I prefissi dovrebbero essere nel formato internazionale (come +1234). Ad esempio, se ricevi chiamate solo da numeri che iniziano con +1, metti +1 qui</string>
     <string name="db_filtering_prefixes_to_keep">Prefissi da conservare</string>
     <string name="db_filtering_enabled_summary">Abilita il filtraggio durante lo scaricamento e l\'aggiornamento della banca dati</string>

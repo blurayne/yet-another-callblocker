@@ -214,8 +214,6 @@
     <string name="db_filtering_keep_short_numbers_max_length">Comprimento dos números para manter</string>
     <string name="db_filtering_keep_short_numbers_summary">Mantenha os números menores do que o comprimento especificado, independentemente dos prefixos</string>
     <string name="db_filtering_keep_short_numbers">Mantenha números curtos</string>
-    <string name="db_filtering_thorough_summary">Se ativado, ele percorre todos os blocos de dados e remove os números que não correspondem aos prefixos. Caso contrário, ele remove apenas blocos indesejados inteiros (deixando alguns números indesejados nos blocos desejados). Recomenda-se deixar isso ativado. Obrigatório para manter números curtos</string>
-    <string name="db_filtering_thorough">Filtragem completa</string>
     <string name="db_filtering_prefixes_to_keep_summary">Uma lista separada por vírgulas de prefixos de números a serem mantidos. Os prefixos devem estar no formato internacional (como +1234). Por exemplo, se você só recebe chamadas de números começando com +1, coloque +1 aqui</string>
     <string name="db_filtering_prefixes_to_keep">Prefixos para manter</string>
     <string name="db_filtering_enabled_summary">Habilita a filtragem durante o download e atualização do banco de dados</string>

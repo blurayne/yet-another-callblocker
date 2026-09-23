@@ -689,14 +689,10 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_filtering_status_nothing_set">Filterung ist an, aber es ist nichts zum Behalten eingetragen</string>
     <string name="db_filtering_status_numbers">%s Nummern</string>
     <string name="db_filtering_category_what">Was behalten wird</string>
-    <string name="db_filtering_category_apply">Anwenden</string>
-    <string name="db_filtering_rebuild">Datenbank neu bauen</string>
-    <string name="db_filtering_rebuild_summary">Jede Nummer wird beim Lesen gegen das Muster gehalten, was hier eingestellt ist, wirkt also beim nächsten Bauen der Datenbank. Aus der vorhandenen Datenbank wird nichts herausgefiltert</string>
-    <string name="db_filtering_rebuild_confirm">Die Quellen werden erneut gelesen und die Datenbank wird von Grund auf gebaut, mit dem Filter, wie er jetzt eingestellt ist. Die genutzte Datenbank bleibt, wie sie ist, bis die neue fertig ist.</string>
     <string name="db_filtering_info">Erklärung</string>
     <string name="db_filtering_info_summary">Die Quellen bringen Nummern aus aller Welt mit. Beim Bauen der Datenbank wird jede Nummer gegen das Muster gehalten; was nicht passt, wird gar nicht erst geschrieben. Das spart Speicher und macht den Aufbau schneller. Mit den weggelassenen Nummern fallen auch ihre Firmennamen weg, und eine Kategorie, deren Nummern alle wegfallen, kommt in der Datenbank nicht mehr vor – die Statistik zählt nur, was übrig bleibt. Anrufe von weggefilterten Nummern erkennt die App nicht mehr, auch nicht aus dem Ausland oder unterwegs.</string>
     <string name="db_filtering_enabled">Filterung eingeschaltet</string>
-    <string name="db_filtering_enabled_summary">Beim Herunterladen und Aktualisieren der Datenbank filtern</string>
+    <string name="db_filtering_enabled_summary">Beim Bauen der Datenbank filtern. Eine Änderung hier wirkt beim nächsten Bauen (Datenbank &amp; Quellen, Neu bauen).</string>
     <string name="db_filtering_prefixes_to_keep">Zu behaltende Vorwahlen</string>
     <string name="db_filtering_prefixes_to_keep_summary">Die Vorwahlen der Nummern, die behalten werden, durch Kommas getrennt und im internationalen Format (wie +49). Wenn Sie zum Beispiel nur Anrufe von Nummern erhalten, die mit +49 beginnen, tragen Sie hier +49 ein</string>
     <string name="db_filtering_pattern">Welche Nummern behalten werden</string>
@@ -704,8 +700,6 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="db_filtering_pattern_invalid">Dieses Muster lässt sich nicht lesen</string>
     <string name="build_log_filter">Behalten wird, was auf %s passt</string>
     <string name="build_log_no_filter">Jede Nummer wird behalten</string>
-    <string name="db_filtering_thorough">Gründlich filtern</string>
-    <string name="db_filtering_thorough_summary">Betrifft nur das Herunterladen der Community-Datenbank: eingeschaltet wird jede ihrer Dateien Nummer für Nummer gefiltert, ausgeschaltet werden nur die Dateien fremder Vorwahlen ganz weggelassen. In die Datenbank kommt so oder so nur, was auf das Muster passt. Ausgeschaltet gehen allerdings kurze Nummern verloren, auch wenn sie behalten werden sollen.</string>
     <string name="db_filtering_keep_short_numbers">Kurze Nummern behalten</string>
     <string name="db_filtering_keep_short_numbers_summary">Nummern bis zur angegebenen Länge unabhängig vom Muster behalten. Das sind Notruf- und Servicenummern ohne Ländervorwahl; ausgeschaltet fallen sie weg.</string>
     <string name="db_filtering_keep_short_numbers_max_length">Länge der zu behaltenden Nummern</string>

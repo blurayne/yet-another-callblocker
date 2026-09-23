@@ -19,7 +19,6 @@ import net.evolution515.callblocker.data.numbers.NumbersCompiler;
 import net.evolution515.callblocker.data.YacbHolder;
 import net.evolution515.callblocker.event.MainDbDownloadFinishedEvent;
 import net.evolution515.callblocker.utils.DbFilteringUtils;
-import net.evolution515.callblocker.work.TaskService;
 
 /**
  * What of the database is worth keeping.
@@ -34,7 +33,6 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
     private static final String PREF_SCREEN_DB_FILTERING = "dbFiltering";
     private static final String PREF_STATUS = "dbFilteringStatus";
     private static final String PREF_INFO = "dbFilteringInfo";
-    private static final String PREF_REBUILD = "dbFilteringRebuild";
 
     private final Settings settings = App.getSettings();
 
@@ -97,24 +95,6 @@ public class DbFilteringSettingsFragment extends BaseSettingsFragment {
             return true;
         });
 
-        /*
-         * The only way a changed filter reaches the database: it is asked as each source is
-         * read, so the database has to be read again for it to make any difference.
-         */
-        requirePreference(PREF_REBUILD).setOnPreferenceClickListener(preference -> {
-            updateFilter();
-
-            new AlertDialog.Builder(requireActivity())
-                    .setTitle(R.string.db_filtering_rebuild)
-                    .setMessage(R.string.db_filtering_rebuild_confirm)
-                    .setPositiveButton(R.string.db_filtering_rebuild, (dialog, which) ->
-                            BuildStarter.start(requireActivity(),
-                                    TaskService.TASK_DOWNLOAD_MAIN_DB))
-                    .setNegativeButton(R.string.back, null)
-                    .show();
-
-            return true;
-        });
     }
 
     @Override

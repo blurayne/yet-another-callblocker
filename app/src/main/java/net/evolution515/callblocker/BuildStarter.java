@@ -33,8 +33,19 @@ public class BuildStarter {
      * @param activity where the question is asked
      */
     public static void start(Activity activity, String task, DbCompileService.Trigger trigger) {
+        start(activity, task, trigger, null);
+    }
+
+    /**
+     * @param afterwards run once something was done - started, replaced or stopped - and not
+     *                   when the question was answered with "back"; for a screen that closes
+     *                   after starting, which must not close while the question is open
+     */
+    public static void start(Activity activity, String task, DbCompileService.Trigger trigger,
+                             Runnable afterwards) {
         if (!isBuilding()) {
             TaskService.start(activity, task, trigger);
+            done(activity, task, afterwards);
             return;
         }
 
@@ -45,15 +56,31 @@ public class BuildStarter {
                     // the new one is queued behind the old one, which stops within a moment
                     DbCompileService.requestCancel();
                     TaskService.start(activity, task, trigger);
+                    done(activity, task, afterwards);
                 })
-                .setNeutralButton(R.string.build_running_stop,
-                        (d, w) -> DbCompileService.requestCancel())
+                .setNeutralButton(R.string.build_running_stop, (d, w) -> {
+                    DbCompileService.requestCancel();
+                    done(activity, task, afterwards);
+                })
                 .setNegativeButton(R.string.back, null)
                 .show();
     }
 
     public static void start(Activity activity, String task) {
         start(activity, task, DbCompileService.Trigger.BUILD);
+    }
+
+    /**
+     * Opens the build log on what was just set going, so that it can be watched as it
+     * happens - the log follows its end by itself. Only for the database: the PhoneBlock
+     * list is fetched on its own and says how it went in a toast.
+     */
+    private static void done(Activity activity, String task, Runnable afterwards) {
+        if (TaskService.TASK_DOWNLOAD_MAIN_DB.equals(task)) {
+            activity.startActivity(LogcatActivity.getBuildLogIntent(activity, null));
+        }
+
+        if (afterwards != null) afterwards.run();
     }
 
 }

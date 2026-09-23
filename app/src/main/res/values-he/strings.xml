@@ -220,8 +220,6 @@
     <string name="db_filtering_keep_short_numbers_max_length">אורך המספרים לשמירה</string>
     <string name="db_filtering_keep_short_numbers">שמית מספרים קצרים</string>
     <string name="db_filtering_keep_short_numbers_summary">שמירה על מספרים קצרים מהאורך שצוין ללא קשר לקידומות</string>
-    <string name="db_filtering_thorough_summary">אם אפשרות זו זמינה, היא עוברת על כל בלוק נתונים ומסירה מספרים שאינם תואמים לקידומות. אחרת, זה רק מסיר בלוקים לא רצויים שלמים (משאיר כמה מספרים לא רצויים בלוקים מבוקשים). מומלץ להשאיר את זה פועל. נדרש לשמירת מספרים קצרים</string>
-    <string name="db_filtering_thorough">סינון יסודי</string>
     <string name="db_filtering_prefixes_to_keep_summary">רשימה מופרדת באמצעות פסיקים של קידומות מספרים לשמירה. הקידומת צריכה להיות בתבנית הבינלאומית (כמו +1234). למשל, אם מתקבלים אצלך שיחות רק ממספרים המתחילים ב- +1, יש להזין +1 כאן</string>
     <string name="db_filtering_prefixes_to_keep">קידומות לשמירה</string>
     <string name="db_filtering_enabled_summary">מאפשר סינון במהלך הורדת ועדכון מסד הנתונים</string>

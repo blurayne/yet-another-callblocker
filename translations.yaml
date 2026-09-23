@@ -1851,7 +1851,7 @@ add_web_review:
   zh-rCN: 在网上添加评论
   zh-rTW: 新增評論（網絡）
 back:
-  comment: RootSettingsFragment; DbFilteringSettingsFragment dialog text; DbFilteringSettingsFragment; +7 more
+  comment: RootSettingsFragment; DbFilteringSettingsFragment dialog text; BlockingPauseHelper; +6 more
   en: Back
   de: Zurück
   ar: خلف
@@ -4800,22 +4800,6 @@ db_filtering_category_what:
   comment: db_filtering_preferences.xml title
   en: What is kept
   de: Was behalten wird
-db_filtering_category_apply:
-  comment: db_filtering_preferences.xml title
-  en: Apply
-  de: Anwenden
-db_filtering_rebuild:
-  comment: db_filtering_preferences.xml title; DbFilteringSettingsFragment dialog title; DbFilteringSettingsFragment dialog text
-  en: Build the database again
-  de: Datenbank neu bauen
-db_filtering_rebuild_summary:
-  comment: db_filtering_preferences.xml summary
-  en: Every number is held against the pattern as it is read, so what is set here takes effect the next time the database is built. Nothing is filtered out of the database that is already there
-  de: Jede Nummer wird beim Lesen gegen das Muster gehalten, was hier eingestellt ist, wirkt also beim nächsten Bauen der Datenbank. Aus der vorhandenen Datenbank wird nichts herausgefiltert
-db_filtering_rebuild_confirm:
-  comment: DbFilteringSettingsFragment dialog title
-  en: The sources are read again and the database is built from scratch, with the filter as it is set now. The database in use stays as it is until the new one is finished.
-  de: Die Quellen werden erneut gelesen und die Datenbank wird von Grund auf gebaut, mit dem Filter, wie er jetzt eingestellt ist. Die genutzte Datenbank bleibt, wie sie ist, bis die neue fertig ist.
 db_filtering_info:
   comment: db_filtering_preferences.xml title
   en: Explanation
@@ -4887,8 +4871,8 @@ db_filtering_enabled:
   vi: Đã bật lọc
 db_filtering_enabled_summary:
   comment: db_filtering_preferences.xml summary
-  en: Enables the filtering during the database download and update
-  de: Beim Herunterladen und Aktualisieren der Datenbank filtern
+  en: Filter while the database is built. A change here takes effect with the next build (Database &amp; sources, Rebuild).
+  de: Beim Bauen der Datenbank filtern. Eine Änderung hier wirkt beim nächsten Bauen (Datenbank &amp; Quellen, Neu bauen).
   ar: تمكين التصفية أثناء تنزيل قاعدة البيانات وتحديثها
   ca: Habilita el filtratge durant la descàrrega i actualització de la base de dades
   eo: Ŝalti la filtradon dum la elŝutado kaj ĝisdatigado de la datenbanko
@@ -4970,49 +4954,6 @@ build_log_no_filter:
   comment: DbCompileService
   en: Keeping every number
   de: Jede Nummer wird behalten
-db_filtering_thorough:
-  comment: db_filtering_preferences.xml title
-  en: Thorough filtering
-  de: Gründlich filtern
-  ar: تصفية شاملة
-  ca: Filtratge exhaustiu
-  eo: Plena filtrado
-  es: Filtrado exhaustivo
-  fr: Filtrage minutieux
-  gl: Filtrado completo
-  he: סינון יסודי
-  hr: Temeljito filtriranje
-  it: Filtraggio accurato
-  iw: סינון יסודי
-  nl: Grondig filteren
-  pl: Dokładne filtrowanie
-  pt: Filtragem completa
-  pt-rBR: Filtragem completa
-  ru: Тщательная фильтрация
-  ta: ''
-  tr: Kapsamlı filtreleme
-  uk: Ретельна фільтрація
-  vi: Lọc kỹ
-db_filtering_thorough_summary:
-  comment: db_filtering_preferences.xml summary
-  en: 'Only about downloading the community database: when on, each of its files is filtered number by number; when off, only the files of other country codes are left out whole. Only what matches the pattern gets into the database either way. When off, short numbers are lost even if they are to be kept.'
-  de: 'Betrifft nur das Herunterladen der Community-Datenbank: eingeschaltet wird jede ihrer Dateien Nummer für Nummer gefiltert, ausgeschaltet werden nur die Dateien fremder Vorwahlen ganz weggelassen. In die Datenbank kommt so oder so nur, was auf das Muster passt. Ausgeschaltet gehen allerdings kurze Nummern verloren, auch wenn sie behalten werden sollen.'
-  ca: Si està activat, passa per a cada bloc de dades i elimina els números que no coincideixen amb els prefixos. En cas contrari, només elimina blocs sencers no desitjats (deixant alguns números no desitjats en blocs desitjats). Es recomana deixar-ho activat. Necessari per a mantenir números curts
-  es: Si se activa, recorre cada bloque de datos y elimina los números que no coinciden con los prefijos. Si no, sólo elimina los bloques enteros no deseados (dejando algunos números no deseados en los bloques deseados). Se recomienda dejar esta opción activada. Necesario para mantener los números cortos
-  fr: Si activé, ceci passe en revue chaque bloc de données et supprime les numéros ne correspondant pas aux préfixes. Sinon, on ne supprime que les blocs entiers non désirés (laissant quelques numéros non désirés dans les blocs désirés). Il est recommandé de laisser cette option activée. Nécessaire pour conserver les numéros courts
-  gl: Se o activas, comprobará cada bloque de datos e eliminará os números que non concorden cos prefixos. Se non, só elimina os bloques non desexados ao completo (deixando algúns números non desexados nos bloques admitidos). É recomendable activar isto. Requerido para manter números curtos
-  he: אם אפשרות זו זמינה, היא עוברת על כל בלוק נתונים ומסירה מספרים שאינם תואמים לקידומות. אחרת, זה רק מסיר בלוקים לא רצויים שלמים (משאיר כמה מספרים לא רצויים בלוקים מבוקשים). מומלץ להשאיר את זה פועל. נדרש לשמירת מספרים קצרים
-  hr: Ako je aktivirano, prolazi kroz svaki blok podataka i uklanja brojeve koji se ne podudaraju s predznacima. Inače, uklanja samo cijele neželjene blokove (ostavljajući neke neželjene brojeve u željenim blokovima). Preporučujemo da ovo ostaviš uključeno. Potrebno za čuvanje kratkih brojeva
-  it: Se abilitato, passa attraverso ogni blocco di dati e rimuove i numeri che non corrispondono ai prefissi. Altrimenti, rimuove solo interi blocchi indesiderati (lasciando alcuni numeri indesiderati nei blocchi desiderati). Si raccomanda di lasciarlo attivo. Richiesto per conservare i numeri brevi
-  iw: אם אפשרות זו זמינה, היא עוברת על כל בלוק נתונים ומסירה מספרים שאינם תואמים לקידומות. אחרת, זה רק מסיר בלוקים לא רצויים שלמים (משאיר כמה מספרים לא רצויים בלוקים מבוקשים). מומלץ להשאיר את זה פועל. נדרש לשמירת מספרים קצרים
-  nl: Schakel in om elk gegevensblok grondig te doorlopen en nummers te wissen die niet overeenkomen met de landnummers. Schakel uit om gehele onnodige blokken te wissen, waardoor enkele ongewenste nummers kunnen achterblijven. Wij raden aan deze functie in te schakelen
-  pl: Jeśli włączone, przetwarza każdy blok danych i usuwa numery niepasujące do prefiksów. W przeciwnym razie usuwa całe niechciane bloki (pozostawiając niektóre niechciane numery w chcianych blokach). Zaleca się pozostawienie tej opcji włączonej. Wymagane do zachowania krótkich numerów
-  pt: Se ativado, percorre todos os blocos de dados e remove os números que não correspondem aos prefixos. Caso contrário, remove apenas blocos indesejados inteiros (deixando alguns números indesejados nos blocos desejados). Recomenda-se deixar isto ativado. Obrigatório para manter números curtos
-  pt-rBR: Se ativado, ele percorre todos os blocos de dados e remove os números que não correspondem aos prefixos. Caso contrário, ele remove apenas blocos indesejados inteiros (deixando alguns números indesejados nos blocos desejados). Recomenda-se deixar isso ativado. Obrigatório para manter números curtos
-  ru: Если включена, фильтрация проходит по всем блокам данных и удаляет номера, не подходящие по префиксам. В противном случае удаляются только целые блоки (оставляя некоторые лишние номера в сохраняемых блоках). Рекомендуется оставить включённым. Требуется для сохранения коротких номеров
-  tr: Etkinleştirilirse, her veri bloğunu inceler ve ön eklerle eşleşmeyen numaraları kaldırır. Aksi takdirde, yalnızca bütün halinde istenmeyen blokları kaldırır (istenmeyen bloklarda bazı istenmeyen numaralar bırakır). Bunu açık bırakmanız önerilir. Kısa numaraları tutmak için gereklidir
-  uk: Якщо ввімкнено, додаток пройде через кожен блок даних і видалить номера, що не відповідають префіксам. В іншому випадку він видалить лише цілі небажані номери (залишаючи деякі небажані номери в бажаних блоках). Рекомендується залишити це увімкненим. Необхідний для збереження коротких номерів
-  vi: Nếu được bật, nó đi qua mọi khối dữ liệu và xoá các số không khớp với các tiền tố. Nếu không, nó chỉ xoá toàn bộ các khối không mong muốn (để lại một số số không mong muốn trong các khối mong muốn). Chúng tôi khuyên bạn cứ để bật tuỳ chọn này. Được yêu cầu để giữ lại các số ngắn
 db_filtering_keep_short_numbers:
   comment: db_filtering_preferences.xml title
   en: Keep short numbers

@@ -415,14 +415,10 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_filtering_status_nothing_set">Filtering is on, but nothing is set to keep</string>
     <string name="db_filtering_status_numbers">%s numbers</string>
     <string name="db_filtering_category_what">What is kept</string>
-    <string name="db_filtering_category_apply">Apply</string>
-    <string name="db_filtering_rebuild">Build the database again</string>
-    <string name="db_filtering_rebuild_summary">Every number is held against the pattern as it is read, so what is set here takes effect the next time the database is built. Nothing is filtered out of the database that is already there</string>
-    <string name="db_filtering_rebuild_confirm">The sources are read again and the database is built from scratch, with the filter as it is set now. The database in use stays as it is until the new one is finished.</string>
     <string name="db_filtering_info">Explanation</string>
     <string name="db_filtering_info_summary">The sources bring numbers from all over the world. While the database is built, every number is held against the pattern, and what doesn\'t match is never written. That saves storage and makes the build faster. The company names of the numbers that are left out go with them, and a category whose numbers are all left out no longer appears in the database - the statistics only count what is left. Calls from numbers that were filtered out are not recognised any more, from abroad or from a foreign number while you travel.</string>
     <string name="db_filtering_enabled">Filtering enabled</string>
-    <string name="db_filtering_enabled_summary">Enables the filtering during the database download and update</string>
+    <string name="db_filtering_enabled_summary">Filter while the database is built. A change here takes effect with the next build (Database &amp; sources, Rebuild).</string>
     <string name="db_filtering_prefixes_to_keep">Prefixes to keep</string>
     <string name="db_filtering_prefixes_to_keep_summary">A comma-separated list of prefixes of numbers to keep. The prefixes should be in the international format (like +1234). E.g., if you only receive calls from numbers starting with +1, put +1 here</string>
     <string name="db_filtering_pattern">Which numbers to keep</string>
@@ -430,8 +426,6 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="db_filtering_pattern_invalid">That pattern can\'t be read</string>
     <string name="build_log_filter">Keeping numbers that match %s</string>
     <string name="build_log_no_filter">Keeping every number</string>
-    <string name="db_filtering_thorough">Thorough filtering</string>
-    <string name="db_filtering_thorough_summary">Only about downloading the community database: when on, each of its files is filtered number by number; when off, only the files of other country codes are left out whole. Only what matches the pattern gets into the database either way. When off, short numbers are lost even if they are to be kept.</string>
     <string name="db_filtering_keep_short_numbers">Keep short numbers</string>
     <string name="db_filtering_keep_short_numbers_summary">Keep numbers up to the given length whatever the pattern says. These are emergency and service numbers without a country code; when off, they are left out.</string>
     <string name="db_filtering_keep_short_numbers_max_length">Length of numbers to keep</string>

@@ -215,8 +215,6 @@
     <string name="db_filtering_keep_short_numbers_max_length">Tutulacak numaraların uzunluğu</string>
     <string name="db_filtering_keep_short_numbers_summary">Ön eklerden bağımsız olarak belirtilen uzunluktan daha kısa numaraları tut</string>
     <string name="db_filtering_keep_short_numbers">Kısa numaraları tut</string>
-    <string name="db_filtering_thorough_summary">Etkinleştirilirse, her veri bloğunu inceler ve ön eklerle eşleşmeyen numaraları kaldırır. Aksi takdirde, yalnızca bütün halinde istenmeyen blokları kaldırır (istenmeyen bloklarda bazı istenmeyen numaralar bırakır). Bunu açık bırakmanız önerilir. Kısa numaraları tutmak için gereklidir</string>
-    <string name="db_filtering_thorough">Kapsamlı filtreleme</string>
     <string name="db_filtering_prefixes_to_keep">Tutulacak ön ekler</string>
     <string name="db_filtering_enabled_summary">Veri tabanı indirme ve güncelleme sırasında filtrelemeyi etkinleştirir</string>
     <string name="db_filtering_enabled">Filtreleme etkin</string>

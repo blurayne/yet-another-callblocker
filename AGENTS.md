@@ -79,6 +79,14 @@ accepts both at the pinned revision, so this is a property of that pin rather th
 prefer additive files, keep the existing code style (slf4j logging, `Settings` getters,
 `YacbHolder` wiring), and don't reformat untouched code.
 
+The app's own package and application id are `net.evolution515.callblocker`; upstream's are
+`dummydomain.yetanothercallblocker`. Code taken over from upstream has its `package` and
+`import` lines rewritten, and lives under `app/src/main/java/net/evolution515/callblocker/`.
+`dummydomain.yetanothercallblocker.sia.*` is **not** ours: it is the package of the
+LibPhoneNumberInfo library and stays as it is. The different application id also means this
+build installs next to upstream's app rather than over it; settings move across with
+Sichern/Wiederherstellen.
+
 ## What CI cannot verify
 
 Whether the caller ID actually appears depends on the phone app: the AOSP Dialer and the Google

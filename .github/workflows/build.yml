@@ -168,7 +168,7 @@ jobs:
           echo "checking ${manifest}"
 
           missing=""
-          for file in app/src/main/java/dummydomain/yetanothercallblocker/*Activity.java; do
+          for file in app/src/main/java/net/evolution515/callblocker/*Activity.java; do
             name=$(basename "${file}" .java)
             grep -q "${name}" "${manifest}" || missing="${missing} ${name}"
           done

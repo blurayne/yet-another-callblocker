@@ -34,12 +34,12 @@ The app's own crash files can be read with `run-as`, which works because the deb
 debuggable (it does not work with a release build):
 
 ```
-adb shell run-as dummydomain.yetanothercallblocker ls cache/
-adb shell run-as dummydomain.yetanothercallblocker cat cache/crash_<timestamp>.txt
+adb shell run-as net.evolution515.callblocker ls cache/
+adb shell run-as net.evolution515.callblocker cat cache/crash_<timestamp>.txt
 ```
 
 `run-as` reaches the credential-protected data directory. The databases live in the
-device-protected one (`/data/user_de/0/dummydomain.yetanothercallblocker/`), which needs root.
+device-protected one (`/data/user_de/0/net.evolution515.callblocker/`), which needs root.
 
 
 ### With adb on the phone itself (Android 11+)
@@ -64,7 +64,7 @@ dialog, the second on the "Wireless debugging" screen itself.
 Developer options -> "Take bug report" -> "Interactive report" produces a zip that contains the
 full logcat, and the notification it posts when it's done can share it. It also contains a lot
 of unrelated device data, so it's worth extracting the interesting part
-(`FATAL EXCEPTION`, or the lines mentioning `dummydomain.yetanothercallblocker`) before sharing.
+(`FATAL EXCEPTION`, or the lines mentioning `net.evolution515.callblocker`) before sharing.
 
 
 ## Signing

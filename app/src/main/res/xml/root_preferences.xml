@@ -90,7 +90,7 @@
             app:summary="@string/caller_id_overlay_summary"
             app:title="@string/caller_id_overlay" />
         <Preference
-            app:fragment="dummydomain.yetanothercallblocker.CallerIdTemplateSettingsFragment"
+            app:fragment="net.evolution515.callblocker.CallerIdTemplateSettingsFragment"
             app:key="callerIdTemplateScreen"
             app:persistent="false"
             app:title="@string/caller_id_template" />
@@ -103,7 +103,7 @@
     <!-- where what the app knows about a number comes from -->
     <PreferenceCategory app:title="@string/settings_category_number_sources">
         <Preference
-            app:fragment="dummydomain.yetanothercallblocker.DbManagementSettingsFragment"
+            app:fragment="net.evolution515.callblocker.DbManagementSettingsFragment"
             app:key="dbManagement"
             app:persistent="false"
             app:title="@string/db_management" />
@@ -120,7 +120,7 @@
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/settings_category_appearance">
-        <dummydomain.yetanothercallblocker.preference.IntListPreference
+        <net.evolution515.callblocker.preference.IntListPreference
             app:defaultValue="-1"
             app:entries="@array/ui_mode_entries"
             app:entryValues="@array/ui_mode_entry_values"
@@ -171,7 +171,7 @@
 
     <PreferenceCategory app:title="@string/settings_screen_advanced">
         <Preference
-            app:fragment="dummydomain.yetanothercallblocker.AdvancedSettingsFragment"
+            app:fragment="net.evolution515.callblocker.AdvancedSettingsFragment"
             app:key="screenAdvanced"
             app:summary="@string/settings_screen_advanced_summary"
             app:title="@string/settings_screen_advanced" />

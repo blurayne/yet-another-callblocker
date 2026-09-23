@@ -57,7 +57,7 @@
     <PreferenceCategory app:title="@string/db_management_category_space">
 
         <Preference
-            app:fragment="dummydomain.yetanothercallblocker.DbFilteringSettingsFragment"
+            app:fragment="net.evolution515.callblocker.DbFilteringSettingsFragment"
             app:key="dbFiltering"
             app:title="@string/settings_screen_db_filtering" />
 

@@ -77,7 +77,7 @@ def buildTime = {
 android {
     compileSdkVersion 33
     defaultConfig {
-        applicationId "dummydomain.yetanothercallblocker"
+        applicationId "net.evolution515.callblocker"
         minSdkVersion 14
         targetSdkVersion 33
         versionCode 5170
@@ -89,7 +89,7 @@ android {
 
         javaCompileOptions {
             annotationProcessorOptions {
-                arguments = [eventBusIndex: 'dummydomain.yetanothercallblocker.EventBusIndex']
+                arguments = [eventBusIndex: 'net.evolution515.callblocker.EventBusIndex']
             }
         }
     }

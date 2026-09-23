@@ -473,6 +473,17 @@ public class DbCompileService {
                 buildLog.line(BuildLog.MAIN,
                         context.getString(R.string.build_log_total_filtered), totals.skipped);
             }
+
+            buildLog.line(BuildLog.MAIN, context.getString(R.string.build_log_total_names),
+                    totals.names);
+            buildLog.line(BuildLog.MAIN,
+                    context.getString(R.string.build_log_total_categories), totals.categories);
+
+            if (totals.newCategories > 0) {
+                buildLog.line(BuildLog.MAIN,
+                        context.getString(R.string.build_log_total_categories_new),
+                        totals.newCategories);
+            }
         }
 
         buildLog.line(BuildLog.MAIN, context.getString(R.string.build_log_total_sources,

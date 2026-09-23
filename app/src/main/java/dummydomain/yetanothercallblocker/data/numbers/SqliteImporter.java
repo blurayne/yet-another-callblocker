@@ -65,14 +65,21 @@ public class SqliteImporter {
         /** How many business names it brought, beside the numbers. */
         final long names;
 
+        /** How many categories the file names, and which of them nobody had before. */
+        final int categories;
+        final java.util.List<String> newCategories;
+
         /** What the file says it is, or 0 when it doesn't say. */
         final int version;
 
-        Result(long read, long deletions, long skipped, long names, int version) {
+        Result(long read, long deletions, long skipped, long names, int categories,
+               java.util.List<String> newCategories, int version) {
             this.read = read;
             this.deletions = deletions;
             this.skipped = skipped;
             this.names = names;
+            this.categories = categories;
+            this.newCategories = newCategories;
             this.version = version;
         }
 
@@ -131,7 +138,10 @@ public class SqliteImporter {
                 SQLiteDatabase.OPEN_READONLY);
 
         try {
-            SparseIntArray categories = mapCategories(source, target);
+            java.util.List<String> added = new java.util.ArrayList<>();
+            int[] named = {0};
+
+            SparseIntArray categories = mapCategories(source, target, named, added);
 
             long[] counts = readNumbers(source, target, writer, sourceId, asLayer, filter,
                     categories, progress);
@@ -140,8 +150,8 @@ public class SqliteImporter {
 
             long names = readNames(source, writer, sourceId, filter);
 
-            return new Result(counts[0] + deletions, deletions, counts[1], names,
-                    versionOf(source));
+            return new Result(counts[0] + deletions, deletions, counts[1], names, named[0],
+                    added, versionOf(source));
         } finally {
             source.close();
         }
@@ -155,10 +165,12 @@ public class SqliteImporter {
      * goes in as it stands. What is left is the ones that differ, and the ones nobody had
      * before - those are added to the table as they are found.
      */
-    private static SparseIntArray mapCategories(SQLiteDatabase source, SQLiteDatabase target) {
+    private static SparseIntArray mapCategories(SQLiteDatabase source, SQLiteDatabase target,
+                                                int[] named, java.util.List<String> added) {
         SparseIntArray mapping = new SparseIntArray();
 
         SparseArray<String> theirs = NumbersDb.getCategories(source);
+        named[0] = theirs.size();
 
         if (theirs.size() == 0) {
             LOG.info("mapCategories() the file says nothing about its categories");
@@ -175,6 +187,12 @@ public class SqliteImporter {
             if (name != null && name.equals(ours.get(theirId))) continue;
 
             int ourId = NumbersDb.categoryFor(target, name);
+
+            // an id the table didn't have a name for before is one this file just brought
+            if (ourId > 0 && ours.get(ourId) == null) {
+                added.add(name.trim());
+                ours.put(ourId, name.trim());
+            }
 
             if (ourId != theirId) mapping.put(theirId, ourId);
         }

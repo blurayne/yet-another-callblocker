@@ -51,6 +51,15 @@ public class NumbersWriter implements Closeable {
     /** How many rows have actually gone away, which only the statement can say. */
     private long deletedRows;
 
+    /**
+     * Which category ids have been written, for the source being read and for the whole run.
+     *
+     * <p>Noted here because every row goes through here, whatever it was read out of. The
+     * ids fit in seven bits, so this is two arrays of 128 and a flag set per row.
+     */
+    private final boolean[] sourceCategories = new boolean[128];
+    private final boolean[] runCategories = new boolean[128];
+
     public NumbersWriter(SQLiteDatabase db) {
         this.db = db;
 
@@ -98,6 +107,8 @@ public class NumbersWriter implements Closeable {
     public void put(long number, int flags, int score, int sourceId) {
         if (number <= 0) return;
 
+        noteCategory(NumberFlags.getCategory(flags));
+
         insertNumber.bindLong(1, number);
         insertNumber.bindLong(2, flags);
         insertNumber.bindLong(3, score);
@@ -118,6 +129,8 @@ public class NumbersWriter implements Closeable {
     public void merge(long number, Integer rating, Integer category, Integer score,
                       boolean personal, int sourceId) {
         if (number <= 0) return;
+
+        if (category != null) noteCategory(category);
 
         int flags = 0;
         int currentScore = 0;
@@ -151,6 +164,35 @@ public class NumbersWriter implements Closeable {
 
         deleteName.bindLong(1, number);
         deleteName.executeUpdateDelete();
+    }
+
+    private void noteCategory(int category) {
+        // 0 is "none", which is not a category anyone would count
+        if (category <= 0 || category >= sourceCategories.length) return;
+
+        sourceCategories[category] = true;
+        runCategories[category] = true;
+    }
+
+    /** Starts counting categories again, for the next source. */
+    public void startSource() {
+        java.util.Arrays.fill(sourceCategories, false);
+    }
+
+    /** How many different categories the source being read has written. */
+    public int getSourceCategories() {
+        return count(sourceCategories);
+    }
+
+    /** How many different categories have been written since this writer was made. */
+    public int getRunCategories() {
+        return count(runCategories);
+    }
+
+    private static int count(boolean[] seen) {
+        int count = 0;
+        for (boolean each : seen) if (each) count++;
+        return count;
     }
 
     /** How many rows have been taken out since this writer was made. */

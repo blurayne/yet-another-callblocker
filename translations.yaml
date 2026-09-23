@@ -5305,6 +5305,18 @@ build_log_names:
   comment: NumbersCompiler build log
   en: 'Business names:'
   de: 'Firmennamen:'
+build_log_categories:
+  comment: NumbersCompiler build log
+  en: 'Categories used:'
+  de: 'Verwendete Kategorien:'
+build_log_categories_named:
+  comment: NumbersCompiler build log
+  en: 'Categories named in the file:'
+  de: 'Kategorien in der Datei:'
+build_log_categories_new:
+  comment: NumbersCompiler build log
+  en: 'New categories: %1$d (%2$s)'
+  de: 'Neue Kategorien: %1$d (%2$s)'
 build_log_filtered:
   comment: NumbersCompiler build log
   en: 'Filtered out:'
@@ -5409,6 +5421,18 @@ build_log_total_filtered:
   comment: DbCompileService build log
   en: 'Filtered out in total:'
   de: 'Herausgefiltert insgesamt:'
+build_log_total_names:
+  comment: DbCompileService build log
+  en: 'Business names in the database:'
+  de: 'Firmennamen in der Datenbank:'
+build_log_total_categories:
+  comment: DbCompileService build log
+  en: 'Categories in the database:'
+  de: 'Kategorien in der Datenbank:'
+build_log_total_categories_new:
+  comment: DbCompileService build log
+  en: 'New categories in total:'
+  de: 'Neue Kategorien insgesamt:'
 build_log_total_sources:
   comment: DbCompileService build log
   en: 'Sources read: %1$d of %2$d'

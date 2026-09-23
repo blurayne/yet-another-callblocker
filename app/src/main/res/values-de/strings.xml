@@ -163,6 +163,9 @@
     <string name="build_log_updated">Aktualisierte Einträge:</string>
     <string name="build_log_deleted">Entfernte Einträge:</string>
     <string name="build_log_names">Firmennamen:</string>
+    <string name="build_log_categories">Verwendete Kategorien:</string>
+    <string name="build_log_categories_named">Kategorien in der Datei:</string>
+    <string name="build_log_categories_new">Neue Kategorien: %1$d (%2$s)</string>
     <string name="build_log_filtered">Herausgefiltert:</string>
     <string name="build_log_ingesting">Datei %1$d von %2$d wird gelesen</string>
     <string name="build_log_ingesting_files">%1$d Dateien werden gelesen</string>
@@ -189,6 +192,9 @@
     <string name="build_log_total_updated">Aktualisierte Einträge insgesamt:</string>
     <string name="build_log_total_deleted">Entfernte Einträge insgesamt:</string>
     <string name="build_log_total_filtered">Herausgefiltert insgesamt:</string>
+    <string name="build_log_total_names">Firmennamen in der Datenbank:</string>
+    <string name="build_log_total_categories">Kategorien in der Datenbank:</string>
+    <string name="build_log_total_categories_new">Neue Kategorien insgesamt:</string>
     <string name="build_log_total_sources">Gelesene Quellen: %1$d von %2$d</string>
     <string name="build_log_finished">Fertig mit %1$s Nummern um %2$s, nach %3$d Sekunden</string>
     <string name="build_log_empty">Es wurde noch nichts gebaut</string>

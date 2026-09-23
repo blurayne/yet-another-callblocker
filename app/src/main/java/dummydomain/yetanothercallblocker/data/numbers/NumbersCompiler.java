@@ -3,6 +3,7 @@ package dummydomain.yetanothercallblocker.data.numbers;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.TextUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,21 +93,47 @@ public class NumbersCompiler {
         public final long deleted;
         /** What the filter kept out, which is most of a community database. */
         public final long skipped;
+        /** Business names it brought along. */
+        public final long names;
+        /** How many different categories its numbers are in. */
+        public final int categories;
+        /** How many categories it brought that the table had no name for before. */
+        public final int newCategories;
 
         Counts(long read, long inserted, long updated, long deleted, long skipped) {
+            this(read, inserted, updated, deleted, skipped, 0, 0, 0);
+        }
+
+        Counts(long read, long inserted, long updated, long deleted, long skipped,
+               long names, int categories, int newCategories) {
             this.read = read;
             this.inserted = inserted;
             this.updated = updated;
             this.deleted = deleted;
             this.skipped = skipped;
+            this.names = names;
+            this.categories = categories;
+            this.newCategories = newCategories;
         }
 
-        /** The two of them together, which is what a run adds up to over its sources. */
+        /**
+         * The two of them together, which is what a run adds up to over its sources.
+         *
+         * <p>The categories are not added up - two sources using the same one is one category
+         * - and are set from the table once the run is over.
+         */
         Counts plus(Counts other) {
             if (other == null) return this;
 
             return new Counts(read + other.read, inserted + other.inserted,
-                    updated + other.updated, deleted + other.deleted, skipped + other.skipped);
+                    updated + other.updated, deleted + other.deleted, skipped + other.skipped,
+                    names + other.names, categories, newCategories + other.newCategories);
+        }
+
+        /** The same, with what the finished table holds in place of what was handed over. */
+        Counts withTable(long names, int categories) {
+            return new Counts(read, inserted, updated, deleted, skipped, names, categories,
+                    newCategories);
         }
 
     }
@@ -404,7 +431,8 @@ public class NumbersCompiler {
                     countBefore = countAfter;
 
                     Counts counts = new Counts(run.sourceRead(), inserted, updated, deleted,
-                            run.sourceSkipped());
+                            run.sourceSkipped(), run.sourceNames(), writer.getSourceCategories(),
+                            run.sourceNewCategories().size());
 
                     if (log != null) {
                         log.line(input.tag, context.getString(R.string.build_log_read), counts.read);
@@ -420,10 +448,22 @@ public class NumbersCompiler {
                                     counts.skipped);
                         }
 
-                        // only a source that brings names has a line about them
-                        if (run.sourceNames() > 0) {
-                            log.line(input.tag, context.getString(R.string.build_log_names),
-                                    run.sourceNames());
+                        log.line(input.tag, context.getString(R.string.build_log_names),
+                                counts.names);
+
+                        /*
+                         * The categories the numbers are in, and for a database that names
+                         * its own, which of them are new - with their names, because a new
+                         * category is one nobody has translated and worth knowing about.
+                         */
+                        log.line(input.tag, context.getString(R.string.build_log_categories),
+                                counts.categories);
+
+                        if (!run.sourceNewCategories().isEmpty()) {
+                            log.line(input.tag, context.getString(
+                                    R.string.build_log_categories_new,
+                                    run.sourceNewCategories().size(),
+                                    TextUtils.join(", ", run.sourceNewCategories())));
                         }
                     }
 
@@ -433,6 +473,9 @@ public class NumbersCompiler {
 
                     written++;
                 }
+
+                // the categories of the whole run, which is not the sum of the sources'
+                totals = totals.withTable(0, writer.getRunCategories());
 
                 NumbersDb.setMeta(db, NumbersDb.META_COMPILED,
                         String.valueOf(System.currentTimeMillis()));
@@ -446,7 +489,11 @@ public class NumbersCompiler {
 
             long numbers = NumbersDb.getCount(db);
             NumbersDb.setMeta(db, NumbersDb.META_COUNT, String.valueOf(numbers));
-            NumbersDb.setMeta(db, NumbersDb.META_NAMES, String.valueOf(NumbersDb.getNamesCount(db)));
+            long namesInTable = NumbersDb.getNamesCount(db);
+            NumbersDb.setMeta(db, NumbersDb.META_NAMES, String.valueOf(namesInTable));
+
+            // the names the table ended up with: a later source's name replaces an earlier one
+            totals = totals.withTable(namesInTable, totals.categories);
 
             /*
              * Now that nothing more is going in: one pass over what is there, rather than a
@@ -528,6 +575,9 @@ public class NumbersCompiler {
         /** Business names the source being read brought along, which are not numbers. */
         private long sourceNames;
 
+        /** Categories the source being read brought that the table had no name for. */
+        private final List<String> sourceNewCategories = new ArrayList<>();
+
         /** What this source is called in the log, and where that log is. */
         private String tag;
         private BuildLog log;
@@ -561,12 +611,18 @@ public class NumbersCompiler {
             sourceDeletions = 0;
             sourceSkipped = 0;
             sourceNames = 0;
+            sourceNewCategories.clear();
+            writer.startSource();
             sourceDeletedRows = writer.getDeletedRows();
             lastLogged = 0;
         }
 
         long sourceNames() {
             return sourceNames;
+        }
+
+        List<String> sourceNewCategories() {
+            return sourceNewCategories;
         }
 
         long sourceNumbers() {
@@ -729,6 +785,12 @@ public class NumbersCompiler {
             sourceDeletions += result.deletions;
             sourceSkipped += result.skipped;
             sourceNames += result.names;
+            sourceNewCategories.addAll(result.newCategories);
+
+            if (log != null && result.categories > 0) {
+                log.line(tag, context.getString(R.string.build_log_categories_named),
+                        result.categories);
+            }
 
             pending += result.read + result.names;
             entries += result.read;

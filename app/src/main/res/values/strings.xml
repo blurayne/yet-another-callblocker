@@ -488,6 +488,9 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="build_log_updated">Updated records:</string>
     <string name="build_log_deleted">Deleted records:</string>
     <string name="build_log_names">Business names:</string>
+    <string name="build_log_categories">Categories used:</string>
+    <string name="build_log_categories_named">Categories named in the file:</string>
+    <string name="build_log_categories_new">New categories: %1$d (%2$s)</string>
     <string name="build_log_filtered">Filtered out:</string>
     <string name="build_log_ingesting">Ingesting file %1$d of %2$d</string>
     <string name="build_log_ingesting_files">Ingesting %1$d files</string>
@@ -514,6 +517,9 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="build_log_total_updated">Updated records in total:</string>
     <string name="build_log_total_deleted">Deleted records in total:</string>
     <string name="build_log_total_filtered">Filtered out in total:</string>
+    <string name="build_log_total_names">Business names in the database:</string>
+    <string name="build_log_total_categories">Categories in the database:</string>
+    <string name="build_log_total_categories_new">New categories in total:</string>
     <string name="build_log_total_sources">Sources read: %1$d of %2$d</string>
     <string name="build_log_finished">Finished with %1$s numbers at %2$s, after %3$d seconds</string>
     <string name="build_log_empty">Nothing has been built yet</string>

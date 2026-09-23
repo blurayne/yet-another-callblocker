@@ -56,6 +56,12 @@ public class NumberInfoService {
     }
 
     /** Where the sources were built into, which is what a number is asked of first. */
+    protected GeoLookup geoLookup;
+
+    public void setGeoLookup(GeoLookup geoLookup) {
+        this.geoLookup = geoLookup;
+    }
+
     public void setNumbersLookup(NumbersLookup numbersLookup) {
         this.numbersLookup = numbersLookup;
     }
@@ -113,6 +119,12 @@ public class NumberInfoService {
         String normalizedNumber = numberInfo.normalizedNumber
                 = numberNormalizer.normalizeNumber(number, countryCode);
         LOG.trace("getNumberInfo() normalizedNumber={}", numberInfo.normalizedNumber);
+
+        // where it is from, out of the table in the app: nothing is asked of anyone for it
+        if (geoLookup != null) {
+            numberInfo.origin = geoLookup.describe(
+                    normalizedNumber != null ? normalizedNumber : number);
+        }
 
         /*
          * The lists are matched against every form of the number, not just the one the call

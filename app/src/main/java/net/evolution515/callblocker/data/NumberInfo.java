@@ -18,6 +18,9 @@ public class NumberInfo {
     public String number;
     public String normalizedNumber;
 
+    /** Where the number is from - "Berlin, Deutschland" - or null when that isn't known. */
+    public String origin;
+
     // info from various sources
     public boolean isHiddenNumber;
     /**

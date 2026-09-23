@@ -754,10 +754,12 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="about_sia">Should I Answer – about the project</string>
     <string name="about_phone_block">PhoneBlock</string>
     <string name="about_tellows">tellows</string>
+    <string name="about_geo">Where a number is from: libphonenumber by Google, Apache License 2.0</string>
     <string name="about_donate">These projects are run by other people, and running them costs money. If this app is any use to you, it is their work you are finding useful – please think about supporting them.</string>
     <string name="url_sia_about" translatable="false">https://www.shouldianswer.com/about</string>
     <string name="url_phone_block" translatable="false">https://phoneblock.net</string>
     <string name="url_tellows" translatable="false">https://www.tellows.de</string>
+    <string name="url_libphonenumber" translatable="false">https://github.com/google/libphonenumber</string>
     <string name="url_repo" translatable="false">https://gitlab.com/xynngh/YetAnotherCallBlocker</string>
     <string name="url_faq" translatable="false">https://gitlab.com/xynngh/YetAnotherCallBlocker/-/blob/master/FAQ.md</string>
     <string name="url_translate" translatable="false">https://hosted.weblate.org/engage/yet-another-call-blocker/</string>

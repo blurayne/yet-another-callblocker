@@ -164,6 +164,16 @@ public class NumberInfoUtils {
         return getDefaultCallerIdName(context, numberInfo);
     }
 
+    /**
+     * The number with where it is from behind it - "+4930123456 (Berlin, Deutschland)" - or
+     * the number alone when that isn't known.
+     */
+    public static String withOrigin(String number, NumberInfo numberInfo) {
+        String origin = numberInfo != null ? numberInfo.origin : null;
+
+        return !TextUtils.isEmpty(origin) ? number + " (" + origin + ")" : number;
+    }
+
     /** The business name the databases have for the number, or null when they have none. */
     public static String getBusinessName(NumberInfo numberInfo) {
         if (numberInfo == null || numberInfo.noNumber) return null;

@@ -84,6 +84,16 @@ plain JVM against files the reference implementation wrote (it needs `org.tukaan
 name. It was checked row for row against the reference reader on the published `db.yabl`
 (13,089,195 rows) and against `bnetza.zip`'s `.dat` slices.
 
+## Where a number is from
+
+`app/src/main/assets/geo.db` maps number prefixes to a country and a place (city or region),
+made by `tools/build-geo-db.py` (a uv script) from Google's libphonenumber (Apache License
+2.0, via the pinned Python port `phonenumbers`). It is checked in; re-run the tool to update
+it, and `--lookup +49...` to check a number against libphonenumber's own answer.
+`data/GeoLookup.java` copies it out of the assets after install or update and fills
+`NumberInfo.origin`, which the blocked-call notification and the call list put behind the
+number. Nothing is looked up online.
+
 ## Upstream
 
 `upstream` is the GitLab repo, mirrored to `origin/master`. Keep changes rebaseable on it:

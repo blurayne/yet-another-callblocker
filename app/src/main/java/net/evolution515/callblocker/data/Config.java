@@ -192,6 +192,11 @@ public class Config {
                 settings, NumberUtils::isHiddenNumber, NumberUtils::normalizeNumber,
                 communityDatabase, featuredDatabase, contactsProvider, blacklistService);
         numberInfoService.setNumbersLookup(numbersLookup);
+
+        // where a number is from; copied out of the assets now rather than on the first call
+        GeoLookup geoLookup = new GeoLookup(context);
+        numberInfoService.setGeoLookup(geoLookup);
+        new Thread(geoLookup::prepare, "yacb-geo").start();
         numberInfoService.setPhoneBlockList(phoneBlockList);
         numberInfoService.setPhoneBlockPersonalLists(phoneBlockPersonalLists);
         numberInfoService.setWhitelist(new Whitelist(settings));

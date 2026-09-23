@@ -425,15 +425,19 @@ public class NotificationHelper {
         return text;
     }
 
+    /**
+     * What a blocked call is said as. The list entry that matched is not in it: the title
+     * already says the call was on the list, and the pattern and name of the entry say
+     * nothing about who called. The number and where it is from do, so they come first.
+     */
     private static String getBlockedDescription(Context context, NumberInfo numberInfo) {
         String text = numberInfo.name;
 
+        text = concat(text, "\n", getNumberDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getVerificationDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getCommunityDescriptionPart(context, numberInfo));
-        text = concat(text, "\n", getBlacklistDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getPhoneBlockDescriptionPart(context, numberInfo));
         text = concat(text, "\n", getWhitelistDescriptionPart(context, numberInfo));
-        text = concat(text, "\n", getNumberDescriptionPart(context, numberInfo));
 
         return text;
     }
@@ -451,8 +455,11 @@ public class NotificationHelper {
                 ? context.getString(R.string.info_failed_verification) : null;
     }
 
+    /** The number, and where it is from when that is known: "+49 30 1234567 (Berlin, Deutschland)". */
     private static String getNumberDescriptionPart(Context context, NumberInfo numberInfo) {
-        return numberInfo.noNumber ? context.getString(R.string.no_number) : numberInfo.number;
+        if (numberInfo.noNumber) return context.getString(R.string.no_number);
+
+        return NumberInfoUtils.withOrigin(numberInfo.number, numberInfo);
     }
 
     private static String getCommunityDescriptionPart(Context context, NumberInfo numberInfo) {

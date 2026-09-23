@@ -7476,6 +7476,10 @@ about_tellows:
   comment: AboutActivity
   en: tellows
   de: tellows
+about_geo:
+  comment: AboutActivity
+  en: 'Where a number is from: libphonenumber by Google, Apache License 2.0'
+  de: 'Woher eine Nummer stammt: libphonenumber von Google, Apache-Lizenz 2.0'
 about_donate:
   comment: activity_about.xml text
   en: These projects are run by other people, and running them costs money. If this app is any use to you, it is their work you are finding useful – please think about supporting them.
@@ -7489,6 +7493,9 @@ url_phone_block:
 url_tellows:
   comment: AboutActivity
   en: https://www.tellows.de
+url_libphonenumber:
+  comment: AboutActivity
+  en: https://github.com/google/libphonenumber
 url_repo:
   comment: AboutActivity
   en: https://gitlab.com/xynngh/YetAnotherCallBlocker

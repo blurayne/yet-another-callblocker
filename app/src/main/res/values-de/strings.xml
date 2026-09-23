@@ -762,5 +762,6 @@ Tokens und Passwörter kommen nur zurück, wenn sie mitgesichert wurden.</string
     <string name="about_sia">Should I Answer – über das Projekt</string>
     <string name="about_phone_block">PhoneBlock</string>
     <string name="about_tellows">tellows</string>
+    <string name="about_geo">Woher eine Nummer stammt: libphonenumber von Google, Apache-Lizenz 2.0</string>
     <string name="about_donate">Diese Projekte werden von anderen betrieben, und das kostet Geld. Wenn Ihnen diese App etwas nützt, dann nützt Ihnen deren Arbeit – denken Sie bitte über eine Spende nach.</string>
 </resources>

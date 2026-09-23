@@ -112,6 +112,13 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
             bindTypeIcons(group);
 
             String descriptionString = NumberInfoUtils.getShortDescription(context, numberInfo);
+
+            // where it is from goes behind the number; when a name stands there instead, here
+            if (!TextUtils.isEmpty(numberInfo.origin) && !showsNumber(item)) {
+                descriptionString = TextUtils.isEmpty(descriptionString) ? numberInfo.origin
+                        : descriptionString + " \u00b7 " + numberInfo.origin;
+            }
+
             if (!TextUtils.isEmpty(descriptionString)) {
                 description.setText(descriptionString);
                 description.setVisibility(View.VISIBLE);
@@ -186,7 +193,16 @@ public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
             String listEntryName = NumberInfoUtils.getListEntryName(numberInfo);
             if (listEntryName != null) return listEntryName;
 
-            return item.number;
+            return NumberInfoUtils.withOrigin(item.number, numberInfo);
+        }
+
+        /** Whether the row's label is the number itself, which is where its origin goes. */
+        private boolean showsNumber(CallLogItem item) {
+            NumberInfo numberInfo = item.numberInfo;
+
+            return item.presentation.hasNumber() && !numberInfo.noNumber
+                    && numberInfo.name == null
+                    && NumberInfoUtils.getListEntryName(numberInfo) == null;
         }
 
         private void bindTypeIcons(CallLogItemGroup group) {

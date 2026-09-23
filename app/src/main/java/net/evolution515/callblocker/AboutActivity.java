@@ -48,6 +48,9 @@ public class AboutActivity extends AppCompatActivity {
         setLink(R.id.about_phone_block, R.string.url_phone_block, R.string.about_phone_block);
         setLink(R.id.about_tellows, R.string.url_tellows, R.string.about_tellows);
 
+        // where a number is from comes out of libphonenumber, whose licence asks to be named
+        setLink(R.id.about_geo, R.string.url_libphonenumber, R.string.about_geo);
+
         ((TextView) findViewById(R.id.app_version)).setText(getString(R.string.version_string,
                 BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE));
 

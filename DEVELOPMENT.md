@@ -253,3 +253,21 @@ changes nothing about the number.
 **Not implemented yet.** The provider screen stores all of this - the choice, the address, the
 token - and the caller info does not offer API providers while there is no client to ask them.
 The rows appear as soon as it exists; the settings do not have to be entered again.
+
+## Talking to the Should I Answer API by hand
+
+`tools/sia-api.sh` sends the same requests the phone-number library does, for trying the API
+out without a phone:
+
+```
+tools/sia-api.sh reviews +4930121212   # community reviews for one number, as JSON
+tools/sia-api.sh update 3976           # the next database update after version 3976
+```
+
+It follows what `WebService` in LibPhoneNumberInfo actually sends: a `multipart/form-data`
+body, and a `_checksum` field that is the md5 of every field value concatenated in the order
+Java's `HashMap` iterates them, followed by `saltandmira2`. The reviews call sends `number`
+(without the `+`) and `country`. `SIA-API.md` in callblocker-sia-data describes a
+url-encoded body without the checksum, which is not what the library does.
+
+A reviews call tells SIA which number is being asked about.

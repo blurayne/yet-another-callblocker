@@ -56,6 +56,9 @@ public class InfoDialogHelper {
         setText(view, R.id.number, !numberInfo.noNumber
                 ? numberInfo.number : context.getString(R.string.no_number));
 
+        // where it is from, out of the table in the app
+        setText(view, R.id.origin, numberInfo.noNumber ? null : numberInfo.origin);
+
         String contactName = numberInfo.contactItem != null
                 ? numberInfo.contactItem.displayName : null;
         setText(view, R.id.name, contactName);

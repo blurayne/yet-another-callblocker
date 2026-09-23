@@ -7059,6 +7059,42 @@ stats_unnamed_source:
   comment: StatisticsActivity
   en: Unnamed source
   de: Quelle ohne Namen
+stats_spam_countries:
+  comment: StatisticsActivity
+  en: Spam by country
+  de: Spam nach Ländern
+stats_spam_countries_places:
+  comment: StatisticsActivity
+  en: Spam by country and place
+  de: Spam nach Ländern und Orten
+stats_good_countries:
+  comment: StatisticsActivity
+  en: Trusted numbers by country
+  de: Seriöse Nummern nach Ländern
+stats_good_countries_places:
+  comment: StatisticsActivity
+  en: Trusted numbers by country and place
+  de: Seriöse Nummern nach Ländern und Orten
+stats_places:
+  comment: StatisticsActivity
+  en: Places
+  de: Orte
+stats_unknown_country:
+  comment: StatisticsActivity
+  en: Unknown country
+  de: Unbekanntes Land
+stats_no_place:
+  comment: StatisticsActivity
+  en: No place known (mobile numbers and the like)
+  de: Ohne Ortsangabe (Mobilfunk und Ähnliches)
+stats_origin_hint:
+  comment: StatisticsActivity
+  en: How many numbers with this rating come from where, most first. Tap one to go further.
+  de: Wie viele Nummern mit dieser Bewertung woher kommen, die meisten zuerst. Antippen, um weiterzugehen.
+stats_no_companies:
+  comment: StatisticsActivity
+  en: No company is known here, so these are the numbers with the strongest rating.
+  de: Hier ist keine Firma bekannt, daher die Nummern mit der stärksten Bewertung.
 stats_filtered_pattern:
   comment: StatisticsActivity
   en: yes, keeping %s

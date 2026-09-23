@@ -125,6 +125,17 @@ public class YacbHolder {
         return numbersLookup;
     }
 
+    private static GeoLookup geoLookup;
+
+    static void setGeoLookup(GeoLookup geoLookup) {
+        YacbHolder.geoLookup = geoLookup;
+    }
+
+    /** Where a number is from, out of the table in the assets. */
+    public static GeoLookup getGeoLookup() {
+        return geoLookup;
+    }
+
     static void setNumberInfoService(NumberInfoService numberInfoService) {
         YacbHolder.numberInfoService = numberInfoService;
     }

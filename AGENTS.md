@@ -92,7 +92,9 @@ made by `tools/build-geo-db.py` (a uv script) from Google's libphonenumber (Apac
 it, and `--lookup +49...` to check a number against libphonenumber's own answer.
 `data/GeoLookup.java` copies it out of the assets after install or update and fills
 `NumberInfo.origin`, which the blocked-call notification and the call list put behind the
-number. Nothing is looked up online.
+number, and the info dialog under it. `data/OriginStats.java` joins it with the numbers
+table in Java for the statistics by country and place (countries in memory, a country's
+places loaded when it is opened, its numbers read by key ranges). Nothing is looked up online.
 
 ## Upstream
 

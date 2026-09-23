@@ -115,6 +115,11 @@ public class GeoLookup {
         open();
     }
 
+    /** The table itself, open read-only, for the statistics that walk it; null when missing. */
+    public SQLiteDatabase database() {
+        return open();
+    }
+
     private synchronized Origin query(String digits) {
         SQLiteDatabase db = open();
         if (db == null) return NONE;

@@ -76,6 +76,15 @@
     <string name="stats_no">nein</string>
     <string name="stats_no_category">Ohne Kategorie</string>
     <string name="stats_unnamed_source">Quelle ohne Namen</string>
+    <string name="stats_spam_countries">Spam nach Ländern</string>
+    <string name="stats_spam_countries_places">Spam nach Ländern und Orten</string>
+    <string name="stats_good_countries">Seriöse Nummern nach Ländern</string>
+    <string name="stats_good_countries_places">Seriöse Nummern nach Ländern und Orten</string>
+    <string name="stats_places">Orte</string>
+    <string name="stats_unknown_country">Unbekanntes Land</string>
+    <string name="stats_no_place">Ohne Ortsangabe (Mobilfunk und Ähnliches)</string>
+    <string name="stats_origin_hint">Wie viele Nummern mit dieser Bewertung woher kommen, die meisten zuerst. Antippen, um weiterzugehen.</string>
+    <string name="stats_no_companies">Hier ist keine Firma bekannt, daher die Nummern mit der stärksten Bewertung.</string>
     <string name="stats_filtered_pattern">ja, behalten wird %s</string>
     <string name="stats_few_filtered">So wenig kann daran liegen, dass die Datenbank gefiltert ist: behalten wird nur, was auf %s passt, und die Kategorien und Firmennamen von allem anderen fallen mit weg. Antippen öffnet die Filterung.</string>
     <string name="stats_few_named_only">\"Nur mit bekannter Firma\" ist eingeschaltet; im Menü ausschalten, um alle Nummern zu sehen.</string>

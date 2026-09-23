@@ -721,6 +721,15 @@ Tokens and passwords come back only if the backup was made with them in it.</str
     <string name="stats_no">no</string>
     <string name="stats_no_category">No category</string>
     <string name="stats_unnamed_source">Unnamed source</string>
+    <string name="stats_spam_countries">Spam by country</string>
+    <string name="stats_spam_countries_places">Spam by country and place</string>
+    <string name="stats_good_countries">Trusted numbers by country</string>
+    <string name="stats_good_countries_places">Trusted numbers by country and place</string>
+    <string name="stats_places">Places</string>
+    <string name="stats_unknown_country">Unknown country</string>
+    <string name="stats_no_place">No place known (mobile numbers and the like)</string>
+    <string name="stats_origin_hint">How many numbers with this rating come from where, most first. Tap one to go further.</string>
+    <string name="stats_no_companies">No company is known here, so these are the numbers with the strongest rating.</string>
     <string name="stats_filtered_pattern">yes, keeping %s</string>
     <string name="stats_few_filtered">So little may be because the database is filtered: only what matches %s is kept, and the categories and company names of everything else are left out with it. Tap to open the filter.</string>
     <string name="stats_few_named_only">\"Only where a company is known\" is on; switch it off in the menu to see every number.</string>

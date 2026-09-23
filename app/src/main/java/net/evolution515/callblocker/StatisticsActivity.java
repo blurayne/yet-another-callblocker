@@ -24,7 +24,10 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.evolution515.callblocker.data.GeoLookup;
+import net.evolution515.callblocker.data.OriginStats;
 import net.evolution515.callblocker.data.SiaNumberCategoryUtils;
+import net.evolution515.callblocker.data.YacbHolder;
 import net.evolution515.callblocker.data.numbers.NumberFlags;
 import net.evolution515.callblocker.data.numbers.NumbersStats;
 
@@ -40,6 +43,12 @@ public class StatisticsActivity extends AppCompatActivity {
 
     private static final String PARAM_KIND = "kind";
 
+    /** For the lists by origin: which rating, which country, which place, and what to call it. */
+    private static final String PARAM_RATING = "rating";
+    private static final String PARAM_REGION = "region";
+    private static final String PARAM_PLACE = "place";
+    private static final String PARAM_TITLE = "title";
+
     private static final String PREFS = "statistics";
     private static final String PREF_NAMED_ONLY = "namedOnly";
 
@@ -52,7 +61,17 @@ public class StatisticsActivity extends AppCompatActivity {
         TOP_NEGATIVE(R.string.stats_top_negative),
         TOP_POSITIVE(R.string.stats_top_positive),
         CATEGORIES(R.string.stats_categories),
-        SOURCES(R.string.stats_sources);
+        SOURCES(R.string.stats_sources),
+
+        // by where the numbers are from: country, then the numbers - or country, place, numbers
+        SPAM_COUNTRIES(R.string.stats_spam_countries),
+        SPAM_COUNTRIES_PLACES(R.string.stats_spam_countries_places),
+        GOOD_COUNTRIES(R.string.stats_good_countries),
+        GOOD_COUNTRIES_PLACES(R.string.stats_good_countries_places),
+
+        // the steps down, which are not in the menu: they are opened from a row
+        PLACES(R.string.stats_places),
+        ORIGIN_NUMBERS(R.string.stats_top_negative);
 
         final int titleResId;
 
@@ -61,7 +80,22 @@ public class StatisticsActivity extends AppCompatActivity {
         }
 
         boolean isTop() {
-            return this == TOP_NEGATIVE || this == TOP_POSITIVE;
+            return this == TOP_NEGATIVE || this == TOP_POSITIVE || this == ORIGIN_NUMBERS;
+        }
+
+        boolean isCountries() {
+            return this == SPAM_COUNTRIES || this == SPAM_COUNTRIES_PLACES
+                    || this == GOOD_COUNTRIES || this == GOOD_COUNTRIES_PLACES;
+        }
+
+        boolean isStep() {
+            return this == PLACES || this == ORIGIN_NUMBERS;
+        }
+
+        /** Which rating a country list is about; the steps down are told. */
+        int rating() {
+            return this == TOP_POSITIVE || this == GOOD_COUNTRIES || this == GOOD_COUNTRIES_PLACES
+                    ? NumberFlags.RATING_POSITIVE : NumberFlags.RATING_NEGATIVE;
         }
     }
 
@@ -74,12 +108,20 @@ public class StatisticsActivity extends AppCompatActivity {
         final Kind opens;
         final String number;
 
+        /** Where the row leads when it isn't a plain kind or a number: a step down. */
+        Intent intent;
+
         Row(String title, String subtitle, String value, Kind opens, String number) {
             this.title = title;
             this.subtitle = subtitle;
             this.value = value;
             this.opens = opens;
             this.number = number;
+        }
+
+        Row leadingTo(Intent intent) {
+            this.intent = intent;
+            return this;
         }
 
         static Row menu(Context context, Kind kind) {
@@ -106,6 +148,14 @@ public class StatisticsActivity extends AppCompatActivity {
 
     private Kind kind = Kind.MENU;
 
+    /** For the steps down: what they are about. */
+    private int rating = NumberFlags.RATING_NEGATIVE;
+    private String region;
+    private int placeId = -1;
+
+    /** Whether the companies ran out and the strongest numbers stand in for them. */
+    private boolean fellBack;
+
     private final List<Row> rows = new ArrayList<>();
     private final Adapter adapter = new Adapter();
 
@@ -128,6 +178,22 @@ public class StatisticsActivity extends AppCompatActivity {
         }
 
         setTitle(kind.titleResId);
+
+        Intent intent = getIntent();
+        rating = intent.getIntExtra(PARAM_RATING, kind.rating());
+        region = intent.getStringExtra(PARAM_REGION);
+        placeId = intent.getIntExtra(PARAM_PLACE, -1);
+
+        // a step down is called what it is about, and says which way the ratings go
+        if (kind.isStep()) {
+            String title = intent.getStringExtra(PARAM_TITLE);
+            if (!TextUtils.isEmpty(title)) setTitle(title);
+
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setSubtitle(rating == NumberFlags.RATING_POSITIVE
+                        ? R.string.stats_top_positive : R.string.stats_top_negative);
+            }
+        }
 
         hintView = findViewById(R.id.hint);
 
@@ -206,6 +272,7 @@ public class StatisticsActivity extends AppCompatActivity {
         task = new AsyncTask<Void, Void, List<Row>>() {
             @Override
             protected List<Row> doInBackground(Void... voids) {
+                fellBack = false;
                 return compute(stats, namedOnly);
             }
 
@@ -213,7 +280,8 @@ public class StatisticsActivity extends AppCompatActivity {
             protected void onPostExecute(List<Row> result) {
                 if (isCancelled()) return;
 
-                String hint = result.size() <= 1 ? fewHint(namedOnly) : null;
+                String hint = fellBack ? getString(R.string.stats_no_companies)
+                        : result.size() <= 1 ? fewHint(namedOnly) : null;
 
                 if (hint == null) {
                     hint = result.isEmpty() ? getString(R.string.stats_nothing) : hint(namedOnly);
@@ -241,7 +309,10 @@ public class StatisticsActivity extends AppCompatActivity {
      * others their company names and categories. For the top lists the toggle is the other.
      */
     private String fewHint(boolean namedOnly) {
-        if (kind != Kind.CATEGORIES && !kind.isTop()) return null;
+        if (kind != Kind.CATEGORIES && !kind.isTop() && !kind.isCountries()
+                && kind != Kind.PLACES) {
+            return null;
+        }
 
         StringBuilder hint = new StringBuilder();
 
@@ -260,6 +331,8 @@ public class StatisticsActivity extends AppCompatActivity {
 
     /** What the list says above itself, when it has something to say. */
     private String hint(boolean namedOnly) {
+        if (kind.isCountries() || kind == Kind.PLACES) return getString(R.string.stats_origin_hint);
+
         if (!kind.isTop()) return null;
 
         return getString(namedOnly ? R.string.stats_top_hint_named : R.string.stats_top_hint_all,
@@ -279,7 +352,7 @@ public class StatisticsActivity extends AppCompatActivity {
         List<Row> list = new ArrayList<>();
 
         for (Kind each : Kind.values()) {
-            if (each != Kind.MENU) list.add(Row.menu(this, each));
+            if (each != Kind.MENU && !each.isStep()) list.add(Row.menu(this, each));
         }
 
         return list;
@@ -321,27 +394,11 @@ public class StatisticsActivity extends AppCompatActivity {
 
             case TOP_NEGATIVE:
             case TOP_POSITIVE: {
-                int rating = kind == Kind.TOP_NEGATIVE
-                        ? NumberFlags.RATING_NEGATIVE : NumberFlags.RATING_POSITIVE;
-
                 int position = 0;
 
                 for (NumbersStats.Entry entry : stats.top(rating, namedOnly, TOP_LIMIT)) {
-                    String number = "+" + entry.number;
-                    String category = SiaNumberCategoryUtils.getName(this, entry.category);
-
-                    // the score is negative ratings over positive ones; said as a plain count
-                    int score = kind == Kind.TOP_NEGATIVE ? entry.score : -entry.score;
-
-                    String subtitle = !TextUtils.isEmpty(entry.name) ? number : null;
-                    if (!TextUtils.isEmpty(category)) {
-                        subtitle = subtitle != null ? subtitle + " · " + category : category;
-                    }
-
-                    list.add(new Row((++position) + ". "
-                            + (!TextUtils.isEmpty(entry.name) ? entry.name : number),
-                            subtitle, NumberFormat.getInstance().format(Math.max(1, score)),
-                            null, number));
+                    list.add(entryRow(++position, entry.number, entry.name, entry.category,
+                            entry.score));
                 }
                 break;
             }
@@ -357,6 +414,69 @@ public class StatisticsActivity extends AppCompatActivity {
                 }
                 break;
 
+            case SPAM_COUNTRIES:
+            case SPAM_COUNTRIES_PLACES:
+            case GOOD_COUNTRIES:
+            case GOOD_COUNTRIES_PLACES: {
+                OriginStats origins = origins();
+                if (origins == null) break;
+
+                boolean withPlaces = kind == Kind.SPAM_COUNTRIES_PLACES
+                        || kind == Kind.GOOD_COUNTRIES_PLACES;
+
+                for (OriginStats.Count count : origins.countries(rating)) {
+                    boolean known = !TextUtils.isEmpty(count.region);
+                    String name = known ? count.name : getString(R.string.stats_unknown_country);
+
+                    Row row = Row.figure(name, count.count);
+
+                    // an unknown country has no places and no range of numbers to read
+                    if (known) {
+                        row.leadingTo(withPlaces
+                                ? stepIntent(Kind.PLACES, count.region, -1, name)
+                                : stepIntent(Kind.ORIGIN_NUMBERS, count.region, -1, name));
+                    }
+
+                    list.add(row);
+                }
+                break;
+            }
+
+            case PLACES: {
+                OriginStats origins = origins();
+                if (origins == null || region == null) break;
+
+                String country = OriginStats.countryName(region);
+
+                for (OriginStats.Count count : origins.places(region, rating)) {
+                    boolean placeKnown = count.placeId != OriginStats.NO_PLACE
+                            && !TextUtils.isEmpty(count.name);
+                    String name = placeKnown ? count.name : getString(R.string.stats_no_place);
+
+                    list.add(Row.figure(name, count.count).leadingTo(stepIntent(
+                            Kind.ORIGIN_NUMBERS, region, count.placeId,
+                            placeKnown ? name + ", " + country : country)));
+                }
+                break;
+            }
+
+            case ORIGIN_NUMBERS: {
+                OriginStats origins = origins();
+                if (origins == null || region == null) break;
+
+                boolean[] fell = {false};
+                int position = 0;
+
+                for (OriginStats.Entry entry : origins.numbers(region, placeId, rating,
+                        namedOnly, TOP_LIMIT, fell)) {
+                    list.add(entryRow(++position, entry.number, entry.name, entry.category,
+                            entry.score));
+                }
+
+                fellBack = fell[0];
+                break;
+            }
+
             case SOURCES:
                 for (NumbersStats.Count count : stats.sources()) {
                     list.add(Row.figure(!TextUtils.isEmpty(count.name)
@@ -371,8 +491,44 @@ public class StatisticsActivity extends AppCompatActivity {
         return list;
     }
 
+    /**
+     * A number of a top list: the company when one is known, with the number under it, or
+     * the number itself; the category; and how strongly it is rated, as a plain count.
+     */
+    private Row entryRow(int position, long numberValue, String name, int categoryId, int score) {
+        String number = "+" + numberValue;
+        String category = SiaNumberCategoryUtils.getName(this, categoryId);
+
+        // the score is negative ratings over positive ones
+        int strength = rating == NumberFlags.RATING_NEGATIVE ? score : -score;
+
+        String subtitle = !TextUtils.isEmpty(name) ? number : null;
+        if (!TextUtils.isEmpty(category)) {
+            subtitle = subtitle != null ? subtitle + " \u00b7 " + category : category;
+        }
+
+        return new Row(position + ". " + (!TextUtils.isEmpty(name) ? name : number), subtitle,
+                NumberFormat.getInstance().format(Math.max(1, strength)), null, number);
+    }
+
+    private Intent stepIntent(Kind step, String stepRegion, int stepPlace, String title) {
+        return getIntent(this, step)
+                .putExtra(PARAM_RATING, rating)
+                .putExtra(PARAM_REGION, stepRegion)
+                .putExtra(PARAM_PLACE, stepPlace)
+                .putExtra(PARAM_TITLE, title);
+    }
+
+    /** The lists by origin, or null when the place data can't be read. */
+    private OriginStats origins() {
+        GeoLookup geo = YacbHolder.getGeoLookup();
+        return geo != null ? new OriginStats(this, geo) : null;
+    }
+
     private void onRowClicked(Row row) {
-        if (row.opens != null) {
+        if (row.intent != null) {
+            startActivity(row.intent);
+        } else if (row.opens != null) {
             startActivity(getIntent(this, row.opens));
         } else if (row.number != null) {
             startActivity(InfoDialogActivity.getIntent(this, row.number));
@@ -426,7 +582,8 @@ public class StatisticsActivity extends AppCompatActivity {
             value.setText(row.value);
             value.setVisibility(TextUtils.isEmpty(row.value) ? View.GONE : View.VISIBLE);
 
-            itemView.setClickable(row.opens != null || row.number != null);
+            itemView.setClickable(row.opens != null || row.number != null
+                    || row.intent != null);
         }
 
     }

@@ -195,6 +195,7 @@ public class Config {
 
         // where a number is from; copied out of the assets now rather than on the first call
         GeoLookup geoLookup = new GeoLookup(context);
+        YacbHolder.setGeoLookup(geoLookup);
         numberInfoService.setGeoLookup(geoLookup);
         new Thread(geoLookup::prepare, "yacb-geo").start();
         numberInfoService.setPhoneBlockList(phoneBlockList);

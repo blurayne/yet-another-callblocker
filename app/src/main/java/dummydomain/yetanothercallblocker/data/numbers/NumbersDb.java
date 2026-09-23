@@ -205,6 +205,21 @@ public class NumbersDb extends SQLiteOpenHelper {
      *
      * @return the id to write into a row, or 0 - "nothing is known" - when there is no room
      */
+    /** What files call the absence of a category, which is not a category of its own. */
+    private static final java.util.Set<String> NO_CATEGORY = new java.util.HashSet<>(
+            java.util.Arrays.asList("none", "unknown", "unbekannt", "keine", "n/a", "-", "?"));
+
+    /**
+     * Whether a category name only says that there is none.
+     *
+     * <p>Such a category would be added like any other and then written over a real one:
+     * "UNKNOWN" from one source in place of "SCAM" from another. It is taken for 0 instead,
+     * which a later source never writes over anything.
+     */
+    public static boolean isNoCategory(String name) {
+        return name == null || NO_CATEGORY.contains(name.trim().toLowerCase(java.util.Locale.ROOT));
+    }
+
     public static int categoryFor(SQLiteDatabase db, String name) {
         if (name == null || name.trim().isEmpty()) return 0;
 

@@ -3,7 +3,6 @@ package dummydomain.yetanothercallblocker.data.numbers;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
-import android.text.TextUtils;
 
 import java.io.Closeable;
 
@@ -130,6 +129,19 @@ public class NumbersWriter implements Closeable {
                       boolean personal, int sourceId) {
         if (number <= 0) return;
 
+        /*
+         * Not knowing is not something to say over what is known. A source that has the
+         * number without a category - 0, "none", or a category its file calls unknown - leaves
+         * the category an earlier source gave it; one without any ratings leaves the rating,
+         * and the score that goes with it. What it does know still goes in.
+         */
+        if (category != null && category <= 0) category = null;
+
+        if (rating != null && rating == NumberFlags.RATING_UNKNOWN) {
+            rating = null;
+            score = null;
+        }
+
         if (category != null) noteCategory(category);
 
         int flags = 0;
@@ -202,7 +214,11 @@ public class NumbersWriter implements Closeable {
 
     /** The name a phone book has for the number, or nothing when it has none. */
     public void putName(long number, String name, int sourceId) {
-        if (number <= 0 || TextUtils.isEmpty(name)) return;
+        if (number <= 0 || name == null) return;
+
+        // an empty name, or one of blanks, leaves the name an earlier source gave
+        name = name.trim();
+        if (name.isEmpty()) return;
 
         insertName.bindLong(1, number);
         insertName.bindString(2, name);

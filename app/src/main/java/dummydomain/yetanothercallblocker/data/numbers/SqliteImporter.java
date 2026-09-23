@@ -183,6 +183,12 @@ public class SqliteImporter {
             int theirId = theirs.keyAt(i);
             String name = theirs.valueAt(i);
 
+            // "unknown" is the absence of a category, not one to add and write over others
+            if (NumbersDb.isNoCategory(name)) {
+                if (theirId != 0) mapping.put(theirId, 0);
+                continue;
+            }
+
             // the same name under the same number: nothing to do for any row that uses it
             if (name != null && name.equals(ours.get(theirId))) continue;
 

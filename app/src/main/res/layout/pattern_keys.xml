@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The characters a pattern needs that the phone keypad doesn't have. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/patternKeys"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <Button
+        android:id="@+id/keyAnyDigits"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:minWidth="0dp"
+        android:text="@string/pattern_key_any_digits"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/keyOneDigit"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:minWidth="0dp"
+        android:text="@string/pattern_key_one_digit"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/keyGroupOpen"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:minWidth="0dp"
+        android:text="@string/pattern_key_group_open"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/keyGroupClose"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:minWidth="0dp"
+        android:text="@string/pattern_key_group_close"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/keyComma"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:minWidth="0dp"
+        android:text="@string/pattern_key_comma"
+        android:textSize="18sp" />
+
+</LinearLayout>

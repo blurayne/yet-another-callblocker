@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
     <string name="notification_channel_group_name_incoming_calls">Входящие вызовы</string>
     <string name="notification_channel_name_neutral">С нейтральной оценкой</string>
     <string name="notification_channel_name_unknown">Неизвестные (без оценки)</string>
@@ -66,7 +66,7 @@
     <string name="default_caller_id_app">\"Приложение для АОН\" по умолчанию</string>
     <string name="default_caller_id_app_unset">Выберите другое \"приложение для АОН и защиты от спама\" в \"Приложениях по умолчанию\" в настройках системы</string>
     <string name="default_phone_app">\"Приложение для звонков\" по умолчанию</string>
-    <string name="default_phone_app_set">Выберите \"Yet Another Call Blocker\" в качестве \"приложения для звонков\" в \"Приложениях по умолчанию\" в настройках системы</string>
+    <string name="default_phone_app_set">Выберите \"Caller ID &amp; Spam\" в качестве \"приложения для звонков\" в \"Приложениях по умолчанию\" в настройках системы</string>
     <string name="default_phone_app_unset">Выберите другое \"приложение для звонков\" в \"Приложениях по умолчанию\" в настройках системы</string>
     <string name="open_system_settings">Открыть Настройки</string>
     <string name="no_main_db_title">Скачать основную базу номеров</string>
@@ -222,13 +222,8 @@
     <string name="db_filtering_enabled_summary">Включает фильтрацию во время загрузки и обновления базы</string>
     <string name="db_filtering_prefixes_to_keep">Префиксы для сохранения</string>
     <string name="db_filtering_prefixes_to_keep_summary">Список (разделённый запятыми) префиксов номеров, которые нужно сохранить. Префиксы должны быть в международном формате (например, +7999). Например, если вам звонят только номера начинающиеся на +7, введите сюда +7</string>
-    <string name="db_filtering_thorough">Тщательная фильтрация</string>
-    <string name="db_filtering_thorough_summary">Если включена, фильтрация проходит по всем блокам данных и удаляет номера, не подходящие по префиксам. В противном случае удаляются только целые блоки (оставляя некоторые лишние номера в сохраняемых блоках). Рекомендуется оставить включённым. Требуется для сохранения коротких номеров</string>
     <string name="db_filtering_keep_short_numbers">Сохранять короткие номера</string>
     <string name="db_filtering_keep_short_numbers_summary">Сохранять номера, короче указанной длины, вне зависимости от префиксов</string>
     <string name="db_filtering_keep_short_numbers_max_length">Длина номеров для сохранения</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">Максимальная длина (включительная) коротких номеров, которые нужно сохранить вне зависимости от префиксов. Например, значение 5 сохранит номера длиной 5 цифр и короче</string>
-    <string name="db_filtering_filter_db">Отфильтровать базу</string>
-    <string name="db_filtering_filter_db_summary">Запустить фильтрацию базы сейчас (чтобы отфильтровать существующие данные)</string>
-    <string name="filtering_db">Фильтрация базы номеров…</string>
 </resources>

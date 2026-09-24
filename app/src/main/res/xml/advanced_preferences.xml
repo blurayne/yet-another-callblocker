@@ -5,32 +5,24 @@
     app:title="@string/settings_screen_advanced">
 
     <PreferenceCategory
-        app:key="categoryAdvancedDb"
-        app:title="@string/settings_category_database">
+        app:key="categoryLimitedMode"
+        app:title="@string/settings_category_limited_mode">
 
         <Preference
-            app:key="dbManagement"
+            app:key="limitedModeInfo"
             app:persistent="false"
-            app:title="@string/open_db_management_activity">
-            <intent
-                android:targetClass="dummydomain.yetanothercallblocker.DbManagementActivity"
-                android:targetPackage="@string/app_id" />
-        </Preference>
+            app:summary="@string/limited_mode_info_summary"
+            app:title="@string/limited_mode_info" />
 
-        <Preference
-            app:fragment="dummydomain.yetanothercallblocker.DbFilteringSettingsFragment"
-            app:key="dbFiltering"
-            app:title="@string/settings_screen_db_filtering" />
+        <MultiSelectListPreference
+            android:defaultValue="@array/block_in_limited_mode_default_values"
+            android:entries="@array/block_in_limited_mode_entries"
+            android:entryValues="@array/block_in_limited_mode_values"
+            android:key="blockInLimitedMode"
+            android:summary="@string/block_in_limited_mode_summary"
+            android:title="@string/block_in_limited_mode" />
 
     </PreferenceCategory>
-
-    <MultiSelectListPreference
-        android:defaultValue="@array/block_in_limited_mode_default_values"
-        android:entries="@array/block_in_limited_mode_entries"
-        android:entryValues="@array/block_in_limited_mode_values"
-        android:key="blockInLimitedMode"
-        android:summary="@string/block_in_limited_mode_summary"
-        android:title="@string/block_in_limited_mode" />
 
     <PreferenceCategory
         app:key="categoryCountryCodes"
@@ -50,26 +42,38 @@
             app:title="@string/country_code_for_reviews_override" />
     </PreferenceCategory>
 
-    <EditTextPreference
-        app:key="databaseDownloadUrl"
-        app:title="@string/database_download_url" />
-
     <PreferenceCategory
         app:key="categoryDebugging"
         app:title="@string/settings_category_debugging">
+
+        <Preference
+            app:key="viewLogcat"
+            app:persistent="false"
+            app:summary="@string/view_logcat_summary"
+            app:title="@string/view_logcat" />
+
         <Preference
             app:key="exportLogcat"
             app:persistent="false"
             app:summary="@string/export_logcat_summary"
             app:title="@string/export_logcat" />
+
+        <Preference
+            app:key="shareCrashReports"
+            app:persistent="false"
+            app:summary="@string/share_crash_reports_summary"
+            app:title="@string/share_crash_reports" />
+
         <SwitchPreferenceCompat
             app:key="saveCrashesToExternalStorage"
             app:summary="@string/save_crashes_to_external_storage_summary"
             app:title="@string/save_crashes_to_external_storage" />
+
         <SwitchPreferenceCompat
             app:key="saveLogcatOnCrash"
             app:summary="@string/save_logcat_on_crash_summary"
             app:title="@string/save_logcat_on_crash" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

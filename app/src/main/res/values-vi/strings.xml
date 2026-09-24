@@ -157,7 +157,7 @@
     <string name="call_log_permission_message">Cấp quyền \"Điện thoại\" để xem các cuộc gọi gần đây</string>
     <string name="open_system_settings">Mở Cài đặt</string>
     <string name="default_phone_app_unset">Chọn một ứng dụng khác làm \"Ứng dụng điện thoại\" trong \"Ứng dụng mặc định\" trong cài đặt hệ thống</string>
-    <string name="default_phone_app_set">Chọn \"Yet Another Call Blocker\" làm \"Ứng dụng điện thoại\" trong \"Ứng dụng mặc định\" trong cài đặt hệ thống</string>
+    <string name="default_phone_app_set">Chọn \"Caller ID &amp; Spam\" làm \"Ứng dụng điện thoại\" trong \"Ứng dụng mặc định\" trong cài đặt hệ thống</string>
     <string name="default_phone_app">\"Ứng dụng điện thoại\" mặc định</string>
     <string name="default_caller_id_app_unset">Chọn một ứng dụng khác làm \"Ứng dụng ID người gọi\" trong \"Ứng dụng mặc định\" trong cài đặt hệ thống</string>
     <string name="default_caller_id_app">\"Ứng dụng ID người gọi\" mặc định</string>
@@ -184,7 +184,7 @@
     <string name="sia_category_unsolicited">Không mong muốn</string>
     <string name="sia_category_nuisance">Phiền nhiễu</string>
     <string name="sia_category_dept_collector">Người đòi nợ</string>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
     <string name="sia_category_sms">SMS</string>
     <string name="sia_category_scam">Lừa đảo</string>
     <string name="sia_category_political">Chính trị</string>
@@ -207,15 +207,10 @@
     <string name="notification_channel_group_name_services">Dịch vụ</string>
     <string name="notification_channel_group_name_blocked_calls">Cuộc gọi bị chặn</string>
     <string name="notification_channel_group_name_incoming_calls">Cuộc gọi đến</string>
-    <string name="filtering_db">Đang lọc CSDL…</string>
-    <string name="db_filtering_filter_db_summary">Chạy việc lọc cơ sở dữ liệu ngay (để lọc dữ liệu hiện có)</string>
-    <string name="db_filtering_filter_db">Lọc cơ sở dữ liệu</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">Độ dài tối đa của các số ngắn để giữ lại mà không tính đến các tiền tố. Vd: giá trị 5 sẽ giữ lại các số có độ dài 5 chữ số hoặc ngắn hơn</string>
     <string name="db_filtering_keep_short_numbers_max_length">Độ dài các số để giữ lại</string>
     <string name="db_filtering_keep_short_numbers_summary">Giữ các số ngắn hơn độ dài được chỉ định mà không tính đến các tiền tố</string>
     <string name="db_filtering_keep_short_numbers">Giữ lại các số ngắn</string>
-    <string name="db_filtering_thorough_summary">Nếu được bật, nó đi qua mọi khối dữ liệu và xoá các số không khớp với các tiền tố. Nếu không, nó chỉ xoá toàn bộ các khối không mong muốn (để lại một số số không mong muốn trong các khối mong muốn). Chúng tôi khuyên bạn cứ để bật tuỳ chọn này. Được yêu cầu để giữ lại các số ngắn</string>
-    <string name="db_filtering_thorough">Lọc kỹ</string>
     <string name="db_filtering_prefixes_to_keep_summary">Một danh sách các tiền tố của số điện thoại được chia tách bởi dấu phẩy để giữ lại. Các tiền tố nên ở định dạng quốc tế (như +1234). Vd: nếu bạn chỉ nhận các cuộc gọi từ các số bắt đầu bằng +1, hãy đặt +1 ở đây</string>
     <string name="db_filtering_prefixes_to_keep">Các tiền tố để giữ lại</string>
     <string name="db_filtering_enabled_summary">Bật việc lọc trong khi tải xuống và cập nhật cơ sở dữ liệu</string>

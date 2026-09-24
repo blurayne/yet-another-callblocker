@@ -82,7 +82,7 @@
     <string name="open_system_settings">Abrir configuración</string>
     <string name="default_phone_app_unset">Selecciona una aplicación diferente como «Aplicación de teléfono» en «Aplicaciones predeterminadas» en configuración del sistema</string>
     <string name="default_caller_id_app_unset">Selecciona una aplicación diferente como «Aplicación de identificación de llamadas» en «Aplicaciones predeterminadas» en configuración del sistema</string>
-    <string name="default_phone_app_set">Selecciona «Yet Another Call Blocker» como la «Aplicación de teléfono» en «Aplicaciones predeterminadas» en configuración del sistema</string>
+    <string name="default_phone_app_set">Selecciona «Caller ID &amp; Spam» como la «Aplicación de teléfono» en «Aplicaciones predeterminadas» en configuración del sistema</string>
     <string name="default_phone_app">«Aplicación de teléfono» predeterminada</string>
     <string name="default_caller_id_app">«Aplicación de identificación de llamadas» predeterminada</string>
     <string name="denied_call_screening_role_message">El bloqueo de llamadas avanzado no funcionara porque la aplicación no es la «Aplicación de identificación de llamadas»</string>
@@ -210,15 +210,10 @@
     <string name="done">Hecho</string>
     <string name="yes">Sí</string>
     <string name="add_web_review">Añadir reseña (web)</string>
-    <string name="db_filtering_thorough">Filtrado exhaustivo</string>
-    <string name="filtering_db">Filtrando la Base de datos…</string>
-    <string name="db_filtering_filter_db_summary">Ejecutar ahora el filtrado de la base de datos (para filtrar los datos existentes)</string>
-    <string name="db_filtering_filter_db">Filtrar la base de datos</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">La longitud máxima (inclusive) de los números cortos que se mantendrá sin tener en cuenta los prefijos. Por ejemplo, el valor de 5 mantendrá los números con una longitud de 5 dígitos o menos</string>
     <string name="db_filtering_keep_short_numbers_max_length">Longitud de los números a conservar</string>
     <string name="db_filtering_keep_short_numbers_summary">Mantenga los números más cortos que la longitud especificada independientemente de los prefijos</string>
     <string name="db_filtering_keep_short_numbers">Mantener los números cortos</string>
-    <string name="db_filtering_thorough_summary">Si se activa, recorre cada bloque de datos y elimina los números que no coinciden con los prefijos. Si no, sólo elimina los bloques enteros no deseados (dejando algunos números no deseados en los bloques deseados). Se recomienda dejar esta opción activada. Necesario para mantener los números cortos</string>
     <string name="db_filtering_prefixes_to_keep_summary">Una lista separada por comas de los prefijos de los números que hay que conservar. Los prefijos deben tener el formato internacional (como +1234). Por ejemplo, si sólo recibe llamadas de números que empiezan por +1, ponga aquí +1</string>
     <string name="db_filtering_prefixes_to_keep">Prefijos a conservar</string>
     <string name="db_filtering_enabled_summary">Activa el filtrado durante la descarga y actualización de la base de datos</string>

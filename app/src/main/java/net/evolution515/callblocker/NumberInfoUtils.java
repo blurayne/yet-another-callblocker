@@ -1,0 +1,255 @@
+package net.evolution515.callblocker;
+
+import android.content.Context;
+import android.text.TextUtils;
+
+import net.evolution515.callblocker.data.BlacklistUtils;
+import net.evolution515.callblocker.data.NumberInfo;
+import net.evolution515.callblocker.data.PhoneBlockList;
+import net.evolution515.callblocker.data.SiaNumberCategoryUtils;
+import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseItem;
+import dummydomain.yetanothercallblocker.sia.model.database.FeaturedDatabaseItem;
+
+public class NumberInfoUtils {
+
+    public static String getShortDescription(Context context, NumberInfo numberInfo) {
+        if (numberInfo.communityDatabaseItem != null) {
+            String category = SiaNumberCategoryUtils.getName(context,
+                    numberInfo.communityDatabaseItem.getCategory());
+
+            if (category != null) return category;
+        }
+
+        if (numberInfo.blacklistItem != null && numberInfo.contactItem == null) {
+            return context.getString(R.string.info_in_blacklist);
+        }
+
+        if (numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam()) {
+            return getPhoneBlockDescription(context, numberInfo.phoneBlockRating);
+        }
+
+        return null;
+    }
+
+    /**
+     * What PhoneBlock says about the number, the user's own lists first, or null if nothing.
+     */
+    public static String getPhoneBlockStatus(Context context, NumberInfo numberInfo) {
+        if (numberInfo.phoneBlockPersonalAllowed) {
+            return context.getString(R.string.info_phone_block_personal_allowed);
+        }
+
+        if (numberInfo.phoneBlockPersonalBlocked) {
+            return context.getString(R.string.info_phone_block_personal_blocked);
+        }
+
+        if (numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam()) {
+            return getPhoneBlockDescription(context, numberInfo.phoneBlockRating);
+        }
+
+        return null;
+    }
+
+    /**
+     * What the entry that matched is called, but only when that entry is this very number.
+     *
+     * <p>A pattern covers a whole range of numbers, so its name belongs to the range and not
+     * to the number that happened to fall in it.
+     *
+     * @return null when no entry matched, when the entry that did is a pattern, or when it
+     * has no name
+     */
+    public static String getListEntryName(NumberInfo numberInfo) {
+        if (numberInfo.blacklistItem != null
+                && BlacklistUtils.isLiteralPattern(numberInfo.blacklistItem.getPattern())
+                && !TextUtils.isEmpty(numberInfo.blacklistItem.getName())) {
+            return numberInfo.blacklistItem.getName();
+        }
+
+        if (numberInfo.whitelistItem != null
+                && BlacklistUtils.isLiteralPattern(numberInfo.whitelistItem.getPattern())
+                && !TextUtils.isEmpty(numberInfo.whitelistItem.getName())) {
+            return numberInfo.whitelistItem.getName();
+        }
+
+        return null;
+    }
+
+    /**
+     * "In whitelist", with the entry that matched when it is a pattern rather than the number.
+     *
+     * @return null if the number isn't on the whitelist
+     */
+    public static String getWhitelistStatus(Context context, NumberInfo numberInfo) {
+        if (!numberInfo.whitelisted) return null;
+
+        return withEntry(context, context.getString(R.string.info_whitelisted),
+                numberInfo.whitelistItem.getPattern(), numberInfo.number);
+    }
+
+    /**
+     * "In blacklist", with the pattern that matched when it isn't the number itself.
+     *
+     * @return null if the number isn't on the blacklist
+     */
+    public static String getBlacklistStatus(Context context, NumberInfo numberInfo) {
+        if (numberInfo.blacklistItem == null) return null;
+
+        String text = context.getString(numberInfo.contactItem != null
+                ? R.string.info_in_blacklist_contact : R.string.info_in_blacklist);
+
+        return withEntry(context, text,
+                numberInfo.blacklistItem.getHumanReadablePattern(), numberInfo.number);
+    }
+
+    /** Adds the entry to the text unless it is the number itself. */
+    private static String withEntry(Context context, String text, String entry, String number) {
+        if (TextUtils.isEmpty(entry)) return text;
+
+        String cleanNumber = number != null ? BlacklistUtils.cleanNumber(number) : "";
+        if (entry.equals(cleanNumber)) return text;
+
+        return context.getString(R.string.info_list_entry, text, entry);
+    }
+
+    /** What the PhoneBlock community says the number is used for. */
+    public static String getPhoneBlockDescription(Context context, PhoneBlockList.Rating rating) {
+        return context.getString(R.string.phone_block_description,
+                getPhoneBlockRatingName(context, rating));
+    }
+
+    /** The name of a PhoneBlock rating on its own. */
+    public static String getPhoneBlockRatingName(Context context, PhoneBlockList.Rating rating) {
+        int resId;
+        switch (rating) {
+            case LEGITIMATE: resId = R.string.phone_block_rating_legitimate; break;
+            case PING: resId = R.string.phone_block_rating_ping; break;
+            case POLL: resId = R.string.phone_block_rating_poll; break;
+            case ADVERTISING: resId = R.string.phone_block_rating_advertising; break;
+            case GAMBLE: resId = R.string.phone_block_rating_gamble; break;
+            case FRAUD: resId = R.string.phone_block_rating_fraud; break;
+            case MISSED: resId = R.string.phone_block_rating_missed; break;
+            default: resId = R.string.phone_block_rating_unknown; break;
+        }
+
+        return context.getString(resId);
+    }
+
+    /**
+     * The user's own wording for this number, or null when there is none to apply.
+     *
+     * <p>The template is rendered once for the name and once for the line next to it; both
+     * are cheap string replacements on facts that are already in hand.
+     */
+    private static String renderTemplate(Context context, NumberInfo numberInfo) {
+        Settings settings = App.getSettings();
+
+        return CallerIdTemplate.isSet(settings)
+                ? CallerIdTemplate.render(context, numberInfo, settings.getCallerIdTemplate())
+                : null;
+    }
+
+    /**
+     * Returns a name to show instead of the number (the "caller ID"),
+     * or {@code null} if nothing is known about the number.
+     *
+     * @see CallerIdDirectoryProvider
+     */
+    public static String getCallerIdName(Context context, NumberInfo numberInfo) {
+        if (numberInfo == null || numberInfo.noNumber) return null;
+
+        String custom = renderTemplate(context, numberInfo);
+        if (custom != null) return CallerIdTemplate.firstLine(custom);
+
+        return getDefaultCallerIdName(context, numberInfo);
+    }
+
+    /**
+     * The number with where it is from behind it - "+4930123456 (Berlin, Deutschland)" - or
+     * the number alone when that isn't known.
+     */
+    public static String withOrigin(String number, NumberInfo numberInfo) {
+        String origin = numberInfo != null ? numberInfo.origin : null;
+
+        return !TextUtils.isEmpty(origin) ? number + " (" + origin + ")" : number;
+    }
+
+    /** The business name the databases have for the number, or null when they have none. */
+    public static String getBusinessName(NumberInfo numberInfo) {
+        if (numberInfo == null || numberInfo.noNumber) return null;
+
+        FeaturedDatabaseItem featuredItem = numberInfo.featuredDatabaseItem;
+
+        return featuredItem != null && !TextUtils.isEmpty(featuredItem.getName())
+                ? featuredItem.getName() : null;
+    }
+
+    /** What the app shows when the user hasn't said what to show. */
+    static String getDefaultCallerIdName(Context context, NumberInfo numberInfo) {
+        if (numberInfo == null || numberInfo.noNumber) return null;
+
+        FeaturedDatabaseItem featuredItem = numberInfo.featuredDatabaseItem;
+        if (featuredItem != null && !TextUtils.isEmpty(featuredItem.getName())) {
+            return featuredItem.getName();
+        }
+
+        if (numberInfo.blacklistItem != null && numberInfo.contactItem == null
+                && !TextUtils.isEmpty(numberInfo.blacklistItem.getName())) {
+            return numberInfo.blacklistItem.getName();
+        }
+
+        String shortDescription = getShortDescription(context, numberInfo);
+        if (!TextUtils.isEmpty(shortDescription)) return shortDescription;
+
+        switch (numberInfo.rating) {
+            case NEGATIVE:
+                return context.getString(R.string.notification_incoming_call_negative);
+
+            case POSITIVE:
+                return context.getString(R.string.notification_incoming_call_positive);
+
+            case NEUTRAL:
+                return context.getString(R.string.notification_incoming_call_neutral);
+
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Returns additional info to show next to the {@link #getCallerIdName(Context, NumberInfo) name}
+     * (the ratings summary), or {@code null} if there's nothing to add.
+     */
+    public static String getCallerIdLabel(Context context, NumberInfo numberInfo) {
+        if (numberInfo == null || numberInfo.noNumber) return null;
+
+        String custom = renderTemplate(context, numberInfo);
+        if (custom != null) return CallerIdTemplate.rest(custom);
+
+        return getDefaultCallerIdLabel(context, numberInfo);
+    }
+
+    /** What the app puts next to the name when the user hasn't said what to put there. */
+    static String getDefaultCallerIdLabel(Context context, NumberInfo numberInfo) {
+        if (numberInfo == null || numberInfo.noNumber) return null;
+
+        CommunityDatabaseItem communityItem = numberInfo.communityDatabaseItem;
+        if (communityItem != null && communityItem.hasRatings()) {
+            return context.getString(R.string.notification_incoming_call_text_description,
+                    communityItem.getNegativeRatingsCount(),
+                    communityItem.getPositiveRatingsCount(),
+                    communityItem.getNeutralRatingsCount());
+        }
+
+        if (numberInfo.blacklistItem != null && numberInfo.contactItem == null) {
+            return context.getString(R.string.info_in_blacklist);
+        }
+
+        if (numberInfo.phoneBlockRating != null && numberInfo.phoneBlockRating.isSpam()) {
+            return getPhoneBlockDescription(context, numberInfo.phoneBlockRating);
+        }
+
+        return null;
+    }
+
+}

@@ -22,7 +22,7 @@
     <string name="sia_category_unsolicited">Não solicitada</string>
     <string name="notification_background_operation">Operação de fundo em curso…</string>
     <string name="notification_channel_name_blocked_info">Informação de bloqueio</string>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
     <string name="db_management_reset_secondary">Redefinir atualizações</string>
     <string name="edit_blacklist_item_number_pattern">Padrão numérico</string>
     <string name="sia_category_call_center">Call center</string>
@@ -156,7 +156,7 @@
     <string name="call_log_permission_message">Conceder permissão de \"Telefone\" para ver as chamadas recentes</string>
     <string name="open_system_settings">Abrir as Configurações</string>
     <string name="default_phone_app_unset">Selecione um aplicativo diferente como \"aplicativo de Telefone\" em \"aplicativos Padrão\" nas configurações do sistema</string>
-    <string name="default_phone_app_set">Selecione \"Yet Another Call Blocker\" como o \"aplicativo de Telefone\" em \"aplicativos Padrão\" nas configurações do sistema</string>
+    <string name="default_phone_app_set">Selecione \"Caller ID &amp; Spam\" como o \"aplicativo de Telefone\" em \"aplicativos Padrão\" nas configurações do sistema</string>
     <string name="default_phone_app">\"Aplicativo de Telefone\" padrão</string>
     <string name="default_caller_id_app_unset">Selecione um aplicativo diferente como o \"aplicativo Identificador de Chamadas\" em \"aplicativos padrão\" nas configurações do sistema</string>
     <string name="feature_contacts">usando contatos</string>
@@ -210,15 +210,10 @@
     <string name="blocked_call_notifications_disable_confirmation">Desativar mesmo assim</string>
     <string name="blocked_call_notifications_disable_message">Você pode acidentalmente perder uma chamada se as chamadas forem bloqueadas sem notificações</string>
     <string name="show_notifications_for_blocked_calls">Notificar sobre chamadas bloqueadas</string>
-    <string name="filtering_db">Filtrando o BD…</string>
-    <string name="db_filtering_filter_db_summary">Execute a filtragem do banco de dados agora (para filtrar os dados existentes)</string>
-    <string name="db_filtering_filter_db">Filtrar o banco de dados</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">O comprimento máximo (inclusivo) de números curtos a serem mantidos, independentemente dos prefixos. Por exemplo. O valor de 5 manterá os números com comprimento de 5 dígitos ou menos</string>
     <string name="db_filtering_keep_short_numbers_max_length">Comprimento dos números para manter</string>
     <string name="db_filtering_keep_short_numbers_summary">Mantenha os números menores do que o comprimento especificado, independentemente dos prefixos</string>
     <string name="db_filtering_keep_short_numbers">Mantenha números curtos</string>
-    <string name="db_filtering_thorough_summary">Se ativado, ele percorre todos os blocos de dados e remove os números que não correspondem aos prefixos. Caso contrário, ele remove apenas blocos indesejados inteiros (deixando alguns números indesejados nos blocos desejados). Recomenda-se deixar isso ativado. Obrigatório para manter números curtos</string>
-    <string name="db_filtering_thorough">Filtragem completa</string>
     <string name="db_filtering_prefixes_to_keep_summary">Uma lista separada por vírgulas de prefixos de números a serem mantidos. Os prefixos devem estar no formato internacional (como +1234). Por exemplo, se você só recebe chamadas de números começando com +1, coloque +1 aqui</string>
     <string name="db_filtering_prefixes_to_keep">Prefixos para manter</string>
     <string name="db_filtering_enabled_summary">Habilita a filtragem durante o download e atualização do banco de dados</string>

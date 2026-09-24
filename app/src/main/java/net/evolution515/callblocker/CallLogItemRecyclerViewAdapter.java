@@ -1,0 +1,336 @@
+package net.evolution515.callblocker;
+
+import android.content.Context;
+import android.text.TextUtils;
+import android.text.format.DateUtils;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.recyclerview.widget.DiffUtil;
+
+import java.util.Iterator;
+import java.util.List;
+
+import net.evolution515.callblocker.data.CallLogItem;
+import net.evolution515.callblocker.data.CallLogItemGroup;
+import net.evolution515.callblocker.data.NumberInfo;
+
+public class CallLogItemRecyclerViewAdapter extends GenericRecyclerViewAdapter
+        <CallLogItemGroup, CallLogItemRecyclerViewAdapter.ViewHolder> {
+
+    public CallLogItemRecyclerViewAdapter(@Nullable ListInteractionListener<CallLogItemGroup> listener) {
+        super(new DiffUtilCallback(), listener);
+    }
+
+    @Override
+    @NonNull
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.call_log_item, parent, false);
+        return new ViewHolder(view);
+    }
+
+    class ViewHolder extends GenericRecyclerViewAdapter<CallLogItemGroup, ViewHolder>.GenericViewHolder {
+
+        final AppCompatImageView[] callTypeIcons;
+        final TextView label;
+
+        /** The number, small, above the label - when the label says where it is from. */
+        final TextView numberView;
+        final AppCompatImageView numberInfoIcon;
+        final TextView duration;
+        final TextView description;
+        final TextView time;
+
+        ViewHolder(View view) {
+            super(view);
+
+            callTypeIcons = new AppCompatImageView[]{
+                    view.findViewById(R.id.callTypeIcon),
+                    view.findViewById(R.id.callTypeIcon2),
+                    view.findViewById(R.id.callTypeIcon3)
+            };
+            label = view.findViewById(R.id.item_label);
+            numberView = view.findViewById(R.id.item_number);
+            numberInfoIcon = view.findViewById(R.id.numberInfoIcon);
+            duration = view.findViewById(R.id.duration);
+            description = view.findViewById(R.id.description);
+            time = view.findViewById(R.id.time);
+        }
+
+        @Override
+        void bind(CallLogItemGroup group) {
+            if (group == null) { // placeholder
+                label.setVisibility(View.INVISIBLE);
+                numberInfoIcon.setVisibility(View.INVISIBLE);
+                duration.setVisibility(View.GONE);
+                description.setVisibility(View.GONE);
+                time.setVisibility(View.INVISIBLE);
+                for (AppCompatImageView icon : callTypeIcons) {
+                    bindTypeIcon(null, icon);
+                }
+
+                return;
+            } else {
+                label.setVisibility(View.VISIBLE);
+                numberInfoIcon.setVisibility(View.VISIBLE);
+                time.setVisibility(View.VISIBLE);
+            }
+
+            CallLogItem item = group.getItems().get(0);
+
+            Context context = itemView.getContext();
+
+            NumberInfo numberInfo = item.numberInfo;
+
+            /*
+             * A number that is only a number, but whose place is known, gets three lines: the
+             * number itself, smaller, on top; where it is from as the line that is read first;
+             * and what happened below. That says more than "+4930123456 (Berlin, Deutschland)"
+             * cut off at the edge of the screen.
+             */
+            boolean originLine = showsNumber(item) && !TextUtils.isEmpty(numberInfo.origin);
+
+            if (originLine) {
+                numberView.setText(item.number);
+                numberView.setVisibility(View.VISIBLE);
+                label.setText(numberInfo.origin);
+            } else {
+                numberView.setVisibility(View.GONE);
+                label.setText(getLabel(context, item));
+            }
+
+            // a number nothing is known about gets the question mark rather than nothing at all
+            IconAndColor.forNumberInfo(numberInfo).applyToImageView(numberInfoIcon);
+
+            // a contact with a photo is shown with it, the way the phone's own call log does
+            ContactPhotos.apply(numberInfoIcon, numberInfo.contactItem);
+
+            // the line also says what became of the call: what the app did about it when it
+            // came in, or else what the system recorded about it
+            String status = getCallStatus(context, item);
+            String durationString = hasDuration(item) ? getDuration(context, item.duration) : null;
+
+            String statusAndDuration;
+            if (status != null && durationString != null) {
+                statusAndDuration = context.getString(
+                        R.string.call_status_and_duration, status, durationString);
+            } else {
+                statusAndDuration = status != null ? status : durationString;
+            }
+
+            if (!TextUtils.isEmpty(statusAndDuration)) {
+                duration.setText(statusAndDuration);
+                duration.setVisibility(View.VISIBLE);
+            } else {
+                duration.setVisibility(View.GONE);
+            }
+
+            bindTypeIcons(group);
+
+            String descriptionString = NumberInfoUtils.getShortDescription(context, numberInfo);
+
+            // where it is from goes behind the number; when a name stands there instead, here
+            if (!TextUtils.isEmpty(numberInfo.origin) && !showsNumber(item)) {
+                descriptionString = TextUtils.isEmpty(descriptionString) ? numberInfo.origin
+                        : descriptionString + " \u00b7 " + numberInfo.origin;
+            }
+
+            if (!TextUtils.isEmpty(descriptionString)) {
+                description.setText(descriptionString);
+                description.setVisibility(View.VISIBLE);
+            } else {
+                description.setVisibility(View.GONE);
+            }
+
+            CharSequence timeString = DateUtils.getRelativeTimeSpanString(
+                    item.timestamp, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS,
+                    DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_ABBREV_ALL);
+
+            if (group.getItems().size() > 3) {
+                timeString = "(" + group.getItems().size() + ") " + timeString;
+            }
+
+            time.setText(timeString);
+        }
+
+        /** Whether the call lasted long enough for its duration to be worth showing. */
+        private boolean hasDuration(CallLogItem item) {
+            if (item.duration != 0) return true;
+
+            return item.type != CallLogItem.Type.MISSED
+                    && item.type != CallLogItem.Type.REJECTED
+                    && item.type != CallLogItem.Type.BLOCKED;
+        }
+
+        /**
+         * What became of the call: the app's own decision where it has one - only the app knows
+         * that a call was silenced, or that it was let through although something is known
+         * about the number - and otherwise what the system recorded.
+         *
+         * @return null for an ordinary call the app didn't see
+         */
+        private String getCallStatus(Context context, CallLogItem item) {
+            if (item.decision != null) {
+                switch (item.decision) {
+                    case BLOCKED:
+                        return context.getString(R.string.call_status_blocked);
+
+                    case SILENCED:
+                        return context.getString(R.string.call_status_silenced);
+
+                    case ALLOWED:
+                        return context.getString(R.string.call_status_let_through);
+                }
+            }
+
+            switch (item.type) {
+                case BLOCKED:
+                    return context.getString(R.string.call_status_blocked);
+
+                case REJECTED:
+                    return context.getString(R.string.call_status_rejected);
+
+                default:
+                    return null;
+            }
+        }
+
+        private String getLabel(Context context, CallLogItem item) {
+            NumberInfo numberInfo = item.numberInfo;
+
+            if (!item.presentation.hasNumber()) return getPresentationLabel(context, item);
+
+            if (numberInfo.noNumber) return context.getString(R.string.no_number);
+
+            if (numberInfo.name != null) return numberInfo.name;
+
+            // an entry only lends the row its name when it is this very number: the name of a
+            // pattern is about the range it covers, not about the number that fell in it
+            String listEntryName = NumberInfoUtils.getListEntryName(numberInfo);
+            if (listEntryName != null) return listEntryName;
+
+            return item.number;
+        }
+
+        /** Whether the row's label is the number itself, which is where its origin goes. */
+        private boolean showsNumber(CallLogItem item) {
+            NumberInfo numberInfo = item.numberInfo;
+
+            return item.presentation.hasNumber() && !numberInfo.noNumber
+                    && numberInfo.name == null
+                    && NumberInfoUtils.getListEntryName(numberInfo) == null;
+        }
+
+        private void bindTypeIcons(CallLogItemGroup group) {
+            List<CallLogItem> items = group.getItems();
+
+            for (int i = 0; i < callTypeIcons.length; i++) {
+                CallLogItem.Type type = i < items.size() ? items.get(i).type : null;
+                bindTypeIcon(type, callTypeIcons[i]);
+            }
+        }
+
+        private void bindTypeIcon(CallLogItem.Type type, AppCompatImageView view) {
+            Integer icon = null;
+
+            if (type != null) {
+                switch (type) {
+                    case INCOMING:
+                        icon = R.drawable.ic_call_received_24dp;
+                        break;
+
+                    case OUTGOING:
+                        icon = R.drawable.ic_call_made_24dp;
+                        break;
+
+                    case MISSED:
+                        icon = R.drawable.ic_call_missed_24dp;
+                        break;
+
+                    case REJECTED:
+                    case BLOCKED:
+                        icon = R.drawable.ic_call_rejected_24dp;
+                        break;
+                }
+            }
+
+            if (icon != null) {
+                view.setImageResource(icon);
+                view.setVisibility(View.VISIBLE);
+            } else {
+                view.setVisibility(View.GONE);
+            }
+        }
+
+        /** Says what kind of call it was when there's no number to show. */
+        private String getPresentationLabel(Context context, CallLogItem item) {
+            switch (item.presentation) {
+                case RESTRICTED:
+                    return context.getString(R.string.call_log_number_withheld);
+
+                case PAYPHONE:
+                    return context.getString(R.string.call_log_number_payphone);
+
+                default:
+                    return context.getString(R.string.call_log_number_unknown);
+            }
+        }
+
+        private String getDuration(Context context, long duration) {
+            long seconds = duration % 60;
+            long minutes = duration / 60;
+            long hours = minutes / 60;
+            minutes -= hours * 60;
+
+            if (hours != 0) {
+                return context.getString(R.string.duration_h_m_s, hours, minutes, seconds);
+            } else if (minutes != 0) {
+                return context.getString(R.string.duration_m_s, minutes, seconds);
+            }
+            return context.getString(R.string.duration_s, seconds);
+        }
+
+        @SuppressWarnings("NullableProblems")
+        @Override
+        public String toString() {
+            return super.toString() + " '" + label.getText() + "'";
+        }
+    }
+
+    static class DiffUtilCallback extends DiffUtil.ItemCallback<CallLogItemGroup> {
+
+        @Override
+        public boolean areItemsTheSame(@NonNull CallLogItemGroup oldGroup,
+                                       @NonNull CallLogItemGroup newGroup) {
+            if (oldGroup.getItems().size() != newGroup.getItems().size()) return false;
+
+            for (Iterator<CallLogItem> it1 = oldGroup.getItems().iterator(),
+                 it2 = newGroup.getItems().iterator(); it1.hasNext(); ) {
+                if (!areItemsTheSame(it1.next(), it2.next())) return false;
+            }
+
+            return true;
+        }
+
+        protected boolean areItemsTheSame(CallLogItem oldItem, CallLogItem newItem) {
+            return newItem.type == oldItem.type
+                    && TextUtils.equals(newItem.number, oldItem.number)
+                    && newItem.timestamp == oldItem.timestamp
+                    && newItem.duration == oldItem.duration;
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull CallLogItemGroup oldItem,
+                                          @NonNull CallLogItemGroup newItem) {
+            return false; // time always updates
+        }
+
+    }
+
+}

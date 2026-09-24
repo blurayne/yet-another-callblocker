@@ -62,6 +62,34 @@ On pre-Android 8 devices there's a couple of notification-related options in the
 There's also an option to disable all the informational notifications at once.
 
 
+## What is "block forged numbers"?
+
+Some networks sign the number a call is placed from, so that the phone can tell whether the
+number shown is really the caller's (this is called STIR/SHAKEN). Android passes that verdict on
+since Android 11, and the app can block or silence a call the network reports as forged - which
+catches a spoofed number no matter what the database says about it, since the number on such a
+call is one the caller doesn't own.
+
+It only works where the network does it. In much of the world, including Germany, it isn't in
+use: every call is then simply "not verified", which is not the same as "forged", and the option
+does nothing. Spoofing is dealt with by the networks themselves there.
+
+Like every other blocking option, this one never blocks contacts. It needs
+["Advanced call blocking mode"](FAQ.md#whats-that-advanced-call-blocking-mode), since the verdict
+comes with the call being screened.
+
+
+## Can the app silence a call instead of blocking it?
+
+Yes: "Silence calls" in Settings lets you pick the ratings that get the ringer muted
+(negative, neutral, unknown). Such a call isn't rejected - it goes through silently,
+your phone app shows it as usual and it ends up in the call log, you just aren't disturbed by it.
+Contacts are never silenced, and blocking wins if a number is set to be blocked as well.
+
+The feature is provided by the call screening service, so it needs
+["Advanced call blocking mode"](FAQ.md#whats-that-advanced-call-blocking-mode) and Android 10+.
+
+
 ## What countries are covered by the offline number database?
 
 I'm not sure to be honest. But I believe most of the world is covered.  
@@ -90,9 +118,31 @@ The number format *must* match the format that Android uses, that's why the lead
 1. If "Block blacklisted numbers" is enabled and the number matches any valid blacklist pattern, the call is **blocked**.
 
 
+## How does the app display the caller name/ID during an incoming call?
+
+There are two independent ways, both in Settings under "Caller ID":
+
+* **"Caller ID in the phone app"** (enabled by default).  
+  The app registers itself as a contacts directory, and your phone app asks it about every number
+  it can't find in your contacts. The result is displayed by the phone app itself - on the incoming
+  call screen, in the call log and in the contacts search - so there's no extra window and no
+  additional permission. Since the info is resolved while the call is being screened
+  (see ["Advanced call blocking mode"](FAQ.md#whats-that-advanced-call-blocking-mode)),
+  it's ready before the phone starts ringing.  
+  The stock Android phone app (AOSP Dialer, Google Phone) supports this. Some vendor phone apps
+  (Samsung, MIUI) use their own lookup and may ignore it - use the overlay below in that case.
+* **"Caller info overlay"** (disabled by default).  
+  The app draws a small window with the caller info over the incoming call screen.
+  This works regardless of the phone app, but it requires the "display over other apps" permission.
+
+Both are only used for the numbers the app knows something about (a rating, a category,
+a blacklist entry, a company name); contacts are never affected, and unknown numbers are
+displayed by the phone app as usual.
+
 ## Is there a way to display an overlay/pop-up screen with caller information?
 
-Not yet. If you want this feature, vote for [this issue](https://gitlab.com/xynngh/YetAnotherCallBlocker/-/issues/3).
+Yes, see [the question above](FAQ.md#how-does-the-app-display-the-caller-nameid-during-an-incoming-call).
+The upstream discussion of the feature is in [this issue](https://gitlab.com/xynngh/YetAnotherCallBlocker/-/issues/3).
 
 
 ## I have "block hidden numbers" enabled, but some hidden/"private" numbers are still not blocked.
@@ -108,6 +158,33 @@ If you receive a hidden call that wasn't blocked, [create a "crash report"](FAQ.
 Partially. There's no proxy settings in the app, but system-wide tunnels should work fine. The initial database download (from gitlab) via Tor previously failed due to gitlab making extra checks, but I implemented a hack that should work for now. You can always perform the initial download (no identifiable information used) using normal internet connection. You can even avoid it by [embedding main DB](FAQ.md#the-app-takes-too-much-storage-space-what-can-i-do).
 
 Unfortunately, the third-party servers block requests from Tor, so daily updates and online reviews are not available via Tor.
+
+
+## Can I copy the database to another device or keep a backup of it?
+
+Yes: "Manage database" (Settings -> Advanced -> Manage database) has "Export DB" and "Import DB".
+The export is a zip archive of the offline database, which you can share or save anywhere;
+importing it replaces the current database, so the app asks for a confirmation first.
+It's meant for setting up another device (or reinstalling) without downloading the database again.
+
+The archive contains the database only. The blacklist has its own export in the blacklist screen,
+and the settings aren't included in either.
+
+
+## What happens to the database when I filter it?
+
+Filtering deletes the parts of the database you don't need, which can't be undone by filtering
+again - so the app keeps a copy of the unfiltered database ("Keep the unfiltered database",
+enabled by default) and filters that copy. This is what makes "Use the unfiltered database"
+possible, and it means that changing the filter settings and filtering again always starts from
+the complete database instead of narrowing down what is left of it.
+
+The copy needs about as much space as the database itself. Turning the option off frees that
+space, at the price of having to download the database again to get an unfiltered one back.
+Filtering reports how many entries it removed, and if the filter matches everything, the copy is
+dropped again since the database in use is the unfiltered one anyway.
+
+When the database is updated, the filter is applied to the update automatically.
 
 
 ## The app takes too much storage space. What can I do?

@@ -34,3 +34,11 @@ Open and build the project in Android Studio or use Gradle:
 ```
 ./gradlew build
 ```
+
+The build requires JDK 11: Gradle 7.6 and the Android Gradle Plugin 7.4 don't support newer ones.
+
+
+## Next steps
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for signing (including how to create a keystore),
+the CI build, and how to get logs and crash reports off a device.

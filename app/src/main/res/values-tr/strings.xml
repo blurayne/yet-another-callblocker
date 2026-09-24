@@ -165,7 +165,7 @@
     <string name="notification_channel_group_name_services">Hizmetler</string>
     <string name="notification_channel_group_name_blocked_calls">Engellenen aramalar</string>
     <string name="notification_channel_group_name_incoming_calls">Gelen aramalar</string>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
     <string name="duration_s">%dsn</string>
     <string name="duration_m_s">%1$ddk %2$dsn</string>
     <string name="duration_h_m_s">%1$dsa %2$ddk %3$dsn</string>
@@ -192,7 +192,7 @@
     <string name="open_about_activity">Hakkında</string>
     <string name="open_system_settings">Ayarları Aç</string>
     <string name="default_phone_app_unset">Sistem ayarlarındaki \"Öntanımlı uygulamalar\" bölümünde \"Telefon uygulaması\" olarak farklı bir uygulama seçin</string>
-    <string name="default_phone_app_set">Sistem ayarlarındaki \"Öntanımlı uygulamalar\" bölümünde \"Telefon uygulaması\" olarak \"Yet Another Call Blocker\" seçin</string>
+    <string name="default_phone_app_set">Sistem ayarlarındaki \"Öntanımlı uygulamalar\" bölümünde \"Telefon uygulaması\" olarak \"Caller ID &amp; Spam\" seçin</string>
     <string name="default_phone_app">Öntanımlı \"Telefon uygulaması\"</string>
     <string name="default_caller_id_app_unset">Sistem ayarlarındaki \"Öntanımlı uygulamalar\" bölümünde \"Arayan kimliği uygulaması\" olarak farklı bir uygulama seçin</string>
     <string name="default_caller_id_app">Öntanımlı \"Arayan kimliği uygulaması\"</string>
@@ -211,15 +211,10 @@
     <string name="show_notifications_for_blocked_calls_summary">Bir arama engellendikten sonra bildirim görüntüle</string>
     <string name="show_notifications_for_blocked_calls">Engellenen aramaları bildir</string>
     <string name="db_filtering_prefixes_to_keep_summary">Tutulacak numaraların ön eklerinin virgülle ayrılmış listesi. Ön ekler uluslararası biçimde olmalıdır (+1234 gibi). Örneğin, yalnızca +1 ile başlayan numaralardan arama alıyorsanız, buraya +1 koyun</string>
-    <string name="filtering_db">Veri tabanı filtreleniyor…</string>
-    <string name="db_filtering_filter_db_summary">Veri tabanı filtrelemeyi şimdi çalıştır (var olan verileri filtrelemek için)</string>
-    <string name="db_filtering_filter_db">Veri tabanını filtrele</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">Ön eklerden bağımsız olarak tutulacak kısa numaraların (dahil olacak şekilde) azami uzunluğu. Örneğin; 5 değeri, 5 basamaklı veya daha kısa olan numaraları tutacaktır</string>
     <string name="db_filtering_keep_short_numbers_max_length">Tutulacak numaraların uzunluğu</string>
     <string name="db_filtering_keep_short_numbers_summary">Ön eklerden bağımsız olarak belirtilen uzunluktan daha kısa numaraları tut</string>
     <string name="db_filtering_keep_short_numbers">Kısa numaraları tut</string>
-    <string name="db_filtering_thorough_summary">Etkinleştirilirse, her veri bloğunu inceler ve ön eklerle eşleşmeyen numaraları kaldırır. Aksi takdirde, yalnızca bütün halinde istenmeyen blokları kaldırır (istenmeyen bloklarda bazı istenmeyen numaralar bırakır). Bunu açık bırakmanız önerilir. Kısa numaraları tutmak için gereklidir</string>
-    <string name="db_filtering_thorough">Kapsamlı filtreleme</string>
     <string name="db_filtering_prefixes_to_keep">Tutulacak ön ekler</string>
     <string name="db_filtering_enabled_summary">Veri tabanı indirme ve güncelleme sırasında filtrelemeyi etkinleştirir</string>
     <string name="db_filtering_enabled">Filtreleme etkin</string>

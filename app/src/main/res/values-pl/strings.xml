@@ -123,7 +123,7 @@
     <string name="notification_channel_name_tasks">Zadania</string>
     <string name="notification_channel_group_name_blocked_calls">Zablokowane połączenia</string>
     <string name="notification_channel_group_name_incoming_calls">Połączenia przychodzące</string>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
     <string name="block_negative_sia_numbers_summary">Blokuje połączenia z numerów z negatywną oceną (na podstawie bazy danych tworzonej przez społeczność)</string>
     <string name="show_notifications_for_unknown_callers_summary">Wyświetla powiadomienia dla nieznanych połączeń (ani w kontaktach, ani w bazie danych numerów)</string>
     <string name="show_notifications_for_known_callers_summary">Wyświetla powiadomienia dla znanych połączeń (numery w kontaktach)</string>
@@ -184,7 +184,7 @@
     <string name="logo_description">Logo</string>
     <string name="db_last_update_check">Ostatnie sprawdzenie aktualizacji: %s</string>
     <string name="default_phone_app_unset">Wybierz inną aplikację jako „Aplikacja do obsługi telefonu” w ustawieniach systemowych „Aplikacje domyślne”</string>
-    <string name="default_phone_app_set">Wybierz „Yet Another Call Blocker” jako „Aplikacja do obsługi telefonu” w ustawieniach systemowych „Aplikacje domyślne”</string>
+    <string name="default_phone_app_set">Wybierz „Caller ID &amp; Spam” jako „Aplikacja do obsługi telefonu” w ustawieniach systemowych „Aplikacje domyślne”</string>
     <string name="default_caller_id_app_unset">Wybierz inną aplikację jako „Aplikacja do identyfikacji rozmówcy i spamu” w ustawieniach systemowych „Aplikacje domyślne”</string>
     <string name="about_activity">O aplikacji</string>
     <string name="open_about_activity">O aplikacji</string>
@@ -216,16 +216,11 @@
     <string name="show_notifications_for_blocked_calls">Powiadamiaj o zablokowanych połączeniach</string>
     <string name="selected_value_nothing">&lt;nic&gt;</string>
     <string name="block_in_limited_mode_rating">Według oceny</string>
-    <string name="db_filtering_thorough_summary">Jeśli włączone, przetwarza każdy blok danych i usuwa numery niepasujące do prefiksów. W przeciwnym razie usuwa całe niechciane bloki (pozostawiając niektóre niechciane numery w chcianych blokach). Zaleca się pozostawienie tej opcji włączonej. Wymagane do zachowania krótkich numerów</string>
-    <string name="filtering_db">Filtrowanie bazy danych…</string>
-    <string name="db_filtering_filter_db_summary">Uruchamia filtrowanie bazy danych (aby przefiltrować istniejące dane)</string>
     <string name="db_filtering_keep_short_numbers_summary">Zachowuje numery krótsze niż określona długość, niezależnie od prefiksów</string>
     <string name="db_filtering_info">Objaśnienie</string>
-    <string name="db_filtering_filter_db">Filtruj bazę danych</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">Maksymalna długość (włącznie) krótkich numerów do przechowania, niezależnie od prefiksów. Np. wartość 5 zachowa numery o długości 5 cyfr lub krótsze</string>
     <string name="db_filtering_keep_short_numbers_max_length">Długość numerów do zachowania</string>
     <string name="db_filtering_keep_short_numbers">Zachowaj krótkie numery</string>
-    <string name="db_filtering_thorough">Dokładne filtrowanie</string>
     <string name="db_filtering_prefixes_to_keep_summary">Rozdzielona przecinkami lista prefiksów numerów do zachowania. Prefiksy powinny być w międzynarodowym formacie (jak +1234). Np. jeśli otrzymujesz połączenia tylko z numerów zaczynających się od +48, wpisz tutaj +48</string>
     <string name="db_filtering_prefixes_to_keep">Prefiksy do zachowania</string>
     <string name="db_filtering_enabled_summary">Włącza filtrowanie podczas pobierania i aktualizacji bazy danych</string>

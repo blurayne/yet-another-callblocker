@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
     <string name="notification_channel_group_name_incoming_calls">Appels entrants</string>
     <string name="notification_channel_group_name_blocked_calls">Appels bloqués</string>
     <string name="notification_channel_name_known">Appels identifiés</string>
@@ -186,7 +186,7 @@
     <string name="notification_settings">Paramètres de notification</string>
     <string name="open_system_settings">Ouvrir les paramètres</string>
     <string name="default_phone_app_unset">Sélectionnez une autre application comme « Application téléphonique » dans « Applications par défaut » dans les paramètres système</string>
-    <string name="default_phone_app_set">Sélectionnez Yet Another Call Blocker comme « Application téléphonique » dans « Applications par défaut » dans les paramètres système</string>
+    <string name="default_phone_app_set">Sélectionnez Caller ID &amp; Spam comme « Application téléphonique » dans « Applications par défaut » dans les paramètres système</string>
     <string name="default_phone_app">« Application téléphonique » par défaut</string>
     <string name="default_caller_id_app">« Application d\'identification de l\'appelant » par défaut</string>
     <string name="default_caller_id_app_unset">Sélectionnez une autre application comme « Application d\'identification de l\'appelant » dans « Applications par défaut » dans les paramètres système</string>
@@ -210,15 +210,10 @@
     <string name="blocked_call_notifications_disable_message">Ils se peut que vous manquiez un appel si les appels sont bloqués sans notification</string>
     <string name="show_notifications_for_blocked_calls_summary">Afficher une notification après le blocage d\'un appel</string>
     <string name="show_notifications_for_blocked_calls">Notifier les appels bloqués</string>
-    <string name="filtering_db">Filtrage de la BD…</string>
-    <string name="db_filtering_filter_db_summary">Exécuter maintenant le filtrage de la base de données (pour filtrer les données existantes)</string>
-    <string name="db_filtering_filter_db">Filtrer la base de données</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">La longueur maximale (inclusive) des numéros courts à conserver sans tenir compte des préfixes. Par exemple, la valeur 5 permet de conserver les numéros de 5 chiffres ou moins</string>
     <string name="db_filtering_keep_short_numbers_max_length">Longueur des numéros à conserver</string>
     <string name="db_filtering_keep_short_numbers_summary">Conserver les numéros plus courts que la longueur spécifiée, sans tenir compte des préfixes</string>
     <string name="db_filtering_keep_short_numbers">Conserver les numéros courts</string>
-    <string name="db_filtering_thorough_summary">Si activé, ceci passe en revue chaque bloc de données et supprime les numéros ne correspondant pas aux préfixes. Sinon, on ne supprime que les blocs entiers non désirés (laissant quelques numéros non désirés dans les blocs désirés). Il est recommandé de laisser cette option activée. Nécessaire pour conserver les numéros courts</string>
-    <string name="db_filtering_thorough">Filtrage minutieux</string>
     <string name="db_filtering_prefixes_to_keep_summary">Une liste de préfixes de numéros à conserver, séparés par des virgules. Les préfixes doivent être au format international (comme +1234). Par exemple, si vous ne recevez que des appels de numéros commençant par +1, mettez +1 ici</string>
     <string name="db_filtering_prefixes_to_keep">Préfixes à conserver</string>
     <string name="db_filtering_enabled_summary">Active le filtrage pendant le téléchargement et la mise à jour de la base de données</string>

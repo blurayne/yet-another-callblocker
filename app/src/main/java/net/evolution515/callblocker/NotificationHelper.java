@@ -1,0 +1,649 @@
+package net.evolution515.callblocker;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
+import android.text.TextUtils;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import net.evolution515.callblocker.data.NumberInfo;
+import dummydomain.yetanothercallblocker.sia.model.database.CommunityDatabaseItem;
+
+import static net.evolution515.callblocker.IntentHelper.pendingActivity;
+
+public class NotificationHelper {
+
+    private static final String NOTIFICATION_TAG_INCOMING_CALL = "incomingCallNotification";
+    private static final String NOTIFICATION_TAG_BLOCKED_CALL = "blockedCallNotification";
+
+    private static final int NOTIFICATION_ID_INCOMING_CALL = 1;
+    private static final int NOTIFICATION_ID_BLOCKED_CALL = 2;
+    public static final int NOTIFICATION_ID_MONITORING_SERVICE = 3;
+    public static final int NOTIFICATION_ID_TASKS = 4;
+    private static final int NOTIFICATION_ID_PHONE_BLOCK_TOKEN = 5;
+
+    /** Stays behind when the building is over, because nothing else would say that it is. */
+    private static final int NOTIFICATION_ID_DB_BUILD_FINISHED = 6;
+
+    /** The updates that run on their own, for whoever asked to be told about them. */
+    private static final int NOTIFICATION_ID_AUTO_UPDATE = 7;
+
+    /** The phone not letting the app work while nobody is looking at it. */
+    private static final int NOTIFICATION_ID_BACKGROUND_WORK = 8;
+
+    /** Something that went wrong and would otherwise go unnoticed. */
+    private static final int NOTIFICATION_ID_ERROR = 9;
+
+    private static final String CHANNEL_GROUP_ID_INCOMING_CALLS = "incoming_calls";
+    private static final String CHANNEL_GROUP_ID_BLOCKED_CALLS = "blocked_calls";
+    private static final String CHANNEL_GROUP_ID_SERVICES = "services";
+
+    private static final String CHANNEL_ID_KNOWN = "known_calls";
+    private static final String CHANNEL_ID_POSITIVE = "positive_calls";
+    private static final String CHANNEL_ID_NEUTRAL = "neutral_calls";
+    private static final String CHANNEL_ID_UNKNOWN = "unknown_calls";
+    private static final String CHANNEL_ID_NEGATIVE = "negative_calls";
+    private static final String CHANNEL_ID_BLOCKED_INFO = "blocked_info";
+    private static final String CHANNEL_ID_MONITORING_SERVICE = "monitoring_service";
+    private static final String CHANNEL_ID_TASKS = "tasks";
+    private static final String CHANNEL_ID_WARNINGS = "warnings";
+
+    /**
+     * Errors, on a channel of their own.
+     *
+     * <p>Not the tasks channel: that one is quiet by design, because the progress of a job
+     * the user started is not news. An error is. It is also not gated by any setting of the
+     * app's own - "say when the updates run" is about the running, not the failing - so the
+     * one place it can be turned down is where Android lets every channel be turned down.
+     */
+    private static final String CHANNEL_ID_ERRORS = "errors";
+
+    private static boolean notificationChannelsInitialized;
+
+    public static void notify(Context context, int id, Notification notification) {
+        initNotificationChannels(context);
+
+        NotificationManagerCompat.from(context).notify(id, notification);
+    }
+
+    public static void notify(Context context, String tag, int id, Notification notification) {
+        initNotificationChannels(context);
+
+        NotificationManagerCompat.from(context).notify(tag, id, notification);
+    }
+
+    public static void showIncomingCallNotification(Context context, NumberInfo numberInfo) {
+        NotificationWithInfo notificationWithInfo = createIncomingCallNotification(context, numberInfo);
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            if (CHANNEL_ID_KNOWN.equals(notificationWithInfo.channelId)) {
+                if (!App.getSettings().getNotificationsForKnownCallers()) {
+                    return;
+                }
+            } else if (CHANNEL_ID_UNKNOWN.equals(notificationWithInfo.channelId)) {
+                if (!App.getSettings().getNotificationsForUnknownCallers()) {
+                    return;
+                }
+            }
+        }
+
+        notify(context, NOTIFICATION_TAG_INCOMING_CALL, NOTIFICATION_ID_INCOMING_CALL,
+                notificationWithInfo.notification);
+    }
+
+    public static void hideIncomingCallNotification(Context context) {
+        NotificationManagerCompat.from(context)
+                .cancel(NOTIFICATION_TAG_INCOMING_CALL, NOTIFICATION_ID_INCOMING_CALL);
+    }
+
+    public static void showBlockedCallNotification(Context context, NumberInfo numberInfo) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            if (!App.getSettings().getNotificationsForBlockedCalls()) {
+                return;
+            }
+        }
+
+        Notification notification = createBlockedCallNotification(context, numberInfo);
+
+        String tag = NOTIFICATION_TAG_BLOCKED_CALL
+                + (!numberInfo.noNumber ? numberInfo.number : System.nanoTime()); // TODO: handle repeating
+        notify(context, tag, NOTIFICATION_ID_BLOCKED_CALL, notification);
+    }
+
+    public static Notification createMonitoringServiceNotification(Context context) {
+        initNotificationChannels(context);
+
+        PendingIntent contentIntent = pendingActivity(context,
+                new Intent(context, MainActivity.class));
+
+        return new NotificationCompat.Builder(context, CHANNEL_ID_MONITORING_SERVICE)
+                .setSmallIcon(R.drawable.ic_security_24dp)
+                .setContentTitle(context.getString(R.string.monitoring_service_notification_title))
+                .setContentIntent(contentIntent)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .setShowWhen(false)
+                .build();
+    }
+
+    /**
+     * Tells the user that the PhoneBlock token stopped working.
+     *
+     * <p>Nothing else would: the list is downloaded in the background, and a token that was
+     * revoked only shows up when it is used.
+     */
+    public static void showPhoneBlockTokenNotification(Context context) {
+        PendingIntent contentIntent = pendingActivity(context,
+                new Intent(context, SettingsActivity.class));
+
+        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_WARNINGS)
+                .setSmallIcon(R.drawable.ic_error_24dp)
+                .setColor(UiUtils.getColorInt(context, R.color.rateNegative))
+                .setContentTitle(context.getString(R.string.phone_block_token_invalid_title))
+                .setContentText(context.getString(R.string.phone_block_token_invalid_text))
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(context.getString(R.string.phone_block_token_invalid_text)))
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setCategory(NotificationCompat.CATEGORY_ERROR)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .build();
+
+        notify(context, NOTIFICATION_ID_PHONE_BLOCK_TOKEN, notification);
+    }
+
+    public static void hidePhoneBlockTokenNotification(Context context) {
+        NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_PHONE_BLOCK_TOKEN);
+    }
+
+    /**
+     * Says that the phone is stopping the app from working in the background.
+     *
+     * <p>Posted when that has just cost something - a build that never came back - because
+     * that is the moment it means anything. Tapping it goes where it can be changed.
+     */
+    public static void showBackgroundWorkWarning(Context context, String text) {
+        initNotificationChannels(context);
+
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + context.getPackageName()));
+
+        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_WARNINGS)
+                .setSmallIcon(R.drawable.ic_error_24dp)
+                .setContentIntent(pendingActivity(context, intent))
+                .setAutoCancel(true)
+                .setContentTitle(context.getString(R.string.background_work_warning_title))
+                .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .build();
+
+        notify(context, NOTIFICATION_ID_BACKGROUND_WORK, notification);
+    }
+
+    public static Notification createServiceNotification(Context context, String title) {
+        return createServiceNotification(context, title, -1, -1);
+    }
+
+    /**
+     * The notification a background task runs under.
+     *
+     * <p>With a total it carries a bar: building the database walks tens of thousands of
+     * files and takes minutes, and a bar that fills is the difference between waiting and
+     * wondering whether anything is happening at all.
+     */
+    public static Notification createServiceNotification(Context context, String title,
+                                                         int current, int total) {
+        initNotificationChannels(context);
+
+        if (title == null) title = context.getString(R.string.notification_background_operation);
+
+        PendingIntent contentIntent = pendingActivity(context,
+                new Intent(context, MainActivity.class));
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context,
+                CHANNEL_ID_TASKS)
+                .setSmallIcon(R.drawable.ic_file_download_24dp)
+                .setContentIntent(contentIntent)
+                .setOngoing(true)
+                .setContentTitle(title);
+
+        if (total > 0) builder.setProgress(total, Math.max(0, current), false);
+
+        return builder.build();
+    }
+
+    /**
+     * Says that an update that nobody started is running, for as long as it runs.
+     *
+     * <p>Only shown when the user asked to be told: the updates run daily and in the
+     * background, and something the app does by itself has no business announcing itself
+     * unless that was asked for.
+     */
+    public static void showAutoUpdateNotification(Context context, String title) {
+        notify(context, NOTIFICATION_ID_AUTO_UPDATE,
+                createServiceNotification(context, title));
+    }
+
+    public static void hideAutoUpdateNotification(Context context) {
+        NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_AUTO_UPDATE);
+    }
+
+    /**
+     * Says that the database is built, and stays until it is looked at.
+     *
+     * <p>The one the service runs under disappears with the service, so the end of a job the
+     * user started by hand would otherwise be the moment a notification silently vanishes.
+     */
+    public static void showDbBuildFinished(Context context, String title, String text) {
+        showDbBuildFinished(context, title, text, true);
+    }
+
+    /**
+     * @param ok whether it went well; a build that didn't says so with a warning rather than
+     *           with the tick that means "done"
+     */
+    public static void showDbBuildFinished(Context context, String title, String text,
+                                           boolean ok) {
+        if (!ok) {
+            // a build that failed is an error like any other, and goes where those go
+            showError(context, title, text);
+            return;
+        }
+
+        initNotificationChannels(context);
+
+        PendingIntent contentIntent = pendingActivity(context,
+                new Intent(context, SettingsActivity.class));
+
+        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_TASKS)
+                .setSmallIcon(R.drawable.ic_check_24dp)
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .build();
+
+        notify(context, NOTIFICATION_ID_DB_BUILD_FINISHED, notification);
+
+        // whatever was wrong the last time is over, and an error that stays would say otherwise
+        hideError(context);
+    }
+
+    /** Takes an error back, for the run that went right after it. */
+    public static void hideError(Context context) {
+        NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_ERROR);
+    }
+
+    /**
+     * Says that something went wrong, whatever the app's own settings say about noise.
+     *
+     * <p>Whether a job announces that it is running is the user's choice; whether it
+     * announces that it failed is not, because the alternative is a database that quietly
+     * stopped updating three weeks ago. So this ignores every switch the app has and goes
+     * out on the errors channel, where Android lets the user decide what it may do.
+     *
+     * <p>One at a time: a newer error replaces an older one rather than piling up, and
+     * tapping it opens the settings, which is where the sources say what went wrong.
+     */
+    public static void showError(Context context, String title, String text) {
+        initNotificationChannels(context);
+
+        PendingIntent contentIntent = pendingActivity(context,
+                new Intent(context, SettingsActivity.class));
+
+        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_ERRORS)
+                .setSmallIcon(R.drawable.ic_error_24dp)
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .build();
+
+        notify(context, NOTIFICATION_ID_ERROR, notification);
+    }
+
+    /** The same, for several things that went wrong in one run, one per line. */
+    public static void showErrors(Context context, String title, List<String> texts) {
+        if (texts == null || texts.isEmpty()) return;
+
+        showError(context, title, TextUtils.join("\n", texts));
+    }
+
+    private static NotificationWithInfo createIncomingCallNotification(
+            Context context, NumberInfo numberInfo) {
+        boolean unknown = false;
+        String channelId;
+        String title;
+        String text = "";
+        switch (numberInfo.rating) {
+            case POSITIVE:
+                channelId = CHANNEL_ID_POSITIVE;
+                title = context.getString(R.string.notification_incoming_call_positive);
+                break;
+
+            case NEUTRAL:
+                channelId = CHANNEL_ID_NEUTRAL;
+                title = context.getString(R.string.notification_incoming_call_neutral);
+                break;
+
+            case NEGATIVE:
+                channelId = CHANNEL_ID_NEGATIVE;
+                title = context.getString(R.string.notification_incoming_call_negative);
+                break;
+
+            default:
+                unknown = true;
+                channelId = CHANNEL_ID_UNKNOWN;
+                title = context.getString(R.string.notification_incoming_call_unknown);
+                break;
+        }
+
+        // up for debate
+        if (numberInfo.contactItem != null && unknown) {
+            channelId = CHANNEL_ID_KNOWN;
+            title = context.getString(R.string.notification_incoming_call_contact);
+        }
+
+        title = concat(title, " - ", getTitleExtra(context, numberInfo));
+
+        text += getInfoDescription(context, numberInfo);
+
+        IconAndColor iconAndColor = IconAndColor.forNumberInfo(numberInfo);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(iconAndColor.iconResId)
+                .setColor(iconAndColor.getColorInt(context))
+                .setContentTitle(title)
+                .setContentText(firstLine(text))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_STATUS)
+                .setShowWhen(false)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC); // TODO: check
+
+        addCallNotificationIntents(context, builder, numberInfo);
+
+        return new NotificationWithInfo(builder.build(), channelId);
+    }
+
+    private static Notification createBlockedCallNotification(Context context, NumberInfo numberInfo) {
+        String title = concat(context.getString(R.string.notification_blocked_call),
+                " - ", getTitleExtra(context, numberInfo));
+
+        String text = getBlockedDescription(context, numberInfo);
+
+        boolean forgedNumber
+                = numberInfo.blockingReason == NumberInfo.BlockingReason.FAILED_VERIFICATION;
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                context, CHANNEL_ID_BLOCKED_INFO)
+                .setSmallIcon(forgedNumber
+                        ? R.drawable.ic_shield_s_24dp : R.drawable.ic_brick_24dp)
+                .setColor(UiUtils.getColorInt(context, R.color.rateNegative))
+                .setContentTitle(title)
+                .setContentText(firstLine(text))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setCategory(NotificationCompat.CATEGORY_STATUS);
+
+        addCallNotificationIntents(context, builder, numberInfo);
+
+        return builder.build();
+    }
+
+    private static String getTitleExtra(Context context, NumberInfo numberInfo) {
+        return NumberInfoUtils.getShortDescription(context, numberInfo);
+    }
+
+    private static String getInfoDescription(Context context, NumberInfo numberInfo) {
+        String text = numberInfo.name;
+
+        text = concat(text, "\n", getVerificationDescriptionPart(context, numberInfo));
+        text = concat(text, "; ", getCommunityDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getBlacklistDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getPhoneBlockDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getWhitelistDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getNumberDescriptionPart(context, numberInfo));
+
+        return text;
+    }
+
+    /**
+     * What a blocked call is said as. The list entry that matched is not in it: the title
+     * already says the call was on the list, and the pattern and name of the entry say
+     * nothing about who called. The number and where it is from do, so they come first.
+     */
+    private static String getBlockedDescription(Context context, NumberInfo numberInfo) {
+        String text = numberInfo.name;
+
+        text = concat(text, "\n", getNumberDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getVerificationDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getCommunityDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getPhoneBlockDescriptionPart(context, numberInfo));
+        text = concat(text, "\n", getWhitelistDescriptionPart(context, numberInfo));
+
+        return text;
+    }
+
+    private static String getWhitelistDescriptionPart(Context context, NumberInfo numberInfo) {
+        return NumberInfoUtils.getWhitelistStatus(context, numberInfo);
+    }
+
+    private static String getPhoneBlockDescriptionPart(Context context, NumberInfo numberInfo) {
+        return NumberInfoUtils.getPhoneBlockStatus(context, numberInfo);
+    }
+
+    private static String getVerificationDescriptionPart(Context context, NumberInfo numberInfo) {
+        return numberInfo.failedVerification
+                ? context.getString(R.string.info_failed_verification) : null;
+    }
+
+    /** The number, and where it is from when that is known: "+49 30 1234567 (Berlin, Deutschland)". */
+    private static String getNumberDescriptionPart(Context context, NumberInfo numberInfo) {
+        if (numberInfo.noNumber) return context.getString(R.string.no_number);
+
+        return NumberInfoUtils.withOrigin(numberInfo.number, numberInfo);
+    }
+
+    private static String getCommunityDescriptionPart(Context context, NumberInfo numberInfo) {
+        if (numberInfo.communityDatabaseItem != null) {
+            CommunityDatabaseItem communityItem = numberInfo.communityDatabaseItem;
+
+            if (communityItem.hasRatings()) {
+                return context.getString(R.string.notification_incoming_call_text_description,
+                        communityItem.getNegativeRatingsCount(), communityItem.getPositiveRatingsCount(),
+                        communityItem.getNeutralRatingsCount());
+            }
+        }
+
+        return null;
+    }
+
+    private static String getBlacklistDescriptionPart(Context context, NumberInfo numberInfo) {
+        if (numberInfo.blacklistItem != null && numberInfo.contactItem == null) {
+            String name = numberInfo.blacklistItem.getName();
+            return NumberInfoUtils.getBlacklistStatus(context, numberInfo)
+                    + (!TextUtils.isEmpty(name) ? " (" + name + ")" : "");
+        }
+
+        return null;
+    }
+
+    private static String concat(String base, String delimiter, String extra) {
+        if (!TextUtils.isEmpty(extra)) {
+            if (TextUtils.isEmpty(base)) {
+                base = "";
+            } else {
+                base += delimiter;
+            }
+            base += extra;
+        }
+        return base;
+    }
+
+    private static String firstLine(String s) {
+        int index;
+        if (TextUtils.isEmpty(s) || (index = s.indexOf('\n')) == -1) return s;
+        return s.substring(0, index);
+    }
+
+    private static void addCallNotificationIntents(Context context,
+                                                   NotificationCompat.Builder builder,
+                                                   NumberInfo numberInfo) {
+        builder.setContentIntent(createInfoIntent(context, numberInfo));
+
+        if (!numberInfo.noNumber && numberInfo.contactItem == null) {
+            if (ProviderHelper.isPhoneBlockReportOffered()) {
+                builder.addAction(0, context.getString(R.string.phone_block_report_action),
+                        createReportIntent(context, numberInfo));
+            }
+        }
+    }
+
+    private static PendingIntent createInfoIntent(Context context, NumberInfo numberInfo) {
+        return pendingActivity(context, InfoDialogActivity.getIntent(context, numberInfo.number));
+    }
+
+    private static PendingIntent createReportIntent(Context context, NumberInfo numberInfo) {
+        return pendingActivity(context,
+                InfoDialogActivity.getReportIntent(context, numberInfo.number));
+    }
+
+    public static void initNotificationChannels(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+
+        if (notificationChannelsInitialized) return;
+        synchronized (NotificationHelper.class) {
+            if (notificationChannelsInitialized) return;
+            createNotificationChannels(context);
+            notificationChannelsInitialized = true;
+        }
+    }
+
+    private static void createNotificationChannels(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+
+            NotificationChannelGroup channelGroupIncoming = new NotificationChannelGroup(
+                    CHANNEL_GROUP_ID_INCOMING_CALLS,
+                    context.getString(R.string.notification_channel_group_name_incoming_calls));
+            notificationManager.createNotificationChannelGroup(channelGroupIncoming);
+
+            NotificationChannelGroup channelGroupBlocked = new NotificationChannelGroup(
+                    CHANNEL_GROUP_ID_BLOCKED_CALLS,
+                    context.getString(R.string.notification_channel_group_name_blocked_calls));
+            notificationManager.createNotificationChannelGroup(channelGroupBlocked);
+
+            NotificationChannelGroup channelGroupServices = new NotificationChannelGroup(
+                    CHANNEL_GROUP_ID_SERVICES,
+                    context.getString(R.string.notification_channel_group_name_services));
+            notificationManager.createNotificationChannelGroup(channelGroupServices);
+
+            List<NotificationChannel> channels = new ArrayList<>();
+
+            NotificationChannel channel;
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_KNOWN, context.getString(R.string.notification_channel_name_known),
+                    NotificationManager.IMPORTANCE_MIN
+            );
+            channel.setGroup(channelGroupIncoming.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_POSITIVE, context.getString(R.string.notification_channel_name_positive),
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setGroup(channelGroupIncoming.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_NEUTRAL, context.getString(R.string.notification_channel_name_neutral),
+                    NotificationManager.IMPORTANCE_MIN
+            );
+            channel.setGroup(channelGroupIncoming.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_UNKNOWN, context.getString(R.string.notification_channel_name_unknown),
+                    NotificationManager.IMPORTANCE_MIN
+            );
+            channel.setGroup(channelGroupIncoming.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_NEGATIVE, context.getString(R.string.notification_channel_name_negative),
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setGroup(channelGroupIncoming.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_BLOCKED_INFO, context.getString(R.string.notification_channel_name_blocked_info),
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setGroup(channelGroupBlocked.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_MONITORING_SERVICE,
+                    context.getString(R.string.notification_channel_name_monitoring_service),
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setGroup(channelGroupServices.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_TASKS, context.getString(R.string.notification_channel_name_tasks),
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setGroup(channelGroupServices.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_WARNINGS,
+                    context.getString(R.string.notification_channel_name_warnings),
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            channel.setGroup(channelGroupServices.getId());
+            channels.add(channel);
+
+            channel = new NotificationChannel(
+                    CHANNEL_ID_ERRORS,
+                    context.getString(R.string.notification_channel_name_errors),
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setGroup(channelGroupServices.getId());
+            channels.add(channel);
+
+            notificationManager.createNotificationChannels(channels);
+        }
+    }
+
+    private static class NotificationWithInfo {
+        private Notification notification;
+        private String channelId;
+
+        NotificationWithInfo(Notification notification, String channelId) {
+            this.notification = notification;
+            this.channelId = channelId;
+        }
+    }
+
+}

@@ -80,12 +80,72 @@
             android:layout_height="50dp" />
 
         <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/about_data_title"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/about_data" />
+
+        <TextView
+            android:id="@+id/about_sia"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            tools:text="@string/about_sia" />
+
+        <TextView
+            android:id="@+id/about_phone_block"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            tools:text="@string/about_phone_block" />
+
+        <TextView
+            android:id="@+id/about_tellows"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            tools:text="@string/about_tellows" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/about_donate" />
+
+        <TextView
+            android:id="@+id/about_geo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            tools:text="@string/about_geo" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="50dp" />
+
+        <TextView
             android:id="@+id/app_version"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:gravity="center_horizontal"
-            tools:text="v0.5.8" />
+            tools:text="v0.5.17 (5170)" />
+
+        <TextView
+            android:id="@+id/build_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center_horizontal"
+            android:textIsSelectable="true"
+            android:textSize="12sp"
+            tools:text="debug \u00b7 claude/yacb-caller-id \u00b7 e7da1bb\nbuilt 2026-09-20 17:21 UTC" />
 
         <TextView
             android:id="@+id/db_info"

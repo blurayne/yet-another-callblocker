@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="dummydomain.yetanothercallblocker">
+    package="net.evolution515.callblocker">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -10,8 +10,20 @@
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- needed to show the incoming call notifications on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_LOG" android:maxSdkVersion="15" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!--
+        So that "let this app work in the background" can be answered with one tap rather
+        than found in the settings. It is only ever asked when something has just been cut
+        short by it, and the app works without it being granted.
+    -->
+    <uses-permission
+        android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+        tools:ignore="BatteryLife" />
 
     <queries>
         <intent>
@@ -27,11 +39,18 @@
         </intent>
     </queries>
 
+    <!--
+        largeHeap: building the database reads a few hundred thousand files into one table,
+        and the default heap is not enough for it on every phone. It only raises the ceiling;
+        what the app actually uses is what it asks for.
+    -->
     <application
         android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:largeHeap="true"
+        android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
@@ -63,12 +82,63 @@
                 android:value=".MainActivity" />
         </activity>
         <activity
+            android:name=".WhitelistActivity"
+            android:label="@string/title_whitelist_activity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
             android:name=".EditBlacklistItemActivity"
             android:label="@string/title_add_blacklist_item_activity"
             android:parentActivityName=".BlacklistActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".BlacklistActivity" />
+        </activity>
+        <activity
+            android:name=".NumberSourcesActivity"
+            android:label="@string/title_sources_activity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".SettingsActivity" />
+        </activity>
+        <activity
+            android:name=".EditNumberSourceActivity"
+            android:label="@string/title_add_source_activity"
+            android:parentActivityName=".NumberSourcesActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".NumberSourcesActivity" />
+        </activity>
+        <activity
+            android:name=".ProvidersActivity"
+            android:label="@string/title_providers_activity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".SettingsActivity" />
+        </activity>
+        <activity
+            android:name=".EditProviderActivity"
+            android:label="@string/title_add_provider_activity"
+            android:parentActivityName=".ProvidersActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ProvidersActivity" />
+        </activity>
+        <activity
+            android:name=".EditWhitelistItemActivity"
+            android:label="@string/title_add_whitelist_item_activity"
+            android:parentActivityName=".WhitelistActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".WhitelistActivity" />
         </activity>
         <activity
             android:name=".SettingsActivity"
@@ -78,9 +148,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
-        <activity
-            android:name=".DbManagementActivity"
-            android:label="@string/db_management_activity_label" />
         <activity
             android:name=".ReviewsActivity"
             android:label="@string/title_activity_reviews"
@@ -113,6 +180,30 @@
                 <action android:name="android.intent.action.DIAL" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".LogcatActivity"
+            android:label="@string/logcat_activity"
+            android:parentActivityName=".SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".SettingsActivity" />
+        </activity>
+        <activity
+            android:name=".HelpActivity"
+            android:label="@string/help_activity"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
+            android:name=".StatisticsActivity"
+            android:label="@string/open_statistics_activity"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
         </activity>
         <activity
             android:name=".AboutActivity"
@@ -160,6 +251,21 @@
                 <action android:name="android.telecom.CallScreeningService" />
             </intent-filter>
         </service>
+
+        <!--
+            Provides the caller info to the phone app as a contacts directory,
+            which makes it appear on the incoming call screen and in the call log.
+            The Contacts Provider finds it by the meta-data below.
+        -->
+        <provider
+            android:name=".CallerIdDirectoryProvider"
+            android:authorities="${applicationId}.directory"
+            android:exported="true"
+            android:readPermission="android.permission.READ_CONTACTS">
+            <meta-data
+                android:name="android.content.ContactDirectory"
+                android:value="true" />
+        </provider>
 
         <provider
             android:name="androidx.core.content.FileProvider"

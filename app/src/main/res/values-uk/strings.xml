@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
     <string name="notification_channel_group_name_incoming_calls">Вхідні виклики</string>
     <string name="notification_channel_name_neutral">Нейтральні виклики</string>
     <string name="notification_channel_name_unknown">Невідомі виклики</string>
@@ -158,7 +158,7 @@
     <string name="show_notifications_for_blocked_calls">Сповіщати про заблоковані виклики</string>
     <string name="open_system_settings">Відкрити Налаштування системи</string>
     <string name="default_phone_app">Додаток \"Телефон\" за замовчуванням</string>
-    <string name="default_phone_app_set">Оберіть \"Yet Another Call Blocker\" як \"Телефон\" у розділі \"Додатки за замовченням \" системних налуштувань</string>
+    <string name="default_phone_app_set">Оберіть \"Caller ID &amp; Spam\" як \"Телефон\" у розділі \"Додатки за замовченням \" системних налуштувань</string>
     <string name="blacklist_select_all">Вибрати все</string>
     <string name="blocked_call_notifications_disable_message">Ви можете випадково пропустити виклик, якщо виклики будуть заблоковані без сповіщень</string>
     <string name="blocked_call_notifications_disable_confirmation">Вимкнути всеодно</string>
@@ -222,14 +222,9 @@
     <string name="db_filtering_enabled">Фільтрація ввімкнута</string>
     <string name="db_filtering_enabled_summary">Ввімкнути фільтрацію під час завантаження та оновлення бази даних</string>
     <string name="db_filtering_prefixes_to_keep">Префікси для збереження</string>
-    <string name="db_filtering_thorough">Ретельна фільтрація</string>
-    <string name="db_filtering_thorough_summary">Якщо ввімкнено, додаток пройде через кожен блок даних і видалить номера, що не відповідають префіксам. В іншому випадку він видалить лише цілі небажані номери (залишаючи деякі небажані номери в бажаних блоках). Рекомендується залишити це увімкненим. Необхідний для збереження коротких номерів</string>
     <string name="db_filtering_keep_short_numbers">Залишити короткі номери</string>
     <string name="db_filtering_keep_short_numbers_summary">Залишити номери коротші за вказану довжину незалежно від префіксів</string>
     <string name="db_filtering_keep_short_numbers_max_length">Довжина номеру для збереження</string>
     <string name="db_filtering_keep_short_numbers_max_length_summary">Максимальна довжина (включно) коротких номерів для ігнорування префіксів. Наприклад довжина 5 залишатиме номери з довжиною 5 цифр та коротші</string>
-    <string name="db_filtering_filter_db">Відфільтрувати базу даних</string>
-    <string name="db_filtering_filter_db_summary">Запустити фільтрацію бази даних зараз (для фільтрації існуючих даних)</string>
-    <string name="filtering_db">Фільтрація бази…</string>
     <string name="settings_screen_db_filtering">Фільтрація бази даних</string>
 </resources>

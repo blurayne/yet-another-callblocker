@@ -1,43 +1,34 @@
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     app:title="@string/title_settings_activity">
 
-    <PreferenceCategory app:title="@string/settings_category_main">
+    <!-- what is blocked, and the two lists that say which numbers are -->
+    <PreferenceCategory app:title="@string/settings_category_blocking">
+        <Preference
+            app:key="blockingStatus"
+            app:persistent="false"
+            app:title="@string/blocking_on" />
+        <Preference
+            app:key="blacklistScreen"
+            app:persistent="false"
+            app:title="@string/open_blacklist_activity" />
+        <Preference
+            app:key="whitelistScreen"
+            app:persistent="false"
+            app:summary="@string/whitelist_summary"
+            app:title="@string/whitelist" />
         <SwitchPreferenceCompat
             app:defaultValue="true"
-            app:key="incomingCallNotifications"
-            app:summary="@string/incoming_call_notifications_summary"
-            app:title="@string/incoming_call_notifications" />
-        <SwitchPreferenceCompat
-            app:key="autoUpdateEnabled"
-            app:persistent="false"
-            app:summary="@string/auto_updates_summary"
-            app:title="@string/auto_updates" />
-        <SwitchPreferenceCompat
-            app:key="useContacts"
-            app:summary="@string/use_contacts_summary"
-            app:title="@string/use_contacts" />
-        <dummydomain.yetanothercallblocker.preference.IntListPreference
-            app:defaultValue="-1"
-            app:entries="@array/ui_mode_entries"
-            app:entryValues="@array/ui_mode_entry_values"
-            app:key="uiMode"
-            app:title="@string/ui_mode"
-            app:useSimpleSummaryProvider="true" />
-        <ListPreference
-            app:defaultValue="consecutive"
-            app:entries="@array/call_log_grouping_entries"
-            app:entryValues="@array/call_log_grouping_values"
-            app:key="callLogGrouping"
-            app:title="@string/call_log_grouping"
-            app:useSimpleSummaryProvider="true" />
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/settings_category_call_blocking">
-        <SwitchPreferenceCompat
             app:key="blockNegativeSiaNumbers"
             app:summary="@string/block_negative_sia_numbers_summary"
             app:title="@string/block_negative_sia" />
         <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="blockPhoneBlock"
+            app:summary="@string/block_phone_block_summary"
+            app:title="@string/block_phone_block" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:key="blockHiddenNumbers"
             app:summary="@string/block_hidden_number_summary"
             app:title="@string/block_hidden_number" />
@@ -47,29 +38,34 @@
             app:summary="@string/block_blacklisted_summary"
             app:title="@string/block_blacklisted" />
         <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="blockFailedVerification"
+            app:summary="@string/block_failed_verification_summary"
+            app:title="@string/block_failed_verification" />
+        <MultiSelectListPreference
+            app:entries="@array/silence_calls_entries"
+            app:entryValues="@array/silence_calls_values"
+            app:key="silenceCalls"
+            app:summary="@string/silence_calls_summary"
+            app:title="@string/silence_calls" />
+        <SwitchPreferenceCompat
             app:key="useCallScreeningService"
             app:persistent="false"
             app:summary="@string/use_call_screening_service_summary"
             app:title="@string/use_call_screening_service" />
     </PreferenceCategory>
 
-    <SwitchPreferenceCompat
-        app:key="useMonitoringService"
-        app:summary="@string/use_monitoring_service_summary"
-        app:title="@string/use_monitoring_service" />
-
-    <PreferenceCategory
-        app:key="categoryNotifications"
-        app:title="@string/notification_settings">
+    <!-- what the user gets to see and hear about a call -->
+    <PreferenceCategory app:title="@string/settings_category_caller_id_notifications">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="incomingCallNotifications"
+            app:summary="@string/incoming_call_notifications_summary"
+            app:title="@string/incoming_call_notifications" />
         <Preference
             app:key="notificationChannelSettings"
             app:persistent="false"
             app:title="@string/notification_settings" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        app:key="categoryNotificationsLegacy"
-        app:title="@string/notification_settings">
         <SwitchPreferenceCompat
             app:key="showNotificationsForKnownCallers"
             app:summary="@string/show_notifications_for_known_callers_summary"
@@ -83,12 +79,101 @@
             app:persistent="false"
             app:summary="@string/show_notifications_for_blocked_calls_summary"
             app:title="@string/show_notifications_for_blocked_calls" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="callerIdDirectory"
+            app:summary="@string/caller_id_directory_summary"
+            app:title="@string/caller_id_directory" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="callerIdOverlay"
+            app:summary="@string/caller_id_overlay_summary"
+            app:title="@string/caller_id_overlay" />
+        <Preference
+            app:fragment="net.evolution515.callblocker.CallerIdTemplateSettingsFragment"
+            app:key="callerIdTemplateScreen"
+            app:persistent="false"
+            app:title="@string/caller_id_template" />
+        <SwitchPreferenceCompat
+            app:key="useMonitoringService"
+            app:summary="@string/use_monitoring_service_summary"
+            app:title="@string/use_monitoring_service" />
+    </PreferenceCategory>
+
+    <!-- where what the app knows about a number comes from -->
+    <PreferenceCategory app:title="@string/settings_category_number_sources">
+        <Preference
+            app:fragment="net.evolution515.callblocker.DbManagementSettingsFragment"
+            app:key="dbManagement"
+            app:persistent="false"
+            app:title="@string/db_management" />
+        <Preference
+            app:key="providersScreen"
+            app:persistent="false"
+            app:summary="@string/providers_summary"
+            app:title="@string/title_providers_activity" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="useContacts"
+            app:summary="@string/use_contacts_summary"
+            app:title="@string/use_contacts" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/settings_category_appearance">
+        <net.evolution515.callblocker.preference.IntListPreference
+            app:defaultValue="-1"
+            app:entries="@array/ui_mode_entries"
+            app:entryValues="@array/ui_mode_entry_values"
+            app:key="uiMode"
+            app:title="@string/ui_mode"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:defaultValue="none"
+            app:entries="@array/call_log_grouping_entries"
+            app:entryValues="@array/call_log_grouping_values"
+            app:key="callLogGrouping"
+            app:title="@string/call_log_grouping"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <!-- the settings and both lists in one file, in a directory the user picks -->
+    <PreferenceCategory app:title="@string/settings_category_backup">
+        <Preference
+            app:key="backupDirectory"
+            app:persistent="false"
+            app:summary="@string/backup_directory_none"
+            app:title="@string/backup_directory" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="autoBackup"
+            app:summary="@string/auto_backup_summary"
+            app:title="@string/auto_backup" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="backupDatabase"
+            app:summary="@string/backup_database_summary"
+            app:title="@string/backup_database" />
+        <SwitchPreferenceCompat
+            app:key="backupSecrets"
+            app:summary="@string/backup_secrets_summary"
+            app:title="@string/backup_secrets" />
+        <Preference
+            app:key="backupNow"
+            app:persistent="false"
+            app:summary="@string/backup_now_summary"
+            app:title="@string/backup_now" />
+        <Preference
+            app:key="backupRestore"
+            app:persistent="false"
+            app:summary="@string/backup_restore_summary"
+            app:title="@string/backup_restore" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/settings_screen_advanced">
         <Preference
-            app:fragment="dummydomain.yetanothercallblocker.AdvancedSettingsFragment"
+            app:fragment="net.evolution515.callblocker.AdvancedSettingsFragment"
             app:key="screenAdvanced"
+            app:summary="@string/settings_screen_advanced_summary"
             app:title="@string/settings_screen_advanced" />
     </PreferenceCategory>
 

@@ -1,0 +1,296 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      include_database:
+        description: Bundle the offline number database into the APK
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build the APKs
+    runs-on: ubuntu-latest
+
+    env:
+      # empty for pull requests from forks and when the secret isn't set at all
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
+    steps:
+      - name: Check out the sources
+        uses: actions/checkout@v4
+
+      - name: Validate the Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      # the SDK tools need a recent JDK, so this is done before switching to JDK 11 below
+      - name: Set up the Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          # the action installs the obsolete "tools" package by default, which Google has
+          # removed from the repository - everything the build needs is installed below
+          packages: ''
+
+      - name: Install the SDK packages
+        run: sdkmanager 'platforms;android-33' 'build-tools;33.0.2'
+
+      # Gradle 7.2 and AGP 7.0 don't support newer JDKs
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # the app downloads the database on the first start, this makes it work offline right away
+      - name: Bundle the offline database
+        if: inputs.include_database
+        run: |
+          git clone --depth 1 https://gitlab.com/xynngh/YetAnotherCallBlocker_data.git \
+              "${RUNNER_TEMP}/yacb-data"
+          cp -r "${RUNNER_TEMP}/yacb-data/assets/sia" app/src/main/assets/
+
+      - name: Decode the signing keystore
+        id: keystore
+        if: env.KEYSTORE_BASE64 != ''
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          keystore="${RUNNER_TEMP}/keystore.jks"
+
+          # accept the shapes the usual tools produce: `base64` wraps its output unless told
+          # not to, `certutil -encode` adds a PEM header, and some tools use the URL-safe alphabet
+          encoded=$(printf '%s' "${KEYSTORE_BASE64}" | tr -d '[:space:]' \
+              | sed -e 's/-----[A-Z]*-----//g' | tr -- '-_' '+/')
+
+          if ! printf '%s' "${encoded}" | base64 -d > "${keystore}" 2>/dev/null; then
+            # the value itself is a secret, so only say what is wrong with it,
+            # and say it in the error annotation, which is where it will be looked for
+            case "${encoded}" in
+              *[!A-Za-z0-9+/=]*)
+                reason="it holds characters that base64 data can't contain,"
+                reason="${reason} so it isn't (only) an encoded file" ;;
+              *)
+                if [ $((${#encoded} % 4)) -ne 0 ]; then
+                  reason="its length is not a multiple of 4, so it looks truncated"
+                else
+                  reason="the characters look fine, so the data itself is damaged"
+                fi ;;
+            esac
+
+            echo "::error::KEYSTORE_BASE64 (${#encoded} characters) can't be decoded:" \
+                 "${reason}. Create it with: base64 -w0 keystore.jks" \
+                 "(macOS: base64 -i keystore.jks), or on Windows with" \
+                 "[Convert]::ToBase64String([IO.File]::ReadAllBytes('keystore.jks'))."
+            exit 1
+          fi
+
+          echo "decoded $(stat -c%s "${keystore}") bytes"
+
+          if ! keytool -list -keystore "${keystore}" -storepass "${KEYSTORE_PASSWORD}" \
+              > /dev/null 2>&1; then
+            echo "::error::The decoded keystore ($(stat -c%s "${keystore}") bytes) can't be" \
+                 "opened. Check that KEYSTORE_BASE64 is the whole file and that" \
+                 "KEYSTORE_PASSWORD is the keystore (store) password, not the key password."
+            exit 1
+          fi
+
+          echo "path=${keystore}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build
+        env:
+          # empty when there's no keystore - the release APK is then left unsigned
+          YACB_KEYSTORE_FILE: ${{ steps.keystore.outputs.path }}
+          YACB_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          YACB_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          YACB_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          # keep the output, so that the errors can be repeated at the end of the job
+          set -o pipefail
+          ./gradlew assembleDebug assembleRelease --stacktrace 2>&1 | tee "${RUNNER_TEMP}/build.log"
+
+      # the project doesn't fail the build on lint errors, so the findings are printed here
+      - name: Lint
+        continue-on-error: true
+        run: |
+          ./gradlew lintDebug
+          python3 - <<'PY'
+          import collections
+          import glob
+          import xml.etree.ElementTree as ElementTree
+
+          counts = collections.Counter()
+
+          for report in sorted(glob.glob('app/build/reports/lint-results-*.xml')):
+              print('==', report)
+              for issue in ElementTree.parse(report).getroot():
+                  severity = issue.get('severity')
+                  counts[severity] += 1
+
+                  if severity not in ('Error', 'Fatal', 'Warning'):
+                      continue
+
+                  location = issue.find('location')
+                  where = ''
+                  if location is not None:
+                      where = '%s:%s' % (location.get('file'), location.get('line') or '?')
+                  print('%s: %s: %s [%s]' % (severity, issue.get('id'),
+                                             issue.get('message'), where))
+
+          print('== lint summary:', dict(counts) or 'no issues')
+          PY
+
+      # the phone app only queries the app if the Contacts Provider finds the meta-data
+      - name: Check that the caller ID provider is registered
+        run: |
+          manifest=$(find app/build/intermediates -name AndroidManifest.xml \
+              -path '*merged_manifest*' | head -1)
+          echo "checking ${manifest}"
+          grep -q 'CallerIdDirectoryProvider' "${manifest}"
+          grep -q 'android.content.ContactDirectory' "${manifest}"
+          echo 'the caller ID directory provider is registered'
+
+      # an activity that isn't declared doesn't fail the build: it throws when it's opened
+      - name: Check that every activity is declared
+        run: |
+          manifest=$(find app/build/intermediates -name AndroidManifest.xml \
+              -path '*merged_manifest*' | head -1)
+          echo "checking ${manifest}"
+
+          missing=""
+          for file in app/src/main/java/net/evolution515/callblocker/*Activity.java; do
+            name=$(basename "${file}" .java)
+            grep -q "${name}" "${manifest}" || missing="${missing} ${name}"
+          done
+
+          if [ -n "${missing}" ]; then
+            echo "::error::activities missing from the manifest:${missing}"
+            exit 1
+          fi
+
+          echo 'every activity is declared'
+
+      - name: Collect the APKs
+        id: apks
+        run: |
+          version=$(sed -n 's/.*versionName *"\(.*\)".*/\1/p' app/build.gradle)
+          revision=$(git rev-parse --short HEAD)
+          built=$(date -u +%Y%m%d-%H%M%S)
+
+          # the build time distinguishes repeated builds of the same revision
+          echo "name=apk-${built}-${revision}" >> "${GITHUB_OUTPUT}"
+
+          mkdir -p artifacts
+          find app/build/outputs/apk -name '*.apk' -print0 | while IFS= read -r -d '' apk; do
+            cp "${apk}" "artifacts/$(basename "${apk}" .apk)-${version}-${built}-${revision}.apk"
+          done
+
+          (cd artifacts && sha256sum ./*.apk | tee SHA256SUMS.txt)
+
+          # an unsigned APK can't be installed, so say which file to use
+          {
+            echo "Yet Another Call Blocker, version ${version}, built from ${revision}."
+            echo
+            if ls artifacts/*-unsigned-*.apk >/dev/null 2>&1; then
+              echo "The release APK is UNSIGNED and CANNOT BE INSTALLED: no signing secrets are"
+              echo "set for this repository (see BUILDING.md). Install the debug APK instead."
+              echo
+              echo "The debug APK is signed with the debug key from the repo, so builds can be"
+              echo "installed over each other."
+            else
+              echo "The release APK is signed - install that one."
+            fi
+          } | tee artifacts/INSTALL.txt
+
+          # so that a run says what it produced without unpacking the artifact
+          echo "::notice::Built $(cd artifacts && ls ./*.apk | tr '\n' ' ')"
+
+      - name: Upload the APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apks.outputs.name }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: app/build/reports/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Build errors
+        if: failure()
+        run: |
+          # as annotations, which are readable without digging through the whole log
+          # "> Task ..." lines are progress, not errors, and there are hundreds of them
+          grep -E "error:|^e: |^FAILURE|Caused by:|^> [^T]" "${RUNNER_TEMP}/build.log" \
+              | grep -v "^> Task " | head -20 > "${RUNNER_TEMP}/build-errors.txt" || true
+
+          while IFS= read -r line; do
+            echo "::error::${line}"
+          done < "${RUNNER_TEMP}/build-errors.txt"
+
+          cat "${RUNNER_TEMP}/build-errors.txt"
+
+      - name: Lint errors
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob
+          import xml.etree.ElementTree as ElementTree
+
+          errors = []
+
+          for report in sorted(glob.glob('app/build/reports/lint-results-*.xml')):
+              for issue in ElementTree.parse(report).getroot():
+                  if issue.get('severity') not in ('Error', 'Fatal'):
+                      continue
+
+                  location = issue.find('location')
+                  where = ''
+                  if location is not None:
+                      where = '%s:%s' % (location.get('file'), location.get('line') or '?')
+                  errors.append('%s: %s [%s]' % (issue.get('id'), issue.get('message'), where))
+
+          print('\n'.join(errors) if errors else 'no lint errors')
+          PY
+
+  release:
+    name: Publish a release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download the APKs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: apk-*
+          merge-multiple: true
+          path: artifacts
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" artifacts/* \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "${GITHUB_REF_NAME}" \
+              --generate-notes

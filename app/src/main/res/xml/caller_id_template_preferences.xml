@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:key="callerIdTemplateScreen"
+    app:title="@string/caller_id_template">
+
+    <PreferenceCategory app:title="@string/caller_id_template_preview">
+
+        <Preference
+            app:key="callerIdPreview"
+            app:persistent="false"
+            app:selectable="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/caller_id_template_category_own">
+
+        <EditTextPreference
+            app:key="callerIdTemplate"
+            app:summary="@string/caller_id_template_summary"
+            app:title="@string/caller_id_template_field" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/caller_id_template_category_examples">
+
+        <Preference
+            app:key="callerIdExampleDefault"
+            app:persistent="false"
+            app:title="@string/caller_id_template_example_default" />
+
+        <Preference
+            app:key="callerIdExampleCategory"
+            app:persistent="false"
+            app:title="@string/caller_id_template_example_category" />
+
+        <Preference
+            app:key="callerIdExampleRatings"
+            app:persistent="false"
+            app:title="@string/caller_id_template_example_ratings" />
+
+        <Preference
+            app:key="callerIdExampleNumber"
+            app:persistent="false"
+            app:title="@string/caller_id_template_example_number" />
+
+        <Preference
+            app:key="callerIdExampleEverything"
+            app:persistent="false"
+            app:title="@string/caller_id_template_example_everything" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

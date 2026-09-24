@@ -27,7 +27,7 @@
     <string name="block_blacklisted_short">封鎖已被列入黑名單的通話</string>
     <string name="block_blacklisted">封鎖已被列入黑名單的號碼</string>
     <string name="block_blacklisted_summary">封鎖來自黑名單號碼的通話</string>
-    <string name="app_name">Yet Another Call Blocker</string>
+    <string name="app_name">Caller ID &amp; Spam</string>
     <string name="notification_channel_group_name_services">服務</string>
     <string name="notification_channel_name_known">已知通話</string>
     <string name="notification_channel_name_unknown">未知通話</string>
@@ -57,7 +57,7 @@
     <string name="default_caller_id_app">預設「來電顯示應用程式」</string>
     <string name="default_caller_id_app_unset">在系統設定的「預設應用程式」中選擇不同的應用程式作為「來電顯示應用程式」</string>
     <string name="default_phone_app">預設「電話應用程式」</string>
-    <string name="default_phone_app_set">在系統設定的「預設應用程式」中選擇「Yet Another Call Blocker」作為「電話應用程式」</string>
+    <string name="default_phone_app_set">在系統設定的「預設應用程式」中選擇「Caller ID &amp; Spam」作為「電話應用程式」</string>
     <string name="default_phone_app_unset">在系統設定的「預設應用程式」中選擇不同的應用程式作為「電話應用程式」</string>
     <string name="open_system_settings">開啟設定</string>
     <string name="call_log_permission_message">授予「電話」權限以查看最近的通話</string>

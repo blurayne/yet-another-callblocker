@@ -58,8 +58,15 @@ public class EditProviderActivity extends AppCompatActivity {
     private TextInputLayout nameTextField, searchUrlTextField, reportUrlTextField,
             patternTextField, usernameTextField, passwordTextField, apiUrlTextField,
             tokenTextField;
-    private Spinner authSpinner, apiSpinner;
-    private SwitchCompat apiSwitch, enabledSwitch, reportEnabledSwitch;
+    private Spinner authSpinner, typeSpinner;
+    private SwitchCompat enabledSwitch, reportEnabledSwitch;
+
+    /**
+     * What the type spinner offers: addresses (null), or one of the APIs. One choice rather
+     * than a switch and a second spinner that only means something when the switch is on.
+     */
+    private static final Provider.Api[] TYPES = {
+            null, Provider.Api.PHONE_BLOCK, Provider.Api.TELLOWS, Provider.Api.CUSTOM};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,13 +85,12 @@ public class EditProviderActivity extends AppCompatActivity {
         apiUrlTextField = findViewById(R.id.apiUrlTextField);
         tokenTextField = findViewById(R.id.tokenTextField);
         authSpinner = findViewById(R.id.authSpinner);
-        apiSpinner = findViewById(R.id.apiSpinner);
-        apiSwitch = findViewById(R.id.apiSwitch);
+        typeSpinner = findViewById(R.id.typeSpinner);
         enabledSwitch = findViewById(R.id.enabledSwitch);
         reportEnabledSwitch = findViewById(R.id.reportEnabledSwitch);
 
         setUpSpinner(authSpinner, Provider.Auth.values(), this::getAuthName);
-        setUpSpinner(apiSpinner, Provider.Api.values(), this::getApiName);
+        setUpSpinner(typeSpinner, TYPES, this::getTypeName);
 
         String id = getIntent().getStringExtra(PARAM_ID);
         provider = id != null && providerService != null ? providerService.findById(id) : null;
@@ -102,7 +108,6 @@ public class EditProviderActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) fill();
 
-        apiSwitch.setOnCheckedChangeListener((v, checked) -> updateMode());
         authSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -113,10 +118,10 @@ public class EditProviderActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        apiSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        typeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                updateApiFields();
+                updateMode();
             }
 
             @Override
@@ -171,13 +176,14 @@ public class EditProviderActivity extends AppCompatActivity {
     public void onSaveClicked(MenuItem item) {
         if (providerService == null) return;
 
-        boolean api = apiSwitch.isChecked();
+        boolean api = isApi();
 
         String searchUrl = getString(searchUrlTextField);
         String reportUrl = getString(reportUrlTextField);
         String apiUrl = getString(apiUrlTextField);
 
-        Provider.Api apiKind = selected(apiSpinner, Provider.Api.values());
+        // a provider switched to addresses keeps the API it had, for when it is switched back
+        Provider.Api apiKind = api ? selected(typeSpinner, TYPES) : provider.getApi();
 
         if (api) {
             if (apiKind == Provider.Api.CUSTOM && TextUtils.isEmpty(apiUrl)) {
@@ -282,9 +288,8 @@ public class EditProviderActivity extends AppCompatActivity {
         setString(apiUrlTextField, provider.getApiUrl());
 
         select(authSpinner, Provider.Auth.values(), provider.getAuth());
-        select(apiSpinner, Provider.Api.values(), provider.getApi());
-
-        apiSwitch.setChecked(provider.getMode() == Provider.Mode.API);
+        select(typeSpinner, TYPES,
+                provider.getMode() == Provider.Mode.API ? provider.getApi() : null);
 
         if (providerService != null) {
             setString(tokenTextField, providerService.getSecret(provider.getId()));
@@ -297,7 +302,7 @@ public class EditProviderActivity extends AppCompatActivity {
 
     /** Addresses and an API are two ways of asking; only one of them is filled in. */
     private void updateMode() {
-        boolean api = apiSwitch.isChecked();
+        boolean api = isApi();
 
         findViewById(R.id.urlsBlock).setVisibility(api ? View.GONE : View.VISIBLE);
         findViewById(R.id.apiBlock).setVisibility(api ? View.VISIBLE : View.GONE);
@@ -332,7 +337,7 @@ public class EditProviderActivity extends AppCompatActivity {
     private boolean wantsToken() {
         if (Provider.ID_PHONE_BLOCK.equals(provider.getId())) return true;
 
-        if (apiSwitch.isChecked()) return true;
+        if (isApi()) return true;
 
         if (selected(authSpinner, Provider.Auth.values()) == Provider.Auth.BEARER) return true;
 
@@ -342,7 +347,8 @@ public class EditProviderActivity extends AppCompatActivity {
 
     /** The two APIs the app knows live at addresses it knows; only a custom one is typed. */
     private void updateApiFields() {
-        Provider.Api api = selected(apiSpinner, Provider.Api.values());
+        Provider.Api api = selected(typeSpinner, TYPES);
+        if (api == null) return;
 
         apiUrlTextField.setVisibility(api == Provider.Api.CUSTOM ? View.VISIBLE : View.GONE);
 
@@ -364,10 +370,17 @@ public class EditProviderActivity extends AppCompatActivity {
         }
     }
 
-    private String getApiName(Provider.Api api) {
+    /** Whether the type is one of the APIs rather than addresses. */
+    private boolean isApi() {
+        return selected(typeSpinner, TYPES) != null;
+    }
+
+    private String getTypeName(Provider.Api api) {
+        if (api == null) return getString(R.string.provider_type_url);
+
         switch (api) {
-            case PHONE_BLOCK: return "PhoneBlock";
-            case TELLOWS: return "tellows";
+            case PHONE_BLOCK: return "PhoneBlock API";
+            case TELLOWS: return "tellows API";
             default: return getString(R.string.provider_api_custom);
         }
     }

@@ -27,12 +27,16 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/apiSwitch"
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/item_padding"
-            android:text="@string/provider_use_api" />
+            android:text="@string/provider_api" />
+
+        <Spinner
+            android:id="@+id/typeSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
         <!-- addresses that are opened in a browser -->
         <LinearLayout
@@ -132,17 +136,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:visibility="gone">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/item_padding"
-                android:text="@string/provider_api" />
-
-            <Spinner
-                android:id="@+id/apiSpinner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/apiUrlTextField"
@@ -260,11 +253,17 @@
 
         </LinearLayout>
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/item_padding"
+            android:text="@string/provider_use_for" />
+
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/enabledSwitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/item_padding"
+            android:layout_marginTop="4dp"
             android:text="@string/provider_enabled" />
 
         <androidx.appcompat.widget.SwitchCompat
